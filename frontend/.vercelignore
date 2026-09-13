@@ -1,0 +1,35 @@
+# Vercel Ignore File — Prevents uploading GBs of mobile/desktop/cache files
+
+# Native platform directories (Android, iOS, Windows, Linux, macOS)
+android/
+ios/
+windows/
+linux/
+macos/
+
+# Tooling and caches
+.dart_tool/
+.idea/
+.vscode/
+.git/
+test/
+
+# Dart & Flutter source files (not needed for precompiled web deployment)
+lib/
+
+# Intermediate Android & OS build artifacts
+build/app/
+build/flutter_assets/
+build/windows/
+build/linux/
+build/macos/
+build/ios/
+
+# Keep ONLY the compiled web distribution
+!build/web/
+!build/web/**
+
+# Sensitive or local files
+.env*
+*.token
+*.txt

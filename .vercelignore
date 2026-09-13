@@ -1,0 +1,41 @@
+# Vercel Ignore File — Root level
+
+# Backend directory (hosted on Railway)
+backend/
+
+# Native platform directories
+frontend/android/
+frontend/ios/
+frontend/windows/
+frontend/linux/
+frontend/macos/
+
+# Tooling and caches
+.dart_tool/
+frontend/.dart_tool/
+.idea/
+.vscode/
+.git/
+test/
+frontend/test/
+
+# Source files (only precompiled web is needed)
+frontend/lib/
+
+# Intermediate Android & OS build artifacts
+frontend/build/app/
+frontend/build/flutter_assets/
+frontend/build/windows/
+frontend/build/linux/
+frontend/build/macos/
+frontend/build/ios/
+
+# Keep ONLY the compiled web distribution
+!frontend/build/web/
+!frontend/build/web/**
+
+# Sensitive or local files
+.env*
+*.token
+*.txt
+Vercel.txt
