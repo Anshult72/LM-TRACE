@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/responsive/responsive_layout.dart';
+import '../../core/widgets/widgets.dart';
 import 'inspections_controller.dart';
 import 'widgets/inspections_list_web_layout.dart';
 
@@ -123,20 +124,21 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
             child: state.isLoading && state.inspections.isEmpty
                 ? const Center(child: CircularProgressIndicator())
                 : filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.search_off, size: 48, color: AppColors.neutral400),
-                            const SizedBox(height: 12),
-                            Text(
-                              _searchQuery.isNotEmpty
-                                  ? 'No records matching "$_searchQuery"'
-                                  : 'No inspections found in this category',
-                              style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.neutral600),
-                            ),
-                          ],
-                        ),
+                    ? AppEmptyState(
+                        icon: Icons.search_off_rounded,
+                        title: _searchQuery.isNotEmpty
+                            ? 'No cases match "$_searchQuery"'
+                            : 'No inspections found',
+                        description: 'Try adjusting your search terms or filter selection to see other inspection records.',
+                        actionLabel: _searchQuery.isNotEmpty ? 'Clear Search' : 'New Inspection',
+                        onActionPressed: () {
+                          if (_searchQuery.isNotEmpty) {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          } else {
+                            context.push('/new-inspection');
+                          }
+                        },
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
@@ -151,9 +153,13 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.secondary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('New Inspection', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.primaryNavy,
+        elevation: 3,
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text(
+          'New Inspection',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+        ),
         onPressed: () => context.push('/new-inspection'),
       ),
     );
@@ -161,161 +167,127 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
 
   Widget _buildFilterChip(String filterKey, String label, {Color? color}) {
     final isSelected = _filter == filterKey;
-    final chipColor = color ?? AppColors.primary;
+    final chipColor = color ?? AppColors.primaryNavy;
 
-    return FilterChip(
-      selected: isSelected,
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-          color: isSelected ? Colors.white : AppColors.neutral700,
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => setState(() => _filter = filterKey),
+          borderRadius: AppRadii.full,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: isSelected ? chipColor : Colors.white,
+              borderRadius: AppRadii.full,
+              border: Border.all(
+                color: isSelected ? chipColor : AppColors.borderLight,
+                width: 1.1,
+              ),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? Colors.white : AppColors.neutral700,
+              ),
+            ),
+          ),
         ),
       ),
-      backgroundColor: AppColors.neutral100,
-      selectedColor: chipColor,
-      showCheckmark: false,
-      onSelected: (val) {
-        if (val) setState(() => _filter = filterKey);
-      },
     );
   }
 
   Widget _buildInspectionTile(BuildContext context, InspectionModel ins) {
-    Color statusColor;
-    Color statusBg;
-    String statusLabel;
-
-    switch (ins.status.toUpperCase()) {
-      case 'COMPLETED':
-      case 'COMPLIANT':
-        statusColor = AppColors.compliant;
-        statusBg = AppColors.compliantBg;
-        statusLabel = 'COMPLIANT';
-        break;
-      case 'POTENTIAL_VIOLATION':
-      case 'VIOLATION':
-        statusColor = AppColors.violation;
-        statusBg = AppColors.violationBg;
-        statusLabel = 'VIOLATION';
-        break;
-      case 'REVIEW_REQUIRED':
-      case 'IN_REVIEW':
-        statusColor = AppColors.review;
-        statusBg = AppColors.reviewBg;
-        statusLabel = 'HITL REVIEW';
-        break;
-      default:
-        statusColor = AppColors.neutral600;
-        statusBg = AppColors.neutral100;
-        statusLabel = ins.status;
-    }
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: AppColors.neutral200),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () => context.push('/inspections/${ins.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return AppCard(
+      onTap: () => context.push('/inspections/${ins.id}'),
+      padding: const EdgeInsets.all(14),
+      borderRadius: AppRadii.md,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Text(
-                        ins.inspectionCode,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: statusBg,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: statusColor.withValues(alpha: 0.3)),
-                        ),
-                        child: Text(
-                          statusLabel,
-                          style: TextStyle(
-                            color: statusColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                   Text(
-                    ins.inspectionDate.split('T').first,
-                    style: const TextStyle(fontSize: 12, color: AppColors.neutral400),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                ins.businessName ?? ins.sellerName ?? 'Retail Goods Inspection',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.neutral800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Row(
-                children: [
-                  const Icon(Icons.location_on_outlined, size: 13, color: AppColors.neutral400),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      ins.location,
-                      style: const TextStyle(fontSize: 11, color: AppColors.neutral600),
-                      overflow: TextOverflow.ellipsis,
+                    ins.inspectionCode,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryNavy,
+                      letterSpacing: 0.2,
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  AppStatusBadge(
+                    status: ins.status,
+                    size: BadgeSize.sm,
+                  ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Text(
+                ins.inspectionDate.split('T').first,
+                style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            ins.businessName ?? ins.sellerName ?? 'Retail Goods Inspection',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Row(
+            children: [
+              const Icon(Icons.location_on_outlined, size: 14, color: AppColors.neutral500),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  ins.location,
+                  style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Wrap(
+                spacing: 6,
                 children: [
-                  Wrap(
-                    spacing: 6,
-                    children: [
-                      _buildBadge(ins.inspectionType, Icons.category_outlined),
-                      if (ins.packageConstructionType != null)
-                        _buildBadge(
-                          ins.packageConstructionType == 'BLOWN_FORMED_MOLDED' ? 'Molded/Blown' : 'Standard Pack',
-                          Icons.inventory_2_outlined,
-                        ),
-                    ],
+                  _buildBadge(ins.inspectionType, Icons.category_outlined),
+                  if (ins.packageConstructionType != null)
+                    _buildBadge(
+                      ins.packageConstructionType == 'BLOWN_FORMED_MOLDED' ? 'Molded/Blown' : 'Standard Pack',
+                      Icons.inventory_2_outlined,
+                    ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Text(
+                    'Audit Details',
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.accentBlue),
                   ),
-                  Row(
-                    children: const [
-                      Text(
-                        'Audit Details',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondary),
-                      ),
-                      Icon(Icons.chevron_right, size: 16, color: AppColors.secondary),
-                    ],
-                  ),
+                  SizedBox(width: 2),
+                  Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.accentBlue),
                 ],
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }

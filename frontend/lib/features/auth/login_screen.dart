@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_brand.dart';
-import '../../core/widgets/app_logo.dart';
+import '../../core/widgets/widgets.dart';
 import 'auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -15,7 +15,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController(text: "inspector@demo.gov.in");
   final _passwordController = TextEditingController(text: "Inspector@123");
-  bool _obscurePassword = true;
+  String _selectedRole = "inspector";
 
   @override
   void dispose() {
@@ -24,16 +24,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  void _fillCredentials(String email, String password) {
+  void _fillCredentials(String role, String email, String password) {
     setState(() {
+      _selectedRole = role;
       _emailController.text = email;
       _passwordController.text = password;
     });
   }
 
   Future<void> _handleLogin() async {
-    // GoRouter's redirect will automatically navigate to /dashboard
-    // when authProvider state changes to authenticated.
     await ref.read(authProvider.notifier).login(
       _emailController.text.trim(),
       _passwordController.text,
@@ -45,197 +44,254 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.lightNeutral,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Card(
-                elevation: 1,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: AppColors.borderLight),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Institutional Crest Icon & Heading
-                      // Official LM-TRACE Brand Logo
-                      Center(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primaryNavy.withValues(alpha: 0.18),
-                                blurRadius: 18,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                          ),
-                          child: const AppLogo(
-                            size: 88,
-                            borderRadius: BorderRadius.all(Radius.circular(18)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      const Center(
-                        child: Text(
-                          AppBrand.name,
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.5,
-                            color: AppColors.primaryNavy,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Center(
-                        child: Text(
-                          "AI-Assisted Legal Metrology Inspection & Compliance",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textMuted,
+      backgroundColor: AppColors.neutral100,
+      body: Stack(
+        children: [
+          // Ambient background glow
+          Positioned(
+            top: -120,
+            left: -120,
+            child: Container(
+              width: 380,
+              height: 380,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.accentBlue.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -150,
+            right: -150,
+            child: Container(
+              width: 440,
+              height: 440,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primaryLight.withValues(alpha: 0.06),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: AppRadii.xl,
+                      border: Border.all(color: AppColors.borderLight, width: 1.2),
+                      boxShadow: AppShadows.lg,
+                    ),
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Official LM-TRACE Brand Logo
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: AppShadows.glow(AppColors.primaryNavy, opacity: 0.15),
+                            ),
+                            child: const AppLogo(
+                              size: 82,
+                              borderRadius: BorderRadius.all(Radius.circular(18)),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 28),
+                        const SizedBox(height: 18),
+                        const Center(
+                          child: Text(
+                            AppBrand.name,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                              color: AppColors.primaryNavy,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Center(
+                          child: Text(
+                            "AI-Assisted Legal Metrology Inspection & Compliance",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textMuted,
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
 
-                      if (authState.errorMessage != null) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppColors.violationRedLight,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.violationRed.withValues(alpha: 0.3)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.error_outline, size: 20, color: AppColors.violationRed),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  authState.errorMessage!,
-                                  style: const TextStyle(fontSize: 12, color: AppColors.violationRed),
+                        // Error Banner
+                        if (authState.errorMessage != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                            decoration: BoxDecoration(
+                              color: AppColors.violationRedLight,
+                              borderRadius: AppRadii.sm,
+                              border: Border.all(color: AppColors.violationRedBorder),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.error_outline_rounded, size: 18, color: AppColors.violationRed),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    authState.errorMessage!,
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.violationRed,
+                                      height: 1.3,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                          const SizedBox(height: 18),
+                        ],
+
+                        // Email / Officer ID
+                        AppTextField(
+                          controller: _emailController,
+                          label: "Officer ID / Email",
+                          hintText: "inspector@demo.gov.in",
+                          prefixIcon: Icons.badge_outlined,
+                          keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 16),
-                      ],
 
-                      // Email / Officer ID
-                      const Text(
-                        "Officer ID / Email",
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textDark),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          hintText: "inspector@demo.gov.in",
-                          prefixIcon: Icon(Icons.badge_outlined, size: 20, color: AppColors.textMuted),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Password
-                      const Text(
-                        "Security Password",
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textDark),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
+                        // Password
+                        AppTextField(
+                          controller: _passwordController,
+                          label: "Security Password",
                           hintText: "••••••••••••",
-                          prefixIcon: const Icon(Icons.lock_outline, size: 20, color: AppColors.textMuted),
-                          suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, size: 20, color: AppColors.textMuted),
-                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                          ),
+                          prefixIcon: Icons.lock_outline_rounded,
+                          isPassword: true,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _handleLogin(),
                         ),
-                      ),
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                      // Login Button
-                      ElevatedButton(
-                        onPressed: authState.isLoading ? null : _handleLogin,
-                        child: authState.isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Text("Secure Inspector Access"),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Quick Demo Account Selector
-                      const Divider(color: AppColors.borderLight),
-                      const SizedBox(height: 12),
-                      const Text(
-                        "Demo Role Switcher (Prototype):",
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMuted),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                textStyle: const TextStyle(fontSize: 11),
-                              ),
-                              onPressed: () => _fillCredentials("inspector@demo.gov.in", "Inspector@123"),
-                              child: const Text("Inspector"),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                textStyle: const TextStyle(fontSize: 11),
-                              ),
-                              onPressed: () => _fillCredentials("supervisor@demo.gov.in", "Supervisor@123"),
-                              child: const Text("Supervisor"),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                textStyle: const TextStyle(fontSize: 11),
-                              ),
-                              onPressed: () => _fillCredentials("admin@demo.gov.in", "Admin@123"),
-                              child: const Text("Admin"),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      const Center(
-                        child: Text(
-                          "Legal Metrology Department • Government of India",
-                          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                        // Login Action Button
+                        AppButton(
+                          label: "Secure Inspector Access",
+                          icon: Icons.login_rounded,
+                          size: AppButtonSize.lg,
+                          isFullWidth: true,
+                          isLoading: authState.isLoading,
+                          onPressed: _handleLogin,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 24),
+
+                        // Quick Demo Account Selector
+                        Row(
+                          children: [
+                            const Expanded(child: Divider(color: AppColors.borderLight)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: Text(
+                                "DEMO ROLE ACCESS",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.6,
+                                  color: AppColors.textMuted.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ),
+                            const Expanded(child: Divider(color: AppColors.borderLight)),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Role Selector Pills
+                        Row(
+                          children: [
+                            _buildRoleChip("Inspector", "inspector", "inspector@demo.gov.in", "Inspector@123"),
+                            const SizedBox(width: 8),
+                            _buildRoleChip("Supervisor", "supervisor", "supervisor@demo.gov.in", "Supervisor@123"),
+                            const SizedBox(width: 8),
+                            _buildRoleChip("Admin", "admin", "admin@demo.gov.in", "Admin@123"),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Official Footer
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: AppColors.passGreen,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 7),
+                            const Flexible(
+                              child: Text(
+                                "Legal Metrology Department • Government of India",
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textMuted,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleChip(String label, String roleKey, String email, String password) {
+    final isSelected = _selectedRole == roleKey;
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _fillCredentials(roleKey, email, password),
+          borderRadius: AppRadii.sm,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              color: isSelected ? AppColors.primaryNavy : AppColors.neutral50,
+              borderRadius: AppRadii.sm,
+              border: Border.all(
+                color: isSelected ? AppColors.primaryNavy : AppColors.borderLight,
+                width: 1.1,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                color: isSelected ? Colors.white : AppColors.neutral700,
               ),
             ),
           ),

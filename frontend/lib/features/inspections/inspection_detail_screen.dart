@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/responsive/responsive_layout.dart';
+import '../../core/widgets/widgets.dart';
 import 'inspections_controller.dart';
 import 'widgets/inspection_detail_web_layout.dart';
 
@@ -354,25 +355,7 @@ class _InspectionDetailScreenState extends ConsumerState<InspectionDetailScreen>
   }
 
   Widget _buildStatusChip(String status) {
-    Color bg = AppColors.reviewAmberLight;
-    Color fg = AppColors.reviewAmber;
-    String label = "⚠ $status";
-
-    if (status == "PASS" || status == "READY" || status == "FINALIZED") {
-      bg = AppColors.passGreenLight;
-      fg = AppColors.passGreen;
-      label = "✓ $status";
-    } else if (status.contains("VIOLATION")) {
-      bg = AppColors.violationRedLight;
-      fg = AppColors.violationRed;
-      label = "✕ $status";
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: fg)),
-    );
+    return AppStatusBadge(status: status, size: BadgeSize.sm);
   }
 
   Widget _buildDeclarationsTab(List<dynamic> declarations) {
@@ -663,31 +646,51 @@ class _InspectionDetailScreenState extends ConsumerState<InspectionDetailScreen>
 
   Widget _buildFindingsTab(List<dynamic> violations) {
     if (violations.isEmpty) {
-      return const Center(child: Text("No findings recorded for this inspection.", style: TextStyle(color: AppColors.textMuted)));
+      return const AppEmptyState(
+        icon: Icons.verified_rounded,
+        title: "No Statutory Violations",
+        description: "All checked mandatory declarations comply with Legal Metrology Packaged Commodities rules.",
+      );
     }
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: violations.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, idx) {
         final v = violations[idx];
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(v['type'] ?? 'Finding', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                    Text(v['status'] ?? 'AI_DETECTED', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.reviewAmber)),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(v['ai_explanation'] ?? '', style: const TextStyle(fontSize: 12)),
-              ],
-            ),
+        final isViolation = (v['status'] ?? '').toString().toUpperCase().contains('VIOLATION');
+
+        return AppCard(
+          border: Border.all(
+            color: isViolation ? AppColors.violationRedBorder : AppColors.reviewAmberBorder,
+            width: 1.1,
+          ),
+          padding: const EdgeInsets.all(14),
+          borderRadius: AppRadii.md,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      v['type'] ?? 'Finding',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5, color: AppColors.primaryNavy),
+                    ),
+                  ),
+                  AppStatusBadge(
+                    status: v['status'] ?? 'AI_DETECTED',
+                    size: BadgeSize.sm,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                v['ai_explanation'] ?? '',
+                style: const TextStyle(fontSize: 12.5, color: AppColors.textDark, height: 1.4),
+              ),
+            ],
           ),
         );
       },

@@ -5,7 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../auth/auth_controller.dart';
 import '../inspections/inspections_controller.dart';
-import '../../core/widgets/app_logo.dart';
+import '../../core/widgets/widgets.dart';
 import '../../core/responsive/responsive_layout.dart';
 import 'widgets/maanak_navigation_drawer.dart';
 import 'widgets/dashboard_web_layout.dart';
@@ -315,102 +315,44 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       mainAxisSpacing: 12,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.55,
+      childAspectRatio: 1.38,
       children: [
-        _buildKpiCard(
+        StatMetricCard(
           title: 'Total Audited',
           value: total.toString(),
           icon: Icons.assignment_turned_in_outlined,
-          accentColor: AppColors.secondary,
+          accentColor: AppColors.secondaryBlue,
           subtitle: 'Packaged Commodities',
+          onTap: () => context.go('/inspections'),
         ),
-        _buildKpiCard(
+        StatMetricCard(
           title: 'Compliance Rate',
           value: displayRate,
           icon: Icons.verified_outlined,
-          accentColor: AppColors.compliant,
+          accentColor: AppColors.passGreen,
           subtitle: rateSubtitle,
+          trendText: rate != null && rate >= 70 ? 'Optimal' : null,
+          isPositiveTrend: rate != null && rate >= 70,
         ),
-        _buildKpiCard(
+        StatMetricCard(
           title: 'Violations Flagged',
           value: violations.toString(),
           icon: Icons.gavel_outlined,
-          accentColor: AppColors.violation,
+          accentColor: AppColors.violationRed,
           subtitle: violationsSubtitle,
+          trendText: violations > 0 ? '$violations Alerts' : null,
+          isPositiveTrend: violations == 0,
+          onTap: () => context.go('/inspections'),
         ),
-        _buildKpiCard(
+        StatMetricCard(
           title: 'Pending Review',
           value: pending.toString(),
           icon: Icons.pending_actions_outlined,
-          accentColor: AppColors.review,
+          accentColor: AppColors.reviewAmber,
           subtitle: pendingSubtitle,
+          onTap: () => context.go('/inspections'),
         ),
       ],
-    );
-  }
-
-  Widget _buildKpiCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color accentColor,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.neutral200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.neutral600,
-                ),
-              ),
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: accentColor.withValues(alpha: 0.12),
-                child: Icon(icon, size: 16, color: accentColor),
-              ),
-            ],
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: accentColor,
-            ),
-          ),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.neutral500,
-              fontWeight: FontWeight.w500,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
     );
   }
 
@@ -803,136 +745,105 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildInspectionCard(BuildContext context, InspectionModel ins) {
-    Color statusColor;
-    Color statusBg;
-    String statusLabel;
+    final hasScore = ins.score != null;
+    final scoreVal = hasScore ? (ins.score! > 1 ? ins.score!.toInt() : (ins.score! * 100).toInt()) : null;
+    final isHigh = scoreVal != null && scoreVal >= 80;
 
-    switch (ins.status.toUpperCase()) {
-      case 'COMPLETED':
-      case 'COMPLIANT':
-        statusColor = AppColors.compliant;
-        statusBg = AppColors.compliantBg;
-        statusLabel = 'COMPLIANT';
-        break;
-      case 'POTENTIAL_VIOLATION':
-      case 'VIOLATION':
-        statusColor = AppColors.violation;
-        statusBg = AppColors.violationBg;
-        statusLabel = 'VIOLATION';
-        break;
-      case 'REVIEW_REQUIRED':
-      case 'NEEDS_REVIEW':
-      case 'IN_REVIEW':
-        statusColor = AppColors.review;
-        statusBg = AppColors.reviewBg;
-        statusLabel = 'HITL REVIEW';
-        break;
-      default:
-        statusColor = AppColors.neutral600;
-        statusBg = AppColors.neutral100;
-        statusLabel = ins.status;
-    }
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: const BorderSide(color: AppColors.neutral200),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: () => context.push('/inspections/${ins.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  ins.inspectionType == 'ONLINE_LISTING' ? Icons.language : Icons.inventory_2_outlined,
-                  color: AppColors.primary,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return AppCard(
+      onTap: () => context.push('/inspections/${ins.id}'),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      borderRadius: AppRadii.md,
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primaryNavy.withValues(alpha: 0.07),
+              borderRadius: AppRadii.sm,
+              border: Border.all(color: AppColors.primaryNavy.withValues(alpha: 0.12)),
+            ),
+            child: Icon(
+              ins.inspectionType == 'ONLINE_LISTING' ? Icons.language_rounded : Icons.inventory_2_outlined,
+              color: AppColors.primaryNavy,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          ins.inspectionCode,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                          decoration: BoxDecoration(
-                            color: statusBg,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            statusLabel,
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
                     Text(
-                      ins.businessName ?? ins.sellerName ?? 'Packaged Goods Commodity',
+                      ins.inspectionCode,
                       style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.neutral800,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppColors.primaryNavy,
+                        letterSpacing: 0.2,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      '${ins.inspectionDate.isNotEmpty ? ins.inspectionDate.split('T').first : 'Recent'} • ${ins.inspectionType == 'ONLINE_LISTING' ? 'E-Commerce' : 'Physical Inspection'}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.neutral500,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    const SizedBox(width: 8),
+                    AppStatusBadge(
+                      status: ins.status,
+                      size: BadgeSize.sm,
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (ins.score != null)
-                    Text(
-                      '${ins.score! > 1 ? ins.score!.toInt() : (ins.score! * 100).toInt()}%',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: (ins.score! >= 80 || ins.score! >= 0.8) ? AppColors.compliant : AppColors.violation,
-                      ),
+                const SizedBox(height: 4),
+                Text(
+                  ins.businessName ?? ins.sellerName ?? 'Packaged Goods Commodity',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  '${ins.inspectionDate.isNotEmpty ? ins.inspectionDate.split('T').first : 'Recent'} • ${ins.inspectionType == 'ONLINE_LISTING' ? 'E-Commerce Scan' : 'Physical Ingestion'}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textMuted,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (scoreVal != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isHigh ? AppColors.passGreenLight : AppColors.violationRedLight,
+                    borderRadius: AppRadii.xs,
+                    border: Border.all(
+                      color: isHigh ? AppColors.passGreenBorder : AppColors.violationRedBorder,
+                      width: 0.8,
                     ),
-                  const SizedBox(height: 4),
-                  const Icon(Icons.chevron_right, size: 18, color: AppColors.neutral400),
-                ],
-              ),
+                  ),
+                  child: Text(
+                    '$scoreVal%',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11.5,
+                      color: isHigh ? AppColors.passGreen : AppColors.violationRed,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.neutral400),
             ],
           ),
-        ),
+        ],
       ),
     );
   }

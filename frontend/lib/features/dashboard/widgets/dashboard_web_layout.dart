@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../auth/auth_controller.dart';
 import '../../inspections/inspections_controller.dart';
 import '../../web/judge_demo_dialog.dart';
@@ -176,46 +177,53 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
     return Row(
       children: [
         Expanded(
-          child: _buildSingleStatCard(
+          child: StatMetricCard(
             title: 'Total Audited',
             value: '$audited',
             subtitle: '+12 cases this week',
             icon: Icons.assignment_turned_in_outlined,
-            iconColor: AppColors.secondaryBlue,
-            trendPositive: true,
+            accentColor: AppColors.secondaryBlue,
+            trendText: '+12%',
+            isPositiveTrend: true,
+            onTap: () => context.go('/inspections'),
           ),
         ),
         const SizedBox(width: 14),
         Expanded(
-          child: _buildSingleStatCard(
+          child: StatMetricCard(
             title: 'Compliance Rate',
             value: '${compRate.toStringAsFixed(1)}%',
             subtitle: 'Rule 6 & 7 verified',
             icon: Icons.verified_outlined,
-            iconColor: AppColors.passGreen,
-            trendPositive: compRate >= 70,
+            accentColor: AppColors.passGreen,
+            trendText: compRate >= 70 ? 'Optimal' : 'Needs Review',
+            isPositiveTrend: compRate >= 70,
           ),
         ),
         const SizedBox(width: 14),
         Expanded(
-          child: _buildSingleStatCard(
+          child: StatMetricCard(
             title: 'Violations Flagged',
             value: '$violations',
             subtitle: 'Non-compliant packages',
             icon: Icons.gavel_outlined,
-            iconColor: AppColors.violationRed,
-            trendPositive: false,
+            accentColor: AppColors.violationRed,
+            trendText: violations > 0 ? '$violations Alerts' : '0 Alerts',
+            isPositiveTrend: violations == 0,
+            onTap: () => context.go('/inspections'),
           ),
         ),
         const SizedBox(width: 14),
         Expanded(
-          child: _buildSingleStatCard(
+          child: StatMetricCard(
             title: 'Pending Review',
             value: '$pending',
             subtitle: 'Awaiting inspector sign-off',
             icon: Icons.pending_actions_outlined,
-            iconColor: AppColors.reviewAmber,
-            trendPositive: null,
+            accentColor: AppColors.reviewAmber,
+            trendText: '$pending pending',
+            isPositiveTrend: false,
+            onTap: () => context.go('/inspections'),
           ),
         ),
       ],
@@ -256,82 +264,6 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
     });
   }
 
-  Widget _buildSingleStatCard({
-    required String title,
-    required String value,
-    required String subtitle,
-    required IconData icon,
-    required Color iconColor,
-    required bool? trendPositive,
-  }) {
-    return Container(
-      height: 130,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.neutral200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.neutral600,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(icon, color: iconColor, size: 18),
-              ),
-            ],
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryNavy,
-              height: 1.1,
-            ),
-          ),
-          Row(
-            children: [
-              if (trendPositive != null)
-                Icon(
-                  trendPositive ? Icons.arrow_upward : Icons.arrow_downward,
-                  size: 13,
-                  color: trendPositive ? AppColors.passGreen : AppColors.violationRed,
-                ),
-              if (trendPositive != null) const SizedBox(width: 3),
-              Text(
-                subtitle,
-                style: const TextStyle(fontSize: 11, color: AppColors.neutral500),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildActivityOverviewCard(
     AsyncValue<Map<String, dynamic>> summaryAsync,
@@ -654,21 +586,6 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
   }
 
   Widget _buildTableRow(BuildContext context, InspectionModel ins) {
-    final status = ins.status.toUpperCase();
-    Color statusBg = AppColors.neutral200;
-    Color statusText = AppColors.neutral700;
-
-    if (['COMPLIANT', 'FINALIZED', 'COMPLETED'].contains(status)) {
-      statusBg = AppColors.passGreen.withValues(alpha: 0.12);
-      statusText = AppColors.passGreen;
-    } else if (['VIOLATION', 'POTENTIAL_VIOLATION'].contains(status)) {
-      statusBg = AppColors.violationRed.withValues(alpha: 0.12);
-      statusText = AppColors.violationRed;
-    } else if (['NEEDS_REVIEW', 'REVIEW_REQUIRED', 'IN_REVIEW', 'DRAFT'].contains(status)) {
-      statusBg = AppColors.reviewAmber.withValues(alpha: 0.12);
-      statusText = AppColors.reviewAmber;
-    }
-
     final dateStr = ins.inspectionDate.length >= 10 ? ins.inspectionDate.substring(0, 10) : ins.inspectionDate;
 
     return InkWell(
@@ -712,16 +629,9 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    status,
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusText),
-                  ),
+                child: AppStatusBadge(
+                  status: ins.status,
+                  size: BadgeSize.sm,
                 ),
               ),
             ),

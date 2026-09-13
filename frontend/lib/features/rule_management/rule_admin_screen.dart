@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/responsive/responsive_layout.dart';
+import '../../core/widgets/widgets.dart';
 import 'widgets/rule_admin_web_layout.dart';
 
 final rulesListProvider = FutureProvider.family<List<dynamic>, String>((ref, category) async {
@@ -339,20 +340,13 @@ class _RuleAdminScreenState extends ConsumerState<RuleAdminScreen> {
     final coverage = (rule['coverage_status'] ?? 'FULLY_IMPLEMENTED').toString().toUpperCase();
     final effectiveFrom = (rule['effective_from'] ?? '').toString().split('T').first;
 
-    return InkWell(
+    return AppCard(
       onTap: () => _showRuleDetailModal(context, rule),
-      borderRadius: BorderRadius.circular(10),
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: AppColors.neutral200),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      padding: const EdgeInsets.all(14),
+      borderRadius: AppRadii.md,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
               // Top Row: Code + Category + Status Chip
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,47 +472,15 @@ class _RuleAdminScreenState extends ConsumerState<RuleAdminScreen> {
                       ),
                     ],
                   ),
-                ],
-              ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildStatusChip(String status) {
-    Color bg;
-    Color fg;
-    switch (status) {
-      case 'ACTIVE':
-      case 'APPROVED':
-        bg = AppColors.compliantBg;
-        fg = AppColors.compliant;
-        break;
-      case 'SCHEDULED':
-        bg = AppColors.aiPurpleLight;
-        fg = AppColors.aiPurple;
-        break;
-      case 'PENDING_REVIEW':
-        bg = AppColors.reviewBg;
-        fg = AppColors.review;
-        break;
-      default:
-        bg = AppColors.neutral100;
-        fg = AppColors.neutral500;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: fg),
-      ),
-    );
+    return AppStatusBadge(status: status, size: BadgeSize.sm);
   }
 
   Widget _buildCoverageBadge(String coverage) {

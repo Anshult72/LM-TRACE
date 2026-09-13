@@ -45,3 +45,5 @@ frontend/android/*.iml
 *.iml
 .DS_Store
 Thumbs.db
+
+.vercel

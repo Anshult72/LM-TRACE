@@ -236,51 +236,70 @@ class ScaffoldWithBottomNavBar extends StatelessWidget {
     return Scaffold(
       body: child,
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
+          border: Border(top: BorderSide(color: AppColors.borderLight, width: 1)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+              color: Color(0x0A0F172A),
+              blurRadius: 16,
+              offset: Offset(0, -4),
             ),
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: currentIndex,
-          onTap: (index) => _onItemTapped(index, context),
-          selectedItemColor: AppColors.secondary,
-          unselectedItemColor: AppColors.neutral400,
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 11,
-          unselectedFontSize: 11,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard),
-              label: 'Dashboard',
+        child: SafeArea(
+          top: false,
+          child: NavigationBarTheme(
+            data: NavigationBarThemeData(
+              indicatorColor: AppColors.accentBlue.withValues(alpha: 0.12),
+              iconTheme: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return const IconThemeData(color: AppColors.accentBlue, size: 22);
+                }
+                return const IconThemeData(color: AppColors.neutral500, size: 22);
+              }),
+              labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.accentBlue);
+                }
+                return const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.neutral500);
+              }),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_outlined),
-              activeIcon: Icon(Icons.assignment),
-              label: 'Inspections',
+            child: NavigationBar(
+              height: 64,
+              backgroundColor: Colors.white,
+              elevation: 0,
+              selectedIndex: currentIndex,
+              onDestinationSelected: (index) => _onItemTapped(index, context),
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard_rounded),
+                  label: 'Dashboard',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.assignment_outlined),
+                  selectedIcon: Icon(Icons.assignment_rounded),
+                  label: 'Inspections',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.qr_code_scanner_outlined),
+                  selectedIcon: Icon(Icons.qr_code_scanner_rounded),
+                  label: 'Scan',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.fingerprint_outlined),
+                  selectedIcon: Icon(Icons.fingerprint_rounded),
+                  label: 'Products',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.gavel_outlined),
+                  selectedIcon: Icon(Icons.gavel_rounded),
+                  label: 'Rules',
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.qr_code_scanner_outlined),
-              activeIcon: Icon(Icons.qr_code_scanner),
-              label: 'Scan',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.fingerprint_outlined),
-              activeIcon: Icon(Icons.fingerprint),
-              label: 'Products',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.gavel_outlined),
-              activeIcon: Icon(Icons.gavel),
-              label: 'Rules',
-            ),
-          ],
+          ),
         ),
       ),
     );

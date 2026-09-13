@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/widgets.dart';
 import 'inspections_controller.dart';
 
 class NewInspectionScreen extends ConsumerStatefulWidget {
@@ -256,25 +257,15 @@ class _NewInspectionScreenState extends ConsumerState<NewInspectionScreen> {
               const SizedBox(height: 28),
 
               // Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  icon: state.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Icon(Icons.camera_alt_outlined),
-                  label: Text(
-                    state.isLoading ? 'Creating Case...' : 'Create & Proceed to Capture',
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: state.isLoading ? null : _handleCreate,
-                ),
+              AppButton(
+                label: 'Create & Proceed to Capture',
+                icon: Icons.camera_alt_outlined,
+                size: AppButtonSize.lg,
+                isFullWidth: true,
+                isLoading: state.isLoading,
+                onPressed: _handleCreate,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -286,9 +277,10 @@ class _NewInspectionScreenState extends ConsumerState<NewInspectionScreen> {
     return Text(
       title,
       style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        color: AppColors.primary,
+        fontSize: 13.5,
+        fontWeight: FontWeight.w700,
+        color: AppColors.primaryNavy,
+        letterSpacing: 0.1,
       ),
     );
   }
@@ -302,48 +294,57 @@ class _NewInspectionScreenState extends ConsumerState<NewInspectionScreen> {
     final isSelected = _inspectionType == value;
     return InkWell(
       onTap: () => setState(() => _inspectionType = value),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.all(12),
+      borderRadius: AppRadii.md,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.secondary.withValues(alpha: 0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          color: isSelected ? AppColors.accentBlue.withValues(alpha: 0.05) : Colors.white,
+          borderRadius: AppRadii.md,
           border: Border.all(
-            color: isSelected ? AppColors.secondary : AppColors.neutral200,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? AppColors.accentBlue : AppColors.borderLight,
+            width: isSelected ? 1.6 : 1.0,
           ),
+          boxShadow: isSelected ? AppShadows.glow(AppColors.accentBlue, opacity: 0.1) : AppShadows.sm,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(
-                  icon,
-                  color: isSelected ? AppColors.secondary : AppColors.neutral600,
-                  size: 20,
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.accentBlue.withValues(alpha: 0.12) : AppColors.neutral100,
+                    borderRadius: AppRadii.sm,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isSelected ? AppColors.accentBlue : AppColors.neutral600,
+                    size: 20,
+                  ),
                 ),
                 const Spacer(),
                 Icon(
-                  isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                  color: isSelected ? AppColors.secondary : AppColors.neutral400,
-                  size: 18,
+                  isSelected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                  color: isSelected ? AppColors.accentBlue : AppColors.neutral400,
+                  size: 20,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               title,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isSelected ? AppColors.secondary : AppColors.neutral800,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? AppColors.accentBlue : AppColors.textDark,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: const TextStyle(fontSize: 11, color: AppColors.neutral600),
+              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
             ),
           ],
         ),

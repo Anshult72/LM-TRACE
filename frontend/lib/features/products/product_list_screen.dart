@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/responsive/responsive_layout.dart';
+import '../../core/widgets/widgets.dart';
 import 'widgets/product_list_web_layout.dart';
 
 final productsListProvider = FutureProvider<List<dynamic>>((ref) async {
@@ -128,120 +129,114 @@ class ProductListScreen extends ConsumerWidget {
                     final ver = p['active_version'] ?? 'v1';
                     final id = p['id'] ?? 'prod-001';
 
-                    return Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: AppColors.neutral200),
-                      ),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(10),
-                        onTap: () => context.push('/products/$id'),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    return AppCard(
+                      onTap: () => context.push('/products/$id'),
+                      padding: const EdgeInsets.all(14),
+                      borderRadius: AppRadii.md,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      brand,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primary,
-                                      ),
-                                    ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryNavy.withValues(alpha: 0.08),
+                                  borderRadius: AppRadii.xs,
+                                ),
+                                child: Text(
+                                  brand,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primaryNavy,
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.secondary.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      'Active: $ver',
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.secondary,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                name,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.neutral900,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accentBlue.withValues(alpha: 0.1),
+                                  borderRadius: AppRadii.full,
+                                  border: Border.all(color: AppColors.accentBlue.withValues(alpha: 0.2), width: 0.8),
+                                ),
+                                child: Text(
+                                  'Active: $ver',
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.accentBlue,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.qr_code, size: 14, color: AppColors.neutral400),
+                              const SizedBox(width: 4),
+                              Text(
+                                'GTIN: $gtin',
+                                style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+                              ),
+                              const SizedBox(width: 14),
+                              const Icon(Icons.scale, size: 14, color: AppColors.neutral400),
+                              const SizedBox(width: 4),
+                              Text(
+                                qty,
+                                style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+                              ),
+                              const SizedBox(width: 14),
+                              const Icon(Icons.currency_rupee, size: 14, color: AppColors.neutral400),
+                              Text(
+                                mrp,
+                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.textDark),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 18, color: AppColors.borderLight),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.qr_code, size: 14, color: AppColors.neutral400),
-                                  const SizedBox(width: 4),
+                                  const Icon(Icons.security, size: 14, color: AppColors.passGreen),
+                                  const SizedBox(width: 5),
                                   Text(
-                                    'GTIN: $gtin',
-                                    style: const TextStyle(fontSize: 11, color: AppColors.neutral600),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  const Icon(Icons.scale, size: 14, color: AppColors.neutral400),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    qty,
-                                    style: const TextStyle(fontSize: 11, color: AppColors.neutral600),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  const Icon(Icons.currency_rupee, size: 14, color: AppColors.neutral400),
-                                  Text(
-                                    mrp,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral800),
+                                    'Fingerprint: ${p['fingerprint_hash'] ?? 'Verified'}',
+                                    style: const TextStyle(fontSize: 10.5, color: AppColors.textMuted),
                                   ),
                                 ],
                               ),
-                              const Divider(height: 16, color: AppColors.neutral200),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.security, size: 13, color: AppColors.compliant),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Fingerprint: ${p['fingerprint_hash'] ?? 'Verified'}',
-                                        style: const TextStyle(fontSize: 10, color: AppColors.neutral500),
-                                      ),
-                                    ],
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Text(
+                                    'Version History & Diff',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.accentBlue,
+                                    ),
                                   ),
-                                  Row(
-                                    children: const [
-                                      Text(
-                                        'Version History & Diff',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.secondary,
-                                        ),
-                                      ),
-                                      Icon(Icons.chevron_right, size: 16, color: AppColors.secondary),
-                                    ],
-                                  ),
+                                  SizedBox(width: 2),
+                                  Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.accentBlue),
                                 ],
                               ),
                             ],
                           ),
-                        ),
+                        ],
                       ),
                     );
                   },
