@@ -202,8 +202,22 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
   /// Returns the current active draft ID for direct-scan workflows, if any.
   String? get activeDraftId => _activeDraftId;
 
+  /// Creates a guaranteed fresh, blank DRAFT inspection with 0 images.
+  Future<InspectionModel?> createFreshDraft() async {
+    _activeDraftId = null;
+    return await _createDraftInternal();
+  }
+
   /// Idempotently recovers or auto-creates a valid DRAFT inspection for direct scan.
-  Future<InspectionModel?> getOrCreateDraftInspection({String? requestedId}) async {
+  Future<InspectionModel?> getOrCreateDraftInspection({
+    String? requestedId,
+    bool forceFresh = false,
+  }) async {
+    if (forceFresh) {
+      _activeDraftId = null;
+      return await _createDraftInternal();
+    }
+
     // 1. If an explicit valid inspection ID was requested, verify and reuse it
     if (requestedId != null && requestedId.isNotEmpty && requestedId != 'null') {
       final existing = state.inspections
@@ -224,18 +238,18 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
       // If requested ID was invalid or already finalized, proceed below to recover/create an active draft
     }
 
-    // 2. Check if this session already holds a valid, active unfinalized draft
+    // 2. Check if this session already holds a valid, active unfinalized draft that is still empty
     if (_activeDraftId != null) {
       final cached = state.inspections.where((i) => i.id == _activeDraftId).firstOrNull;
-      if (cached != null && cached.status.toUpperCase() != 'FINALIZED') {
+      if (cached != null && cached.status.toUpperCase() == 'DRAFT' && cached.images.isEmpty) {
         state = state.copyWith(selectedInspection: cached);
         return cached;
       }
     }
 
-    // 3. Check if there is an unfinalized DRAFT in the current state
+    // 3. Check if there is an unfinalized EMPTY DRAFT in the current state
     final activeDraft = state.inspections
-        .where((i) => i.status.toUpperCase() == 'DRAFT')
+        .where((i) => i.status.toUpperCase() == 'DRAFT' && i.images.isEmpty)
         .firstOrNull;
     if (activeDraft != null) {
       _activeDraftId = activeDraft.id;

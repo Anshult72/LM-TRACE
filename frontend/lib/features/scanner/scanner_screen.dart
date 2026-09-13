@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -37,7 +38,36 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   // Map of surface to captured image bytes and name
   final Map<int, Uint8List> _surfaceImages = {};
   final Map<int, String> _surfaceImageNames = {};
+  final Map<int, String> _surfaceImageUrls = {};
   Map<String, SurfaceState> _surfacesState = RequiredSurfaceValidator.createInitialStates();
+
+  Future<void> _startFreshScan() async {
+    setState(() {
+      _isInitializing = true;
+      _surfacesState = RequiredSurfaceValidator.createInitialStates();
+      _surfaceImages.clear();
+      _surfaceImageNames.clear();
+      _surfaceImageUrls.clear();
+    });
+
+    final notifier = ref.read(inspectionsProvider.notifier);
+    final freshDraft = await notifier.createFreshDraft();
+    if (!mounted) return;
+
+    if (freshDraft != null) {
+      setState(() {
+        _currentInspectionId = freshDraft.id;
+        _isInitializing = false;
+      });
+      if (kIsWeb) {
+        context.go('/scanner?inspectionId=${freshDraft.id}');
+      }
+    } else {
+      setState(() {
+        _isInitializing = false;
+      });
+    }
+  }
 
   Future<Uint8List> _generateSamplePng({required bool hasViolation, required String surface}) async {
     final recorder = ui.PictureRecorder();
@@ -147,15 +177,36 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           for (final img in detail.images) {
             if (img is Map) {
               final surfaceCode = (img['surface_type'] ?? '').toString().toUpperCase();
+              final remoteUrl = img['cloudinary_secure_url']?.toString() ??
+                  img['url']?.toString() ??
+                  img['image_url']?.toString();
+              final base64Str = img['image_base64']?.toString();
+              Uint8List? rawBytes;
+              if (base64Str != null && base64Str.isNotEmpty) {
+                try {
+                  rawBytes = base64Decode(base64Str);
+                } catch (_) {}
+              }
+
               if (_surfacesState.containsKey(surfaceCode)) {
+                final dispName = img['file_name']?.toString() ?? 'Persisted $surfaceCode';
                 _surfacesState[surfaceCode] = _surfacesState[surfaceCode]!.copyWith(
                   status: SurfaceUploadStatus.success,
                   serverImageId: img['id']?.toString(),
-                  imageName: 'Persisted $surfaceCode',
+                  remoteImageUrl: remoteUrl,
+                  imageBase64: base64Str,
+                  imageBytes: rawBytes,
+                  imageName: dispName,
                 );
                 final idx = _canonicalSurfaces.indexOf(surfaceCode);
                 if (idx != -1) {
-                  _surfaceImageNames[idx] = 'Persisted $surfaceCode';
+                  _surfaceImageNames[idx] = dispName;
+                  if (rawBytes != null) {
+                    _surfaceImages[idx] = rawBytes;
+                  }
+                  if (remoteUrl != null && remoteUrl.isNotEmpty) {
+                    _surfaceImageUrls[idx] = remoteUrl;
+                  }
                 }
               }
             }
@@ -442,6 +493,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               _surfacesState = RequiredSurfaceValidator.createInitialStates();
               _surfaceImages.clear();
               _surfaceImageNames.clear();
+              _surfaceImageUrls.clear();
             });
             _syncPersistedImages(val);
           }
@@ -451,6 +503,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         onSurfaceChanged: (val) => setState(() => _selectedSurfaceIndex = val),
         surfaceImages: _surfaceImages,
         surfaceImageNames: _surfaceImageNames,
+        surfaceImageUrls: _surfaceImageUrls,
         onClearActiveSurface: () {
           final surfaceCode = _canonicalSurfaces[_selectedSurfaceIndex];
           final existingId = _surfacesState[surfaceCode]?.serverImageId;
@@ -462,6 +515,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             );
             _surfaceImages.remove(_selectedSurfaceIndex);
             _surfaceImageNames.remove(_selectedSurfaceIndex);
+            _surfaceImageUrls.remove(_selectedSurfaceIndex);
           });
 
           if (existingId != null && _currentInspectionId != null) {
@@ -471,6 +525,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             } catch (_) {}
           }
         },
+        onStartFreshScan: _startFreshScan,
         onPickImage: _pickImage,
         onLoadSamplePackage: _loadSamplePackage,
         onRunPipeline: _runPipeline,
@@ -792,7 +847,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 
   Widget _buildCaptureBox() {
-    final hasImage = _surfaceImages.containsKey(_selectedSurfaceIndex);
+    final surfaceCode = _canonicalSurfaces[_selectedSurfaceIndex];
+    final surfaceState = _surfacesState[surfaceCode];
+    final localBytes = _surfaceImages[_selectedSurfaceIndex];
+    final remoteUrl = _surfaceImageUrls[_selectedSurfaceIndex] ?? surfaceState?.remoteImageUrl;
+    final hasImage = localBytes != null || (remoteUrl != null && remoteUrl.isNotEmpty) || (surfaceState?.hasPreview ?? false);
+    final imageName = _surfaceImageNames[_selectedSurfaceIndex] ?? surfaceState?.imageName ?? 'Surface Image';
 
     return Container(
       height: 240,
@@ -808,23 +868,54 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Center(
-                    child: Container(
-                      width: double.infinity,
-                      color: AppColors.neutral100,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.image, size: 60, color: AppColors.secondary),
-                          const SizedBox(height: 8),
-                          Text(
-                            _surfaceImageNames[_selectedSurfaceIndex] ?? 'Surface Image',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text('Captured & Ready for OCR', style: TextStyle(fontSize: 11, color: AppColors.compliant)),
-                        ],
-                      ),
-                    ),
+                    child: localBytes != null
+                        ? Image.memory(
+                            localBytes,
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            height: double.infinity,
+                          )
+                        : (remoteUrl != null && remoteUrl.isNotEmpty)
+                            ? Image.network(
+                                remoteUrl,
+                                fit: BoxFit.contain,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  width: double.infinity,
+                                  color: AppColors.neutral100,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.cloud_done_outlined, size: 48, color: AppColors.compliant),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        imageName,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      const Text('Image verified on server', style: TextStyle(fontSize: 11, color: AppColors.compliant)),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            : Container(
+                                width: double.infinity,
+                                color: AppColors.neutral100,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.image, size: 60, color: AppColors.secondary),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      imageName,
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text('Captured & Ready for OCR', style: TextStyle(fontSize: 11, color: AppColors.compliant)),
+                                  ],
+                                ),
+                              ),
                   ),
                 ),
                 Positioned(
@@ -836,10 +927,23 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     child: IconButton(
                       icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.violation),
                       onPressed: () {
+                        final existingId = surfaceState?.serverImageId;
                         setState(() {
                           _surfaceImages.remove(_selectedSurfaceIndex);
                           _surfaceImageNames.remove(_selectedSurfaceIndex);
+                          _surfaceImageUrls.remove(_selectedSurfaceIndex);
+                          if (surfaceState != null) {
+                            _surfacesState[surfaceCode] = surfaceState.copyWith(
+                              status: SurfaceUploadStatus.empty,
+                              clearImage: true,
+                            );
+                          }
                         });
+                        if (existingId != null && _currentInspectionId != null) {
+                          try {
+                            ref.read(apiClientProvider).delete("${ApiConstants.inspections}/$_currentInspectionId/images/$existingId");
+                          } catch (_) {}
+                        }
                       },
                     ),
                   ),

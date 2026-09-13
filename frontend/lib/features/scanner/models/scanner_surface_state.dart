@@ -25,6 +25,8 @@ class SurfaceState {
   final Uint8List? imageBytes;
   final String? imageName;
   final String? serverImageId;
+  final String? remoteImageUrl;
+  final String? imageBase64;
   final String? errorMessage;
 
   const SurfaceState({
@@ -33,6 +35,8 @@ class SurfaceState {
     this.imageBytes,
     this.imageName,
     this.serverImageId,
+    this.remoteImageUrl,
+    this.imageBase64,
     this.errorMessage,
   });
 
@@ -40,13 +44,18 @@ class SurfaceState {
   bool get isUploading => status == SurfaceUploadStatus.uploading;
   bool get isFailed => status == SurfaceUploadStatus.failed;
   bool get isEmpty => status == SurfaceUploadStatus.empty;
-  bool get hasPreview => imageBytes != null && imageBytes!.isNotEmpty;
+  bool get hasPreview =>
+      (imageBytes != null && imageBytes!.isNotEmpty) ||
+      (remoteImageUrl != null && remoteImageUrl!.isNotEmpty) ||
+      (imageBase64 != null && imageBase64!.isNotEmpty);
 
   SurfaceState copyWith({
     SurfaceUploadStatus? status,
     Uint8List? imageBytes,
     String? imageName,
     String? serverImageId,
+    String? remoteImageUrl,
+    String? imageBase64,
     String? errorMessage,
     bool clearImage = false,
   }) {
@@ -56,6 +65,8 @@ class SurfaceState {
       imageBytes: clearImage ? null : (imageBytes ?? this.imageBytes),
       imageName: clearImage ? null : (imageName ?? this.imageName),
       serverImageId: clearImage ? null : (serverImageId ?? this.serverImageId),
+      remoteImageUrl: clearImage ? null : (remoteImageUrl ?? this.remoteImageUrl),
+      imageBase64: clearImage ? null : (imageBase64 ?? this.imageBase64),
       errorMessage: clearImage ? null : (errorMessage ?? this.errorMessage),
     );
   }

@@ -18,7 +18,9 @@ class ScannerWebWorkspace extends StatelessWidget {
   final ValueChanged<int> onSurfaceChanged;
   final Map<int, Uint8List> surfaceImages;
   final Map<int, String> surfaceImageNames;
+  final Map<int, String>? surfaceImageUrls;
   final VoidCallback onClearActiveSurface;
+  final VoidCallback? onStartFreshScan;
   final Function(ImageSource) onPickImage;
   final Function(bool) onLoadSamplePackage;
   final VoidCallback onRunPipeline;
@@ -36,7 +38,9 @@ class ScannerWebWorkspace extends StatelessWidget {
     required this.onSurfaceChanged,
     required this.surfaceImages,
     required this.surfaceImageNames,
+    this.surfaceImageUrls,
     required this.onClearActiveSurface,
+    this.onStartFreshScan,
     required this.onPickImage,
     required this.onLoadSamplePackage,
     required this.onRunPipeline,
@@ -298,8 +302,13 @@ class ScannerWebWorkspace extends StatelessWidget {
   }
 
   Widget _buildLeftImagePanel(BuildContext context) {
-    final hasImage = surfaceImages.containsKey(selectedSurfaceIndex);
-    final imageName = surfaceImageNames[selectedSurfaceIndex];
+    const canonicalCodes = ['FRONT', 'BACK', 'SIDE', 'MRP_AREA'];
+    final canonicalCode = selectedSurfaceIndex < canonicalCodes.length ? canonicalCodes[selectedSurfaceIndex] : 'FRONT';
+    final surfaceState = surfacesState?[canonicalCode];
+    final localBytes = surfaceImages[selectedSurfaceIndex];
+    final remoteUrl = surfaceImageUrls?[selectedSurfaceIndex] ?? surfaceState?.remoteImageUrl;
+    final hasImage = localBytes != null || (remoteUrl != null && remoteUrl.isNotEmpty) || (surfaceState?.hasPreview ?? false);
+    final imageName = surfaceImageNames[selectedSurfaceIndex] ?? surfaceState?.imageName;
 
     return Container(
       decoration: BoxDecoration(
@@ -346,12 +355,68 @@ class ScannerWebWorkspace extends StatelessWidget {
                 ? Stack(
                     children: [
                       Center(
-                        child: Image.memory(
-                          surfaceImages[selectedSurfaceIndex]!,
-                          fit: BoxFit.contain,
-                          width: double.infinity,
-                          height: double.infinity,
-                        ),
+                        child: localBytes != null
+                            ? Image.memory(
+                                localBytes,
+                                fit: BoxFit.contain,
+                                width: double.infinity,
+                                height: double.infinity,
+                              )
+                            : (remoteUrl != null && remoteUrl.isNotEmpty)
+                                ? Image.network(
+                                    remoteUrl,
+                                    fit: BoxFit.contain,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    loadingBuilder: (context, child, progress) {
+                                      if (progress == null) return child;
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          value: progress.expectedTotalBytes != null
+                                              ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                                              : null,
+                                        ),
+                                      );
+                                    },
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(Icons.cloud_done_outlined, size: 48, color: AppColors.passGreen),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              imageName ?? 'Persisted Cloud Image ($canonicalCode)',
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.neutral700),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            const Text(
+                                              'Image verified and ready for audit',
+                                              style: TextStyle(fontSize: 11, color: AppColors.neutral500),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.check_circle_outline, size: 48, color: AppColors.passGreen),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          imageName ?? 'Persisted Package Surface ($canonicalCode)',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.neutral700),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        const Text(
+                                          'Surface image saved and ready for audit',
+                                          style: TextStyle(fontSize: 11, color: AppColors.neutral500),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                       ),
                       Positioned(
                         bottom: 12,
