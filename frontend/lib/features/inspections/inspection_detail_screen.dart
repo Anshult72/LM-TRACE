@@ -113,39 +113,8 @@ class _InspectionDetailScreenState extends ConsumerState<InspectionDetailScreen>
     );
   }
 
-  void _showFinalizeDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Finalize & Seal Inspection?"),
-        content: const Text(
-          "Finalizing will lock all declaration readings, apply the current legal metrology rule set, generate the tamper-proof cryptographic audit hash, and seal the case. This cannot be undone.",
-          style: TextStyle(fontSize: 13),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.passGreen),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final ok = await ref.read(inspectionsProvider.notifier).finalizeInspection(widget.inspectionId);
-              if (ok && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("✓ Inspection finalized and sealed in immutable audit record."),
-                    backgroundColor: AppColors.passGreen,
-                  ),
-                );
-              }
-            },
-            child: const Text("Confirm & Finalize"),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
+
   Widget build(BuildContext context) {
     final state = ref.watch(inspectionsProvider);
     final ins = state.selectedInspection;
@@ -299,11 +268,16 @@ class _InspectionDetailScreenState extends ConsumerState<InspectionDetailScreen>
                       const SizedBox(width: 8),
                       if (!isFinalized)
                         ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.passGreen),
-                          onPressed: _showFinalizeDialog,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.passGreen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          ),
+                          onPressed: () => context.push('/inspections/${widget.inspectionId}/finalize'),
                           icon: const Icon(Icons.lock_outline, size: 16),
-                          label: const Text("Finalize"),
+                          label: const Text("Finalise Inspection", style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
+
                     ],
                   ),
                 ),

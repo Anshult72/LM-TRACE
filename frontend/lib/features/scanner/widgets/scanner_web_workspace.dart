@@ -125,8 +125,11 @@ class ScannerWebWorkspace extends StatelessWidget {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     isExpanded: true,
-                    value: currentInspectionId,
+                    value: state.inspections.any((ins) => ins.id == currentInspectionId)
+                        ? currentInspectionId
+                        : null,
                     hint: const Text('Select an inspection case...'),
+
                     items: state.inspections.map((ins) {
                       final itemFinalized = ins.status.toUpperCase() == 'FINALIZED';
                       return DropdownMenuItem<String>(

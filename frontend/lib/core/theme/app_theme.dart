@@ -58,11 +58,15 @@ class AppColors {
 
   // Text & Borders
   static const Color textDark = Color(0xFF0F172A);
+  static const Color textPrimary = textDark;
   static const Color textMuted = Color(0xFF64748B);
   static const Color textLight = Color(0xFF94A3B8);
   static const Color borderLight = Color(0xFFE2E8F0);
+  static const Color cardBorder = borderLight;
+  static const Color surface = cardSurface;
   static const Color borderMuted = Color(0xFFF1F5F9);
   static const Color borderFocus = Color(0xFF2563EB);
+
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(

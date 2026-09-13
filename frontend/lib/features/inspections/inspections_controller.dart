@@ -194,8 +194,101 @@ class InspectionState {
 
 class InspectionsNotifier extends StateNotifier<InspectionState> {
   final ApiClient _apiClient;
+  String? _activeDraftId;
+  Future<InspectionModel?>? _draftCreationFuture;
 
   InspectionsNotifier(this._apiClient) : super(InspectionState());
+
+  /// Returns the current active draft ID for direct-scan workflows, if any.
+  String? get activeDraftId => _activeDraftId;
+
+  /// Idempotently recovers or auto-creates a valid DRAFT inspection for direct scan.
+  Future<InspectionModel?> getOrCreateDraftInspection({String? requestedId}) async {
+    // 1. If an explicit valid inspection ID was requested, verify and reuse it
+    if (requestedId != null && requestedId.isNotEmpty && requestedId != 'null') {
+      final existing = state.inspections
+          .where((i) => i.id == requestedId || i.inspectionCode == requestedId)
+          .firstOrNull;
+      if (existing != null && existing.status.toUpperCase() != 'FINALIZED') {
+        _activeDraftId = existing.id;
+        state = state.copyWith(selectedInspection: existing);
+        return existing;
+      }
+
+      // Check with backend
+      final detail = await fetchInspectionDetail(requestedId);
+      if (detail != null && detail.status.toUpperCase() != 'FINALIZED') {
+        _activeDraftId = detail.id;
+        return detail;
+      }
+      // If requested ID was invalid or already finalized, proceed below to recover/create an active draft
+    }
+
+    // 2. Check if this session already holds a valid, active unfinalized draft
+    if (_activeDraftId != null) {
+      final cached = state.inspections.where((i) => i.id == _activeDraftId).firstOrNull;
+      if (cached != null && cached.status.toUpperCase() != 'FINALIZED') {
+        state = state.copyWith(selectedInspection: cached);
+        return cached;
+      }
+    }
+
+    // 3. Check if there is an unfinalized DRAFT in the current state
+    final activeDraft = state.inspections
+        .where((i) => i.status.toUpperCase() == 'DRAFT')
+        .firstOrNull;
+    if (activeDraft != null) {
+      _activeDraftId = activeDraft.id;
+      state = state.copyWith(selectedInspection: activeDraft);
+      return activeDraft;
+    }
+
+    // 4. Concurrency guard: if draft creation is already in-flight, await it
+    if (_draftCreationFuture != null) {
+      return await _draftCreationFuture;
+    }
+
+    _draftCreationFuture = _createDraftInternal();
+    try {
+      final result = await _draftCreationFuture;
+      return result;
+    } finally {
+      _draftCreationFuture = null;
+    }
+  }
+
+  Future<InspectionModel?> _createDraftInternal() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final response = await _apiClient.post(
+        ApiConstants.inspections,
+        data: {
+          'location': 'Field Scan (Pending Finalisation)',
+          'inspection_type': 'PHYSICAL',
+          'product_category': 'Packaged Food',
+          'notes': '[DIRECT_SCAN] Initialized via Direct Scan',
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final model = InspectionModel.fromJson(response.data);
+        _activeDraftId = model.id;
+        state = state.copyWith(
+          isLoading: false,
+          inspections: [model, ...state.inspections.where((i) => i.id != model.id)],
+          selectedInspection: model,
+        );
+        return model;
+      }
+    } catch (e) {
+      String msg = 'Failed to initialize draft inspection: $e';
+      if (e is DioException && e.response?.data is Map) {
+        final d = e.response!.data as Map;
+        msg = d['detail']?.toString() ?? msg;
+      }
+      state = state.copyWith(isLoading: false, errorMessage: msg);
+    }
+    return null;
+  }
 
   Future<void> fetchInspections() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -228,6 +321,8 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
   }
 
   Future<InspectionModel?> createInspection({
+
+
     required String location,
     String? sellerName,
     String? businessName,
@@ -430,22 +525,34 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
     return false;
   }
 
-  Future<bool> finalizeInspection(String inspectionId) async {
+  Future<bool> finalizeInspection(String inspectionId, {Map<String, dynamic>? finalizationData}) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final response = await _apiClient.post(
         "${ApiConstants.inspections}/$inspectionId/finalize",
+        data: finalizationData,
       );
       if (response.statusCode == 200) {
+        if (_activeDraftId == inspectionId) {
+          _activeDraftId = null;
+        }
         await fetchInspectionDetail(inspectionId);
+        // Also refresh list so registry reflects status
+        fetchInspections();
         state = state.copyWith(isLoading: false);
         return true;
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      String msg = 'Finalization failed: $e';
+      if (e is DioException && e.response?.data is Map) {
+        final d = e.response!.data as Map;
+        msg = d['detail']?.toString() ?? msg;
+      }
+      state = state.copyWith(isLoading: false, errorMessage: msg);
     }
     return false;
   }
+
 
   Future<List<EvidenceModel>> fetchEvidence(String inspectionId) async {
     try {

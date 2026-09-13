@@ -281,10 +281,15 @@ class NeonPostgresRepository(
 
     async def update(self, inspection_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         async with await self._get_session() as session:
-            stmt = update(Inspection).where(Inspection.id == inspection_id).values(**updates)
+            valid_columns = {c.name for c in Inspection.__table__.columns}
+            clean_updates = {k: v for k, v in updates.items() if k in valid_columns}
+            if not clean_updates:
+                return await self._get_inspection_by_id(inspection_id)
+            stmt = update(Inspection).where(Inspection.id == inspection_id).values(**clean_updates)
             await session.execute(stmt)
             await session.commit()
             return await self._get_inspection_by_id(inspection_id)
+
 
     async def list_inspections(self, inspector_id: Optional[str] = None, status: Optional[str] = None, query: Optional[str] = None) -> List[Dict[str, Any]]:
         async with await self._get_session() as session:
@@ -391,14 +396,23 @@ class NeonPostgresRepository(
             await session.commit()
             return updates
 
-    async def finalize_inspection(self, inspection_id: str, snapshot_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def finalize_inspection(self, inspection_id: str, snapshot_data: Dict[str, Any], additional_updates: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         async with await self._get_session() as session:
-            stmt = update(Inspection).where(Inspection.id == inspection_id).values(
-                status="FINALIZED", finalized_at=get_now_utc(), rule_snapshot=snapshot_data
-            )
+            final_vals = {
+                "status": "FINALIZED",
+                "finalized_at": get_now_utc(),
+                "rule_snapshot": snapshot_data,
+            }
+            if additional_updates:
+                valid_columns = {c.name for c in Inspection.__table__.columns}
+                for k, v in additional_updates.items():
+                    if k in valid_columns and v is not None:
+                        final_vals[k] = v
+            stmt = update(Inspection).where(Inspection.id == inspection_id).values(**final_vals)
             await session.execute(stmt)
             await session.commit()
             return await self._get_inspection_by_id(inspection_id)
+
 
     async def save_evidence_items(self, inspection_id: str, evidence_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         async with await self._get_session() as session:

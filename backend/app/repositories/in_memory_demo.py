@@ -933,14 +933,19 @@ class DemoInMemoryRepository(
                     return copy.deepcopy(viol)
         return None
 
-    async def finalize_inspection(self, inspection_id: str, snapshot_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def finalize_inspection(self, inspection_id: str, snapshot_data: Dict[str, Any], additional_updates: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         ins = self.inspections.get(inspection_id)
         if not ins:
             raise ValueError(f"Inspection {inspection_id} not found")
         ins["status"] = "FINALIZED"
         ins["finalized_at"] = get_now_iso()
         ins["rule_snapshot"] = copy.deepcopy(snapshot_data)
+        if additional_updates:
+            for k, v in additional_updates.items():
+                if v is not None:
+                    ins[k] = v
         return copy.deepcopy(ins)
+
 
     async def save_evidence_items(self, inspection_id: str, evidence_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         ins = self.inspections.get(inspection_id)

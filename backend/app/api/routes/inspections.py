@@ -6,9 +6,10 @@ from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
 from fastapi.responses import FileResponse, Response
 from app.schemas.domain import (
-    InspectionCreate, InspectionUpdate, InspectionResponse, ImageResponse,
-    ComplianceAssessmentResponse
+    InspectionCreate, InspectionUpdate, FinalizeInspectionRequest,
+    InspectionResponse, ImageResponse, ComplianceAssessmentResponse
 )
+
 from app.repositories import get_repository
 from app.core.security import get_current_user_payload
 from app.storage.file_storage import storage_manager
@@ -492,6 +493,7 @@ async def retry_evidence_upload(
 @router.post("/{inspection_id}/finalize", response_model=Dict[str, Any])
 async def finalize_inspection(
     inspection_id: str,
+    req: Optional[FinalizeInspectionRequest] = None,
     user_payload: dict = Depends(get_current_user_payload)
 ):
     repo = get_repository()
@@ -500,6 +502,46 @@ async def finalize_inspection(
         raise HTTPException(status_code=404, detail="Inspection not found")
     if ins.get("status") == "FINALIZED":
         return {"message": "Inspection already finalized", "inspection": ins}
+
+    # RBAC ownership check: inspectors can only finalize their own inspection
+    if user_payload.get("role") == "INSPECTOR" and ins.get("inspector_id") and ins.get("inspector_id") != user_payload.get("sub"):
+        raise HTTPException(status_code=403, detail="You do not have permission to finalize this inspection.")
+
+    # Merge finalization details if submitted
+    additional_updates: Dict[str, Any] = {}
+    if req:
+        req_dict = req.model_dump(exclude_unset=True) if hasattr(req, "model_dump") else req
+        for field in [
+            "business_name", "location", "seller_name", "product_category",
+            "inspection_type", "package_type", "package_construction_type", "notes"
+        ]:
+            if field in req_dict and req_dict[field] is not None:
+                additional_updates[field] = req_dict[field]
+
+    # Validate statutory requirements
+    effective_business_name = (additional_updates.get("business_name") or ins.get("business_name") or "").strip()
+    effective_location = (additional_updates.get("location") or ins.get("location") or "").strip()
+
+    if not effective_business_name:
+        raise HTTPException(
+            status_code=400,
+            detail="Establishment / Trader Name is required to finalize inspection."
+        )
+
+    if not effective_location or effective_location == "Field Scan (Pending Finalisation)":
+        raise HTTPException(
+            status_code=400,
+            detail="A valid inspection location address is required to finalize inspection."
+        )
+
+    # Verification: Ensure inspection has captured packaging or analysis records
+    has_images = bool(ins.get("images"))
+    has_analysis = bool(ins.get("declarations") or ins.get("checks") or ins.get("score") is not None)
+    if not (has_images or has_analysis):
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot finalize an inspection before package scanning and statutory analysis."
+        )
 
     # Seal immutable snapshot
     snapshot_data = {
@@ -512,7 +554,7 @@ async def finalize_inspection(
         "status": ins.get("status")
     }
 
-    finalized = await repo.finalize_inspection(inspection_id, snapshot_data)
+    finalized = await repo.finalize_inspection(inspection_id, snapshot_data, additional_updates=additional_updates)
 
     await repo.append_log({
         "user_id": user_payload["sub"],
@@ -521,7 +563,12 @@ async def finalize_inspection(
         "resource_type": "INSPECTION",
         "resource_id": inspection_id,
         "old_value": {"status": ins.get("status")},
-        "new_value": {"status": "FINALIZED"}
+        "new_value": {
+            "status": "FINALIZED",
+            "business_name": effective_business_name,
+            "location": effective_location
+        }
     })
 
     return {"success": True, "inspection": finalized}
+

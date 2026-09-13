@@ -1,6 +1,8 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -74,26 +76,61 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
   bool _isUploading = false;
   String? _uploadStatusMessage;
+  bool _isInitializing = true;
+  String? _initError;
 
   @override
   void initState() {
     super.initState();
     _currentInspectionId = widget.inspectionId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_currentInspectionId == null) {
-        final state = ref.read(inspectionsProvider);
-        if (state.inspections.isNotEmpty) {
-          final activeIns = state.inspections.firstWhere(
-            (ins) => ins.status.toUpperCase() != 'FINALIZED',
-            orElse: () => state.inspections.first,
-          );
-          setState(() {
-            _currentInspectionId = activeIns.id;
-          });
-        }
-      }
+      _initializeScan();
     });
   }
+
+  @override
+  void didUpdateWidget(covariant ScannerScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.inspectionId != oldWidget.inspectionId && widget.inspectionId != null) {
+      _currentInspectionId = widget.inspectionId;
+      _initializeScan();
+    }
+  }
+
+  Future<void> _initializeScan() async {
+    if (!mounted) return;
+    setState(() {
+      _isInitializing = true;
+      _initError = null;
+    });
+
+    final notifier = ref.read(inspectionsProvider.notifier);
+    final draft = await notifier.getOrCreateDraftInspection(
+      requestedId: _currentInspectionId ?? widget.inspectionId,
+    );
+
+    if (!mounted) return;
+    if (draft != null) {
+      setState(() {
+        _currentInspectionId = draft.id;
+        _isInitializing = false;
+      });
+
+      // Synchronize URL on Flutter Web so browser refresh maintains this exact draft ID
+      if (kIsWeb) {
+        final currentUri = GoRouterState.of(context).uri;
+        if (currentUri.queryParameters['inspectionId'] != draft.id) {
+          context.go('/scanner?inspectionId=${draft.id}');
+        }
+      }
+    } else {
+      setState(() {
+        _isInitializing = false;
+        _initError = "Unable to start inspection. Please check connection and retry.";
+      });
+    }
+  }
+
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -246,7 +283,67 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isInitializing && _currentInspectionId == null) {
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: AppBar(title: const Text('Package Scanner & Ingestion')),
+        body: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 42,
+                height: 42,
+                child: CircularProgressIndicator(strokeWidth: 3.5, color: AppColors.secondaryBlue),
+              ),
+              SizedBox(height: 18),
+              Text(
+                'Starting inspection…',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'Initializing statutory inspection session...',
+                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_initError != null && _currentInspectionId == null) {
+      return Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: AppBar(title: const Text('Package Scanner & Ingestion')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: AppColors.violationRed),
+                const SizedBox(height: 16),
+                Text(
+                  _initError!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: _initializeScan,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry Starting Inspection'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (ResponsiveLayout.isWebDesktop(context)) {
+
       return ScannerWebWorkspace(
         currentInspectionId: _currentInspectionId,
         onInspectionChanged: (val) {
@@ -431,9 +528,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           else ...[
             DropdownButton<String>(
               isExpanded: true,
-              value: _currentInspectionId,
+              value: state.inspections.any((ins) => ins.id == _currentInspectionId)
+                  ? _currentInspectionId
+                  : null,
               underline: const SizedBox(),
               items: state.inspections.map((ins) {
+
                 final isItemFinalized = ins.status.toUpperCase() == 'FINALIZED';
                 return DropdownMenuItem<String>(
                   value: ins.id,

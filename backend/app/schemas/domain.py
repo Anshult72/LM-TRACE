@@ -221,7 +221,7 @@ class ComplianceAssessmentResponse(BaseModel):
 
 # --- INSPECTION SCHEMAS ---
 class InspectionCreate(BaseModel):
-    location: str
+    location: str = "Field Scan (Pending Finalisation)"
     seller_name: Optional[str] = None
     business_name: Optional[str] = None
     product_category: str = "Packaged Food"
@@ -229,11 +229,23 @@ class InspectionCreate(BaseModel):
     notes: Optional[str] = None
 
 class InspectionUpdate(BaseModel):
+    location: Optional[str] = None
     seller_name: Optional[str] = None
     business_name: Optional[str] = None
     notes: Optional[str] = None
     package_type: Optional[str] = None
     package_construction_type: Optional[str] = None
+
+class FinalizeInspectionRequest(BaseModel):
+    business_name: Optional[str] = None
+    location: Optional[str] = None
+    seller_name: Optional[str] = None
+    product_category: Optional[str] = None
+    inspection_type: Optional[str] = None
+    package_type: Optional[str] = None
+    package_construction_type: Optional[str] = None
+    notes: Optional[str] = None
+
 
 class EvidenceResponse(BaseModel):
     id: str

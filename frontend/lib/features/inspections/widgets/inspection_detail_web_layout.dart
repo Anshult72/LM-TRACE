@@ -81,7 +81,23 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                 ],
               ),
               const Spacer(),
+              if (status != 'FINALIZED') ...[
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.passGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.lock_outline, size: 16, color: Colors.white),
+                  label: const Text('Finalise Inspection', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: () => context.push('/inspections/${inspection.id}/finalize'),
+                ),
+                const SizedBox(width: 10),
+              ],
               OutlinedButton.icon(
+
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   side: const BorderSide(color: AppColors.neutral300),

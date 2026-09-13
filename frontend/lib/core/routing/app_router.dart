@@ -8,7 +8,9 @@ import '../../features/auth/login_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/inspections/inspections_list_screen.dart';
 import '../../features/inspections/new_inspection_screen.dart';
+import '../../features/inspections/finalize_inspection_screen.dart';
 import '../../features/inspections/inspection_detail_screen.dart';
+
 import '../../features/scanner/scanner_screen.dart';
 import '../../features/calibration/calibration_screen.dart';
 import '../../features/evidence/evidence_viewer_screen.dart';
@@ -113,6 +115,14 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
               return InspectionDetailScreen(inspectionId: id);
             },
           ),
+          GoRoute(
+            path: '/inspections/:id/finalize',
+            builder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return FinalizeInspectionScreen(inspectionId: id);
+            },
+          ),
+
           GoRoute(
             path: '/calibration',
             builder: (context, state) {

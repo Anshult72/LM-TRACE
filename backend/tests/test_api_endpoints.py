@@ -115,3 +115,80 @@ async def test_full_api_workflow():
         res = await ac.get("/api/audit-logs", headers=headers)
         assert res.status_code == 200
         assert len(res.json()) > 0
+
+@pytest.mark.asyncio
+async def test_direct_scan_auto_draft_and_deferred_finalisation():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        # 1. Login
+        res = await ac.post("/api/auth/login", json={
+            "email": "inspector@demo.gov.in",
+            "password": "Inspector@123"
+        })
+        assert res.status_code == 200
+        token = res.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # 2. Auto-create DRAFT inspection via Direct Scan (no establishment / location filled yet)
+        res = await ac.post("/api/inspections", json={
+            "location": "Field Scan (Pending Finalisation)",
+            "product_category": "Packaged Food",
+            "inspection_type": "PHYSICAL",
+            "notes": "[DIRECT_SCAN] Auto-created via Direct Scan"
+        }, headers=headers)
+        assert res.status_code == 200
+        draft = res.json()
+        draft_id = draft["id"]
+        assert draft["status"] == "DRAFT"
+        assert draft["location"] == "Field Scan (Pending Finalisation)"
+        assert draft["business_name"] is None
+
+        # 3. Upload a package surface image to this draft
+        res = await ac.post(
+            f"/api/inspections/{draft_id}/images",
+            headers=headers,
+            files={"file": ("front.png", io.BytesIO(_SAMPLE_PNG), "image/png")},
+            data={"surface_type": "FRONT"},
+        )
+        assert res.status_code == 200
+
+        # 4. Trigger AI Analysis on the draft
+        res = await ac.post(f"/api/inspections/{draft_id}/analyze", headers=headers)
+        assert res.status_code == 200
+        analysis_data = res.json()
+        assert analysis_data["success"] is True
+        assert analysis_data["status"] in ("READY", "NEEDS_REVIEW")
+
+        # 5. Attempt finalisation WITHOUT required establishment details -> Must fail with 400
+        res = await ac.post(f"/api/inspections/{draft_id}/finalize", headers=headers)
+        assert res.status_code == 400
+        assert "Establishment / Trader Name is required" in res.json()["detail"]
+
+        # 6. Attempt finalisation with business_name but placeholder location -> Must fail with 400
+        res = await ac.post(f"/api/inspections/{draft_id}/finalize", json={
+            "business_name": "Metro Hypermarket"
+        }, headers=headers)
+        assert res.status_code == 400
+        assert "valid inspection location address is required" in res.json()["detail"]
+
+        # 7. Submit finalisation WITH mandatory establishment and location details
+        res = await ac.post(f"/api/inspections/{draft_id}/finalize", json={
+            "business_name": "Metro Hypermarket Ltd",
+            "location": "Plot 12, Connaught Place, New Delhi",
+            "seller_name": "Metro Retailers Pvt Ltd",
+            "notes": "Verified all declarations physically against statutory requirements."
+        }, headers=headers)
+        assert res.status_code == 200
+        finalized_data = res.json()
+        assert finalized_data["success"] is True
+        finalized_ins = finalized_data["inspection"]
+        assert finalized_ins["id"] == draft_id
+        assert finalized_ins["status"] == "FINALIZED"
+        assert finalized_ins["business_name"] == "Metro Hypermarket Ltd"
+        assert finalized_ins["location"] == "Plot 12, Connaught Place, New Delhi"
+
+        # 8. Idempotent double finalisation -> returns already finalized without duplicating
+        res = await ac.post(f"/api/inspections/{draft_id}/finalize", headers=headers)
+        assert res.status_code == 200
+        assert res.json().get("message") == "Inspection already finalized"
+

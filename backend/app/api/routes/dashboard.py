@@ -13,6 +13,7 @@ async def get_dashboard_summary(user_payload: dict = Depends(get_current_user_pa
     rules = await repo.list_rules()
 
     total = len(inspections)
+    total_audited = len([item for item in inspections if item.get("status") != "DRAFT"])
     finalized = [item for item in inspections if item.get("status") == "FINALIZED"]
     compliant = [item for item in finalized if (item.get("score") or 0) >= 90]
     pending_reviews = sum(1 for item in inspections if item.get("status") == "NEEDS_REVIEW")
@@ -20,6 +21,7 @@ async def get_dashboard_summary(user_payload: dict = Depends(get_current_user_pa
         1 for item in inspections
         if item.get("status") == "FINALIZED" and (item.get("score") or 0) < 80
     )
+
     low_confidence_cases = sum(
         1 for item in inspections
         if item.get("status") in ["NEEDS_REVIEW", "ANALYSING"] or (item.get("score") is not None and 50 <= (item.get("score") or 0) < 80)
@@ -76,8 +78,10 @@ async def get_dashboard_summary(user_payload: dict = Depends(get_current_user_pa
     }
 
     return {
-        "total_inspections": total,
+        "total_inspections": total_audited,
+        "raw_total_cases": total,
         "compliance_rate": compliance_rate,
+
         "compliance_rate_subtitle": "Finalized Inspections",
         "potential_violations": potential_violations,
         "violations_subtitle": "Compliance Violations",
