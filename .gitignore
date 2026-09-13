@@ -4,6 +4,8 @@
 *.env.*
 backend/.env
 frontend/.env
+Vercel.txt
+*.token
 
 # Python / Backend
 venv/
