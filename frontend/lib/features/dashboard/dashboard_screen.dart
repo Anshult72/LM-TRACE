@@ -237,7 +237,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        user?.zone ?? 'New Delhi Central Zone',
+                        (user?.zone != null && user!.zone.isNotEmpty)
+                            ? user.zone
+                            : 'Central Zone',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.85),
                           fontSize: 12,

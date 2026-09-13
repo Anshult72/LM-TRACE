@@ -6,7 +6,6 @@ import '../../../core/responsive/web_page_container.dart';
 import '../../../core/widgets/widgets.dart';
 import '../../auth/auth_controller.dart';
 import '../../inspections/inspections_controller.dart';
-import '../../web/judge_demo_dialog.dart';
 import '../dashboard_screen.dart';
 
 /// Professional government enterprise desktop dashboard for LM-TRACE.
@@ -41,9 +40,15 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
             loading: () => _buildStatCardsSkeleton(),
             error: (err, stack) => _buildStatCardsFallback(inspectionsState.inspections),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          // 3. Middle Section: 65% Activity Overview / 35% Compliance Breakdown
+          // 3. Operational Action Required Strip (Live DB work queue)
+          summaryAsync.maybeWhen(
+            data: (summary) => _buildActionRequiredBanner(context, summary),
+            orElse: () => const SizedBox.shrink(),
+          ),
+
+          // 4. Middle Section: 65% Activity Overview / 35% Compliance Breakdown
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -57,13 +62,13 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               // Right: Compliance Breakdown by Rule Family (~35%)
               Expanded(
                 flex: 35,
-                child: _buildComplianceBreakdownCard(),
+                child: _buildComplianceBreakdownCard(summaryAsync),
               ),
             ],
           ),
           const SizedBox(height: 24),
 
-          // 4. Recent Inspections Desktop Table
+          // 5. Recent Inspections Desktop Table
           _buildRecentInspectionsTable(context, inspectionsState),
           const SizedBox(height: 32),
         ],
@@ -72,6 +77,10 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
   }
 
   Widget _buildWelcomeHeader(BuildContext context, UserModel? user) {
+    final zoneText = (user?.zone != null && user!.zone.isNotEmpty)
+        ? 'Zone: ${user.zone}'
+        : 'Central Enforcement Directorate';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
@@ -101,7 +110,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                 Row(
                   children: [
                     Text(
-                      'Welcome back, ${user?.fullName ?? "Ramesh Verma"}',
+                      'Welcome back, ${user?.fullName ?? "Inspector"}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -128,40 +137,42 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${user?.department ?? "Legal Metrology Department"} • Zone: ${user?.zone ?? "New Delhi Central Zone"} • Operational Portal',
+                  '${user?.department ?? "Legal Metrology Department"} • $zoneText • Operational Portal',
                   style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
                 ),
               ],
             ),
           ),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              side: const BorderSide(color: Color(0xFFF59E0B)),
-              backgroundColor: const Color(0xFFFEF3C7),
+          // Clean operational status pill - adhering to single primary CTA in header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.neutral100,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.neutral200),
             ),
-            icon: const Icon(Icons.bolt, size: 16, color: Color(0xFFD97706)),
-            label: const Text(
-              'Judge Demo',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFB45309)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.passGreen,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Rule Engine v2.4 Active',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryNavy,
+                  ),
+                ),
+              ],
             ),
-            onPressed: () => JudgeDemoDialog.show(context),
-          ),
-          const SizedBox(width: 10),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondaryBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-              elevation: 0,
-            ),
-            icon: const Icon(Icons.add, size: 16, color: Colors.white),
-            label: const Text(
-              '+ New Inspection',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-            ),
-            onPressed: () => context.push('/new-inspection'),
           ),
         ],
       ),
@@ -169,10 +180,10 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
   }
 
   Widget _buildStatCards(Map<String, dynamic> summary) {
-    final audited = summary['total_audited'] ?? 54;
-    final compRate = (summary['compliance_rate'] as num?)?.toDouble() ?? 72.4;
-    final violations = summary['violations_flagged'] ?? summary['total_violations'] ?? 15;
-    final pending = summary['pending_review'] ?? 8;
+    final audited = (summary['total_audited'] ?? summary['total_inspections'] ?? 0) as int;
+    final compRate = (summary['compliance_rate'] as num?)?.toDouble();
+    final violations = (summary['violations_flagged'] ?? summary['potential_violations'] ?? 0) as int;
+    final pending = (summary['pending_review'] ?? summary['pending_reviews'] ?? 0) as int;
 
     return Row(
       children: [
@@ -180,11 +191,9 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           child: StatMetricCard(
             title: 'Total Audited',
             value: '$audited',
-            subtitle: '+12 cases this week',
+            subtitle: audited == 0 ? 'No finalized audits yet' : 'Statutory Audits Finalized',
             icon: Icons.assignment_turned_in_outlined,
             accentColor: AppColors.secondaryBlue,
-            trendText: '+12%',
-            isPositiveTrend: true,
             onTap: () => context.go('/inspections'),
           ),
         ),
@@ -192,12 +201,12 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
         Expanded(
           child: StatMetricCard(
             title: 'Compliance Rate',
-            value: '${compRate.toStringAsFixed(1)}%',
-            subtitle: 'Rule 6 & 7 verified',
+            value: compRate != null ? '${compRate.toStringAsFixed(1)}%' : '—',
+            subtitle: compRate != null ? 'Rule 6 & 7 verified' : 'No audits completed',
             icon: Icons.verified_outlined,
             accentColor: AppColors.passGreen,
-            trendText: compRate >= 70 ? 'Optimal' : 'Needs Review',
-            isPositiveTrend: compRate >= 70,
+            trendText: compRate != null ? (compRate >= 70 ? 'Optimal' : 'Needs Review') : null,
+            isPositiveTrend: compRate != null ? compRate >= 70 : true,
           ),
         ),
         const SizedBox(width: 14),
@@ -205,7 +214,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           child: StatMetricCard(
             title: 'Violations Flagged',
             value: '$violations',
-            subtitle: 'Non-compliant packages',
+            subtitle: violations == 0 ? 'Zero active non-compliances' : 'Non-compliant packages',
             icon: Icons.gavel_outlined,
             accentColor: AppColors.violationRed,
             trendText: violations > 0 ? '$violations Alerts' : '0 Alerts',
@@ -218,11 +227,11 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           child: StatMetricCard(
             title: 'Pending Review',
             value: '$pending',
-            subtitle: 'Awaiting inspector sign-off',
+            subtitle: pending == 0 ? 'All reviews completed' : 'Awaiting inspector sign-off',
             icon: Icons.pending_actions_outlined,
             accentColor: AppColors.reviewAmber,
-            trendText: '$pending pending',
-            isPositiveTrend: false,
+            trendText: pending > 0 ? '$pending pending' : 'All clear',
+            isPositiveTrend: pending == 0,
             onTap: () => context.go('/inspections'),
           ),
         ),
@@ -251,19 +260,117 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
   }
 
   Widget _buildStatCardsFallback(List<InspectionModel> list) {
-    final audited = list.isNotEmpty ? list.length : 54;
+    final audited = list.where((i) => ['COMPLETED', 'COMPLIANT', 'FINALIZED', 'ARCHIVED'].contains(i.status.toUpperCase())).length;
     final violations = list.where((i) => ['VIOLATION', 'POTENTIAL_VIOLATION'].contains(i.status.toUpperCase())).length;
     final compliant = list.where((i) => ['COMPLIANT', 'FINALIZED'].contains(i.status.toUpperCase())).length;
-    final rate = list.isNotEmpty ? (compliant / list.length) * 100 : 72.4;
+    final rate = audited > 0 ? (compliant / audited) * 100 : null;
+    final pending = list.where((i) => ['NEEDS_REVIEW', 'REVIEW_REQUIRED', 'IN_REVIEW'].contains(i.status.toUpperCase())).length;
 
     return _buildStatCards({
       'total_audited': audited,
       'compliance_rate': rate,
-      'violations_flagged': violations > 0 ? violations : 15,
-      'pending_review': 8,
+      'violations_flagged': violations,
+      'pending_review': pending,
     });
   }
 
+  Widget _buildActionRequiredBanner(BuildContext context, Map<String, dynamic> summary) {
+    final actionData = summary['action_required'] as Map<String, dynamic>?;
+    if (actionData == null) return const SizedBox.shrink();
+
+    final pending = (actionData['pending_reviews'] as num?)?.toInt() ?? 0;
+    final violations = (actionData['compliance_violations'] as num?)?.toInt() ?? 0;
+    final labelChanges = (actionData['label_changes_to_review'] as num?)?.toInt() ?? 0;
+    final lowConfidence = (actionData['low_confidence_cases'] as num?)?.toInt() ?? 0;
+
+    final hasActions = pending > 0 || violations > 0 || labelChanges > 0 || lowConfidence > 0;
+
+    if (!hasActions) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FDF4),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFBBF7D0)),
+        ),
+        child: Row(
+          children: const [
+            Icon(Icons.check_circle_outline, color: Color(0xFF16A34A), size: 18),
+            SizedBox(width: 10),
+            Text(
+              'All statutory compliance reviews are up to date. Zero items requiring urgent officer sign-off.',
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF166534)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 20),
+          const SizedBox(width: 10),
+          const Text(
+            'ACTION REQUIRED:',
+            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF92400E)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 6,
+              children: [
+                if (pending > 0)
+                  _buildActionPill('$pending Pending Reviews', const Color(0xFFD97706), () => context.go('/inspections')),
+                if (violations > 0)
+                  _buildActionPill('$violations Violations Flagged', const Color(0xFFDC2626), () => context.go('/inspections')),
+                if (labelChanges > 0)
+                  _buildActionPill('$labelChanges Packaging Changes', const Color(0xFF0F766E), () => context.go('/products')),
+                if (lowConfidence > 0)
+                  _buildActionPill('$lowConfidence Low Confidence', const Color(0xFFC2410C), () => context.go('/inspections')),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => context.go('/inspections'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              minimumSize: Size.zero,
+            ),
+            child: const Text('Review Cases →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF92400E))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionPill(String label, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: color),
+        ),
+      ),
+    );
+  }
 
   Widget _buildActivityOverviewCard(
     AsyncValue<Map<String, dynamic>> summaryAsync,
@@ -299,14 +406,54 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           ),
           const SizedBox(height: 16),
 
-          // Commodity category spread bars
-          _buildCategoryBar('Packaged Food (Basmati, Atta, Grains)', 24, 0.75),
-          const SizedBox(height: 12),
-          _buildCategoryBar('Edible Oils & Fats (Mustard, Ghee, Refined)', 14, 0.65),
-          const SizedBox(height: 12),
-          _buildCategoryBar('Cosmetics & Personal Care (Serums, Shampoo)', 9, 0.44),
-          const SizedBox(height: 12),
-          _buildCategoryBar('General Merchandise & Baby Foods', 7, 0.85),
+          // Dynamic Commodity category spread bars from live DB summary
+          summaryAsync.maybeWhen(
+            data: (summary) {
+              final rawList = summary['commodity_spread'] as List<dynamic>?;
+              final list = rawList?.whereType<Map<String, dynamic>>().toList() ?? [];
+              final totalAuditedAcrossCommodities = list.fold<int>(0, (sum, item) => sum + ((item['count'] as num?)?.toInt() ?? 0));
+
+              if (list.isEmpty || totalAuditedAcrossCommodities == 0) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.pie_chart_outline, size: 36, color: AppColors.neutral400),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'No commodity distribution data yet',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.neutral600),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Commodity spread analytics will populate as inspections are conducted and finalized.',
+                          style: TextStyle(fontSize: 11.5, color: AppColors.neutral500),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: list.map((item) {
+                  final name = item['name'] as String? ?? 'General Commodity';
+                  final count = (item['count'] as num?)?.toInt() ?? 0;
+                  final compRate = ((item['compliance_rate'] as num?)?.toDouble() ?? 0.0);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: _buildCategoryBar(name, count, compRate),
+                  );
+                }).toList(),
+              );
+            },
+            orElse: () => Container(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+          ),
           const SizedBox(height: 16),
 
           // Operational notice
@@ -335,7 +482,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
   }
 
   Widget _buildCategoryBar(String label, int total, double complianceRate) {
-    final compPercent = (complianceRate * 100).toInt();
+    final compPercent = total > 0 ? (complianceRate * 100).toInt() : 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -352,12 +499,18 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           child: Row(
             children: [
               Expanded(
-                flex: compPercent,
-                child: Container(height: 7, color: AppColors.passGreen),
+                flex: compPercent > 0 ? compPercent : (total == 0 ? 0 : 1),
+                child: Container(
+                  height: 7,
+                  color: total == 0 ? AppColors.neutral300 : AppColors.passGreen,
+                ),
               ),
               Expanded(
-                flex: (100 - compPercent),
-                child: Container(height: 7, color: AppColors.violationRed.withValues(alpha: 0.6)),
+                flex: (100 - compPercent) > 0 ? (100 - compPercent) : 0,
+                child: Container(
+                  height: 7,
+                  color: total == 0 ? AppColors.neutral300 : AppColors.violationRed.withValues(alpha: 0.6),
+                ),
               ),
             ],
           ),
@@ -381,7 +534,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
     );
   }
 
-  Widget _buildComplianceBreakdownCard() {
+  Widget _buildComplianceBreakdownCard(AsyncValue<Map<String, dynamic>> summaryAsync) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -398,19 +551,67 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'Rule enforcement compliance distribution',
+            'Live Legal Metrology rule enforcement compliance',
             style: TextStyle(fontSize: 11, color: AppColors.neutral500),
           ),
           const SizedBox(height: 18),
 
-          _buildRuleHealthRow('Rule 6 Mandatory Declarations', '84%', 0.84, AppColors.passGreen),
-          const Divider(height: 20, color: AppColors.neutral200),
-          _buildRuleHealthRow('Rule 7 Table-I PDP Font Height', '68%', 0.68, AppColors.reviewAmber),
-          const Divider(height: 20, color: AppColors.neutral200),
-          _buildRuleHealthRow('Rule 9 Readability & Contrast', '92%', 0.92, AppColors.passGreen),
-          const Divider(height: 20, color: AppColors.neutral200),
-          _buildRuleHealthRow('Rule 6(11) Unit Sale Price (USP)', '76%', 0.76, AppColors.passGreen),
-          const SizedBox(height: 14),
+          // Dynamic rule health from live DB summary
+          summaryAsync.maybeWhen(
+            data: (summary) {
+              final rawRules = summary['rule_health'] as List<dynamic>?;
+              final rules = rawRules?.whereType<Map<String, dynamic>>().toList() ?? [];
+
+              if (rules.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Text(
+                      'No statutory rule health data available yet.',
+                      style: TextStyle(fontSize: 12, color: AppColors.neutral500),
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: List.generate(rules.length, (index) {
+                  final item = rules[index];
+                  final ruleName = item['rule'] as String? ?? 'Rule';
+                  final rate = item['rate'] as num?;
+                  final totalChecked = (item['total_checked'] as num?)?.toInt() ?? 0;
+
+                  String percentStr;
+                  double progress;
+                  Color color;
+
+                  if (rate == null || totalChecked == 0) {
+                    percentStr = '—';
+                    progress = 0.0;
+                    color = AppColors.neutral400;
+                  } else {
+                    final p = (rate.toDouble() * 100).toInt();
+                    percentStr = '$p%';
+                    progress = rate.toDouble();
+                    color = rate >= 0.70 ? AppColors.passGreen : AppColors.reviewAmber;
+                  }
+
+                  return Column(
+                    children: [
+                      _buildRuleHealthRow(ruleName, percentStr, progress, color),
+                      if (index < rules.length - 1)
+                        const Divider(height: 20, color: AppColors.neutral200),
+                    ],
+                  );
+                }),
+              );
+            },
+            orElse: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+          ),
+          const SizedBox(height: 16),
 
           SizedBox(
             width: double.infinity,
@@ -534,8 +735,37 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           ),
           const Divider(height: 1, color: AppColors.neutral200),
 
-          // Data Rows
-          if (filtered.isEmpty)
+          // Data Rows or Clean Empty States
+          if (inspections.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.neutral100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.assignment_outlined, size: 32, color: AppColors.neutral400),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'No Inspections Recorded Yet',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primaryNavy),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Create your first inspection or launch a physical scan to begin statutory audits.',
+                      style: TextStyle(fontSize: 12, color: AppColors.neutral600),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (filtered.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 36),
               child: Center(

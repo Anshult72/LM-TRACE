@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../theme/app_theme.dart';
-import '../widgets/app_logo.dart';
 import '../../features/auth/auth_controller.dart';
-import '../../features/web/judge_demo_dialog.dart';
+import '../theme/app_theme.dart';
+import '../widgets/widgets.dart';
 import 'responsive_layout.dart';
 
 /// Compact enterprise topbar for LM-TRACE desktop and tablet web.
@@ -94,24 +93,6 @@ class WebTopBar extends ConsumerWidget {
 
           const Spacer(),
 
-          // 2. Quick Action Buttons
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFB45309),
-              side: const BorderSide(color: Color(0xFFF59E0B), width: 1.2),
-              backgroundColor: const Color(0xFFFEF3C7),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-            ),
-            icon: const Icon(Icons.bolt, size: 16, color: Color(0xFFD97706)),
-            label: const Text(
-              'Judge Demo',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-            onPressed: () => JudgeDemoDialog.show(context),
-          ),
-          const SizedBox(width: 12),
-
           // Primary "+ New Inspection" Action Button
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
@@ -148,7 +129,7 @@ class WebTopBar extends ConsumerWidget {
                     radius: 17,
                     backgroundColor: AppColors.primaryNavy,
                     child: Text(
-                      (user?.fullName ?? 'R').substring(0, 1).toUpperCase(),
+                      (user?.fullName ?? 'I').substring(0, 1).toUpperCase(),
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                     ),
                   ),
@@ -159,7 +140,7 @@ class WebTopBar extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user?.fullName ?? 'Ramesh Verma',
+                          user?.fullName ?? 'Inspector',
                           style: const TextStyle(
                             fontSize: 12.5,
                             fontWeight: FontWeight.bold,
@@ -185,7 +166,7 @@ class WebTopBar extends ConsumerWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              user?.zone ?? 'New Delhi Central Zone',
+                              (user?.zone != null && user!.zone.isNotEmpty) ? user.zone : (user?.department ?? 'Legal Metrology'),
                               style: const TextStyle(fontSize: 10.5, color: AppColors.neutral500),
                             ),
                           ],

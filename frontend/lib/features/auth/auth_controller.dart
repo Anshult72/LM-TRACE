@@ -18,7 +18,7 @@ class AuthUser {
     required this.officerId,
     required this.department,
     required this.role,
-    this.zone = 'New Delhi Central Zone',
+    this.zone = '',
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
@@ -29,7 +29,7 @@ class AuthUser {
       officerId: json['officer_id'] ?? json['officerId'] ?? 'LM-001',
       department: json['department'] ?? 'Legal Metrology',
       role: json['role'] ?? 'INSPECTOR',
-      zone: json['zone'] ?? 'New Delhi Central Zone',
+      zone: json['zone'] ?? '',
     );
   }
 }

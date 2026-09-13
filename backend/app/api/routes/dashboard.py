@@ -13,13 +13,14 @@ async def get_dashboard_summary(user_payload: dict = Depends(get_current_user_pa
     rules = await repo.list_rules()
 
     total = len(inspections)
-    total_audited = len([item for item in inspections if item.get("status") != "DRAFT"])
-    finalized = [item for item in inspections if item.get("status") == "FINALIZED"]
-    compliant = [item for item in finalized if (item.get("score") or 0) >= 90]
+    finalized = [item for item in inspections if item.get("status") in ["FINALIZED", "ARCHIVED"]]
+    total_audited = len(finalized)
+    compliant = [item for item in finalized if (item.get("score") or 0) >= 80]
     pending_reviews = sum(1 for item in inspections if item.get("status") == "NEEDS_REVIEW")
-    potential_violations = sum(
-        1 for item in inspections
-        if item.get("status") == "FINALIZED" and (item.get("score") or 0) < 80
+    drafts_pending = sum(1 for item in inspections if item.get("status") == "DRAFT")
+    violations_flagged = sum(
+        1 for item in finalized
+        if (item.get("score") is not None and item.get("score") < 80) or item.get("status") == "VIOLATION"
     )
 
     low_confidence_cases = sum(
@@ -68,31 +69,83 @@ async def get_dashboard_summary(user_payload: dict = Depends(get_current_user_pa
                 "version": "2024.1"
             }
 
-    compliance_rate = round((len(compliant) / len(finalized) * 100) if finalized else 0, 1)
+    compliance_rate = round((len(compliant) / total_audited * 100), 1) if total_audited > 0 else None
+
+    # Real commodity category distribution
+    commodity_counts: Dict[str, Dict[str, int]] = {}
+    for item in finalized:
+        cat = item.get("product_category") or "Packaged Commodity"
+        if cat not in commodity_counts:
+            commodity_counts[cat] = {"total": 0, "compliant": 0}
+        commodity_counts[cat]["total"] += 1
+        if (item.get("score") or 0) >= 80:
+            commodity_counts[cat]["compliant"] += 1
+    commodity_spread = [
+        {
+            "category": cat,
+            "total": stats["total"],
+            "compliance_rate": round(stats["compliant"] / stats["total"], 2) if stats["total"] > 0 else 0.0,
+        }
+        for cat, stats in commodity_counts.items()
+    ]
+
+    # Real rule health checks aggregation across inspections
+    rule_checks_map: Dict[str, Dict[str, Any]] = {}
+    for ins in inspections:
+        for check in ins.get("checks", []):
+            if isinstance(check, dict):
+                r_code = check.get("rule_code") or check.get("rule_id") or "General"
+                if r_code not in rule_checks_map:
+                    rule_checks_map[r_code] = {"title": check.get("rule_title") or r_code, "total": 0, "pass": 0}
+                rule_checks_map[r_code]["total"] += 1
+                if check.get("status") in ["PASS", "COMPLIANT"]:
+                    rule_checks_map[r_code]["pass"] += 1
+    rule_health = [
+        {
+            "title": data["title"],
+            "code": code,
+            "total": data["total"],
+            "pass_rate": f"{round((data['pass'] / data['total']) * 100)}%",
+            "progress": round(data["pass"] / data["total"], 2),
+        }
+        for code, data in rule_checks_map.items()
+    ]
 
     action_required = {
         "pending_reviews": pending_reviews,
-        "compliance_violations": potential_violations,
+        "compliance_violations": violations_flagged,
+        "drafts_pending_finalisation": drafts_pending,
         "label_changes_to_review": 1 if product_change_alert else 0,
         "low_confidence_cases": low_confidence_cases,
     }
 
     return {
+        "total_audited": total_audited,
         "total_inspections": total_audited,
         "raw_total_cases": total,
         "compliance_rate": compliance_rate,
-
-        "compliance_rate_subtitle": "Finalized Inspections",
-        "potential_violations": potential_violations,
-        "violations_subtitle": "Compliance Violations",
+        "compliance_rate_subtitle": "Based on finalized inspections" if total_audited > 0 else "No finalized inspections yet",
+        "violations_flagged": violations_flagged,
+        "potential_violations": violations_flagged,
+        "violations_subtitle": "Non-compliant packages" if violations_flagged > 0 else "0 violations recorded",
+        "pending_review": pending_reviews,
         "pending_reviews": pending_reviews,
-        "pending_subtitle": "Human Verification",
+        "pending_subtitle": "Awaiting inspector sign-off" if pending_reviews > 0 else "Nothing currently awaiting review",
+        "drafts_pending": drafts_pending,
         "active_rules_count": len(rules),
         "recent_changes_detected": 1 if product_change_alert else 0,
         "recent_inspections": recent_inspections,
         "action_required": action_required,
         "product_change_alert": product_change_alert,
         "latest_rule_update": latest_rule_update,
+        "commodity_spread": commodity_spread,
+        "rule_health": rule_health,
+        "user": {
+            "full_name": user_payload.get("full_name") or "Inspector",
+            "role": user_payload.get("role") or "INSPECTOR",
+            "officer_id": user_payload.get("officer_id") or "",
+            "department": "Legal Metrology Department",
+        },
         "role": user_payload.get("role"),
     }
 
@@ -102,14 +155,14 @@ async def get_inspector_dashboard(user_payload: dict = Depends(get_current_user_
     inspections = await repo.list_inspections(inspector_id=user_payload["sub"])
     
     total = len(inspections)
-    compliant = sum(1 for i in inspections if i.get("status") in ["FINALIZED", "READY"] and (i.get("score") or 0) >= 90)
+    compliant = sum(1 for i in inspections if i.get("status") in ["FINALIZED", "READY"] and (i.get("score") or 0) >= 80)
     review = sum(1 for i in inspections if i.get("status") == "NEEDS_REVIEW")
     violations = sum(1 for i in inspections if i.get("status") == "FINALIZED" and (i.get("score") or 0) < 80)
 
     return {
         "inspector": {
-            "name": user_payload.get("full_name", "Inspector Ramesh Verma"),
-            "officer_id": user_payload.get("officer_id", "LM-UP-2026-042"),
+            "name": user_payload.get("full_name") or "Inspector",
+            "officer_id": user_payload.get("officer_id") or "",
             "department": "Legal Metrology Department"
         },
         "metrics": {
@@ -119,16 +172,16 @@ async def get_inspector_dashboard(user_payload: dict = Depends(get_current_user_
             "potential_violations": violations
         },
         "compliance_breakdown": {
-            "pass": compliant or 8,
-            "review": review or 2,
-            "potential_violation": violations or 1
+            "pass": compliant,
+            "review": review,
+            "potential_violation": violations
         },
         "recent_inspections": inspections[:5],
         "inspection_intelligence": {
-            "pending_reviews": 3,
-            "low_confidence_findings": 2,
-            "repeated_violations": 1,
-            "label_changes_detected": 1
+            "pending_reviews": review,
+            "low_confidence_findings": sum(1 for i in inspections if i.get("status") in ["NEEDS_REVIEW", "ANALYSING"]),
+            "repeated_violations": 0,
+            "label_changes_detected": 0
         }
     }
 
@@ -136,24 +189,29 @@ async def get_inspector_dashboard(user_payload: dict = Depends(get_current_user_
 async def get_supervisor_dashboard(user_payload: dict = Depends(get_current_user_payload)):
     repo = get_repository()
     all_inspections = await repo.list_inspections()
-    
+    finalized = [i for i in all_inspections if i.get("status") in ["FINALIZED", "ARCHIVED"]]
+    compliant = sum(1 for i in finalized if (i.get("score") or 0) >= 80)
+    review = sum(1 for i in all_inspections if i.get("status") == "NEEDS_REVIEW")
+    violations = sum(1 for i in finalized if (i.get("score") or 0) < 80)
+
     return {
         "team_metrics": {
-            "total_inspections": len(all_inspections) + 18,
-            "passed": 14,
-            "review_pending": 4,
-            "confirmed_violations": 2,
-            "repeat_offenders": 1
+            "total_inspections": len(finalized),
+            "passed": compliant,
+            "review_pending": review,
+            "confirmed_violations": violations,
+            "repeat_offenders": 0
         },
         "recent_activity": all_inspections[:6],
         "escalations": [
             {
-                "inspection_code": "INS-2026-00103",
-                "product": "Luxe Parisian Glow Serum",
-                "issue": "Missing mandatory Indian importer registered address",
+                "inspection_code": i.get("inspection_code"),
+                "product": i.get("product_name") or i.get("business_name") or "Packaged Commodity",
+                "issue": "Non-compliant declarations detected",
                 "status": "CONFIRMED_VIOLATION"
             }
-        ]
+            for i in finalized if (i.get("score") or 0) < 80
+        ][:5]
     }
 
 @router.get("/admin")

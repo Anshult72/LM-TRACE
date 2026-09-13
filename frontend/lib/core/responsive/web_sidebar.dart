@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../constants/app_brand.dart';
 import '../widgets/app_logo.dart';
-import '../../features/web/judge_demo_dialog.dart';
 import 'responsive_layout.dart';
 
 /// Persistent enterprise left sidebar for LM-TRACE desktop and tablet web.
@@ -296,10 +295,13 @@ class WebSidebar extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         alignment: Alignment.center,
-        child: IconButton(
-          icon: const Icon(Icons.bolt, color: Color(0xFFFBBF24)),
-          tooltip: 'Judge Demo',
-          onPressed: () => JudgeDemoDialog.show(context),
+        child: Container(
+          width: 8,
+          height: 8,
+          decoration: const BoxDecoration(
+            color: Color(0xFF22C55E),
+            shape: BoxShape.circle,
+          ),
         ),
       );
     }
@@ -310,46 +312,20 @@ class WebSidebar extends StatelessWidget {
         color: Color(0xFF0B1B29),
         border: Border(top: BorderSide(color: Color(0xFF1E3A5F), width: 1)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          // Judge Demo Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD97706),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              icon: const Icon(Icons.bolt, size: 16, color: Colors.white),
-              label: const Text(
-                '⚡ Judge Demo Mode',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-              onPressed: () => JudgeDemoDialog.show(context),
+          Container(
+            width: 7,
+            height: 7,
+            decoration: const BoxDecoration(
+              color: Color(0xFF22C55E),
+              shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(height: 10),
-
-          // Engine Status Indicator
-          Row(
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              const Text(
-                'Engine Online • Rule v2024.1',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5),
-              ),
-            ],
+          const SizedBox(width: 8),
+          const Text(
+            'Engine Online • Rule v2024.1',
+            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w500),
           ),
         ],
       ),
