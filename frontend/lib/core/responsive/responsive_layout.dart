@@ -1,4 +1,3 @@
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -57,11 +56,8 @@ class ResponsiveLayout {
   /// True ONLY if running natively on an Android or iOS device (not Web).
   static bool get isNativeMobile {
     if (kIsWeb) return false;
-    try {
-      return Platform.isAndroid || Platform.isIOS;
-    } catch (_) {
-      return false;
-    }
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
   }
 }
 

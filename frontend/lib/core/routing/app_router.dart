@@ -87,6 +87,13 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
             },
           ),
           GoRoute(
+            path: '/scan',
+            redirect: (context, state) {
+              final id = state.uri.queryParameters['inspectionId'];
+              return id != null ? '/scanner?inspectionId=$id' : '/scanner';
+            },
+          ),
+          GoRoute(
             path: '/products',
             builder: (context, state) => const ProductListScreen(),
           ),

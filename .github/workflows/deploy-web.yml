@@ -1,0 +1,71 @@
+name: Deploy LM-TRACE Flutter Web to Vercel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: 'Production Railway Backend API Base URL (optional override)'
+        required: false
+        default: 'https://maanak-production.up.railway.app'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.9'
+          channel: 'stable'
+          cache: true
+          cache-key: "flutter-:os:-:channel:-:version:-:arch:-:hash:"
+
+      - name: Verify Flutter environment
+        run: |
+          flutter --version
+          flutter doctor -v
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: flutter pub get
+
+      - name: Analyze code
+        working-directory: frontend
+        run: flutter analyze
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: flutter test
+
+      - name: Build Flutter Web Release
+        working-directory: frontend
+        env:
+          INPUT_URL: ${{ github.event.inputs.api_base_url }}
+          SECRET_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          API_URL="${INPUT_URL:-${SECRET_URL:-https://maanak-production.up.railway.app}}"
+          echo "Building Flutter Web with API_BASE_URL=$API_URL"
+          flutter build web --release --dart-define=API_BASE_URL="$API_URL"
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: frontend
+          vercel-args: '--prod'

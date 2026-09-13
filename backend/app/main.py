@@ -24,7 +24,7 @@ app = FastAPI(
 # Request logging middleware — logs method, path, status, duration for Railway debugging
 app.add_middleware(RequestLoggingMiddleware)
 
-# CORS configuration
+# CORS configuration (supports local Flutter Web dev, production Vercel, and preview domains)
 if settings.cors_origins_list == ["*"]:
     app.add_middleware(
         CORSMiddleware,
@@ -37,6 +37,7 @@ else:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins_list,
+        allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:\d+|http://127\.0\.0\.1:\d+",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

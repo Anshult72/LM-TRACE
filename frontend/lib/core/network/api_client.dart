@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/api_constants.dart';
@@ -38,9 +37,13 @@ class ApiClient {
         onError: (DioException e, handler) {
           // Transform raw network / HTTP errors into user-friendly messages
           // so that UI code does not need to interpret low-level exceptions.
-          if (e.type == DioExceptionType.connectionError ||
+          final errorStr = e.error?.toString() ?? '';
+          final isNetworkIssue = e.type == DioExceptionType.connectionError ||
               e.type == DioExceptionType.connectionTimeout ||
-              e.error is SocketException) {
+              errorStr.contains('SocketException') ||
+              errorStr.contains('XMLHttpRequest') ||
+              errorStr.contains('Failed to fetch');
+          if (isNetworkIssue) {
             return handler.next(
               DioException(
                 requestOptions: e.requestOptions,
