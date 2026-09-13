@@ -156,6 +156,10 @@ class ApiClient {
     return await dio.patch(path, data: data);
   }
 
+  Future<Response> delete(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    return await dio.delete(path, data: data, queryParameters: queryParameters);
+  }
+
   Future<Response> uploadFile(String path, FormData formData) async {
     return await dio.post(
       path,

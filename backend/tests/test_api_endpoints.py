@@ -49,17 +49,18 @@ async def test_full_api_workflow():
         ins_id = res.json()["id"]
         assert "INS-2026-" in res.json()["inspection_code"]
 
-        # 4. Upload a package surface image (analyze requires >= 1 image)
-        res = await ac.post(
-            f"/api/inspections/{ins_id}/images",
-            headers=headers,
-            files={"file": ("front.png", io.BytesIO(_SAMPLE_PNG), "image/png")},
-            data={"surface_type": "FRONT"},
-        )
-        assert res.status_code == 200
-        assert res.json()["surface_type"] == "FRONT"
+        # 4. Upload ALL 4 required package surface images
+        for surface_code in ["FRONT", "BACK", "SIDE", "MRP_AREA"]:
+            res = await ac.post(
+                f"/api/inspections/{ins_id}/images",
+                headers=headers,
+                files={"file": (f"{surface_code.lower()}.png", io.BytesIO(_SAMPLE_PNG), "image/png")},
+                data={"surface_type": surface_code},
+            )
+            assert res.status_code == 200
+            assert res.json()["surface_type"] == surface_code
 
-        # 5. Trigger Analysis
+        # 5. Trigger Analysis (requires all 4 surfaces)
         res = await ac.post(f"/api/inspections/{ins_id}/analyze", headers=headers)
         assert res.status_code == 200
         analysis_data = res.json()
@@ -143,16 +144,17 @@ async def test_direct_scan_auto_draft_and_deferred_finalisation():
         assert draft["location"] == "Field Scan (Pending Finalisation)"
         assert draft["business_name"] is None
 
-        # 3. Upload a package surface image to this draft
-        res = await ac.post(
-            f"/api/inspections/{draft_id}/images",
-            headers=headers,
-            files={"file": ("front.png", io.BytesIO(_SAMPLE_PNG), "image/png")},
-            data={"surface_type": "FRONT"},
-        )
-        assert res.status_code == 200
+        # 3. Upload ALL 4 required package surface images to this draft
+        for surface_code in ["FRONT", "BACK", "SIDE", "MRP_AREA"]:
+            res = await ac.post(
+                f"/api/inspections/{draft_id}/images",
+                headers=headers,
+                files={"file": (f"{surface_code.lower()}.png", io.BytesIO(_SAMPLE_PNG), "image/png")},
+                data={"surface_type": surface_code},
+            )
+            assert res.status_code == 200
 
-        # 4. Trigger AI Analysis on the draft
+        # 4. Trigger AI Analysis on the draft (allowed now that all 4 surfaces exist)
         res = await ac.post(f"/api/inspections/{draft_id}/analyze", headers=headers)
         assert res.status_code == 200
         analysis_data = res.json()

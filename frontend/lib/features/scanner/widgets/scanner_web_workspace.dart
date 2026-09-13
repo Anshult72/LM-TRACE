@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
 import '../../inspections/inspections_controller.dart';
+import '../models/scanner_surface_state.dart';
 
 /// Professional government desktop workspace for package scanning, CV pre-checks,
 /// OCR extraction, and Rule 7 Table-I font analysis.
@@ -23,6 +24,8 @@ class ScannerWebWorkspace extends StatelessWidget {
   final VoidCallback onRunPipeline;
   final bool isUploading;
   final String? uploadStatusMessage;
+  final Map<String, SurfaceState>? surfacesState;
+  final RequiredImagesValidationResult? validation;
 
   const ScannerWebWorkspace({
     super.key,
@@ -39,6 +42,8 @@ class ScannerWebWorkspace extends StatelessWidget {
     required this.onRunPipeline,
     required this.isUploading,
     required this.uploadStatusMessage,
+    this.surfacesState,
+    this.validation,
   });
 
   @override
@@ -233,7 +238,12 @@ class ScannerWebWorkspace extends StatelessWidget {
       child: Row(
         children: List.generate(surfaces.length, (index) {
           final isSelected = selectedSurfaceIndex == index;
-          final hasImage = surfaceImages.containsKey(index);
+          final canonicalCodes = ['FRONT', 'BACK', 'SIDE', 'MRP_AREA'];
+          final code = index < canonicalCodes.length ? canonicalCodes[index] : 'FRONT';
+          final surfaceState = surfacesState?[code];
+          final isComplete = surfaceState?.isComplete ?? surfaceImages.containsKey(index);
+          final isSurfaceUploading = surfaceState?.isUploading ?? false;
+          final isSurfaceFailed = surfaceState?.isFailed ?? false;
 
           return Expanded(
             child: Padding(
@@ -251,7 +261,20 @@ class ScannerWebWorkspace extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (hasImage) ...[
+                      if (isSurfaceUploading) ...[
+                        SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: isSelected ? Colors.white : AppColors.secondaryBlue,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ] else if (isSurfaceFailed) ...[
+                        Icon(Icons.error_outline, size: 15, color: isSelected ? Colors.white : AppColors.violationRed),
+                        const SizedBox(width: 6),
+                      ] else if (isComplete) ...[
                         Icon(Icons.check_circle, size: 15, color: isSelected ? Colors.white : AppColors.passGreen),
                         const SizedBox(width: 6),
                       ],
@@ -548,6 +571,47 @@ class ScannerWebWorkspace extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // Statutory Completeness Progress Indicator
+              if (validation != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: validation!.isValid
+                        ? AppColors.passGreen.withValues(alpha: 0.08)
+                        : AppColors.review.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: validation!.isValid
+                          ? AppColors.passGreen.withValues(alpha: 0.3)
+                          : AppColors.review.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        validation!.isValid ? Icons.check_circle : Icons.info_outline,
+                        size: 15,
+                        color: validation!.isValid ? AppColors.passGreen : AppColors.review,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          validation!.isValid
+                              ? 'All 4 required surfaces ready for AI analysis'
+                              : '${validation!.completedCount} of 4 surfaces uploaded (${validation!.missingSurfaceNames.join(', ')} missing)',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: validation!.isValid ? AppColors.passGreen : AppColors.primaryNavy,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               // Action button
               if (isUploading) ...[
                 Center(
@@ -570,15 +634,19 @@ class ScannerWebWorkspace extends StatelessWidget {
                   height: 48,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isFinalized ? AppColors.neutral400 : AppColors.secondaryBlue,
+                      backgroundColor: (validation?.isValid == true && !isFinalized)
+                          ? AppColors.secondaryBlue
+                          : AppColors.neutral400,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       elevation: 0,
                     ),
                     icon: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
-                    label: const Text(
-                      'Run AI Compliance Audit',
-                      style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                    label: Text(
+                      validation?.isValid == true
+                          ? 'Run AI Compliance Audit'
+                          : 'Run AI Compliance Audit (${validation?.completedCount ?? 0}/4 Complete)',
+                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                     onPressed: isFinalized ? null : onRunPipeline,
                   ),

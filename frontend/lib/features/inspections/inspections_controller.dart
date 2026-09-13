@@ -397,7 +397,20 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
         } else {
           final responseData = e.response?.data;
           if (responseData is Map) {
-            if (responseData['detail'] is String) {
+            if (responseData['detail'] is Map) {
+              final detailMap = responseData['detail'] as Map;
+              if (detailMap['code'] == 'REQUIRED_IMAGES_MISSING') {
+                final missingList = detailMap['missing_surfaces'] as List?;
+                final missingText = missingList != null && missingList.isNotEmpty
+                    ? missingList.join(', ')
+                    : 'Required package surfaces';
+                message = "Cannot run audit: All 4 package surfaces must be uploaded first.\nMissing: $missingText";
+              } else {
+                message = (detailMap['message'] as String?) ??
+                    (detailMap['detail'] as String?) ??
+                    message;
+              }
+            } else if (responseData['detail'] is String) {
               message = responseData['detail'] as String;
             } else if (responseData['error'] is Map) {
               final errorMap = responseData['error'] as Map;

@@ -21,6 +21,7 @@ from app.engines.compliance_engine.compliance_engine import compliance_engine
 from app.services.evidence.evidence_service import evidence_service
 from app.core.config import settings
 from app.core.logging import logger
+from app.services.inspection.surface_validator import validate_inspection_surfaces
 
 router = APIRouter(prefix="/api/inspections", tags=["Inspections"])
 
@@ -158,6 +159,18 @@ async def upload_image(
         "quality_details": quality_info
     }
 
+    # Supersede older image(s) for the same surface to ensure fresh replacement state
+    existing_images = ins.get("images") or []
+    norm_surface = surface_type.upper()
+    for prev_img in existing_images:
+        if (prev_img.get("surface_type") or "").upper() == norm_surface:
+            prev_id = prev_img.get("id")
+            if prev_id:
+                try:
+                    await repo.delete_image(inspection_id, prev_id)
+                except Exception as del_err:
+                    logger.warning("Could not delete superseded image %s: %s", prev_id, del_err)
+
     saved_img = await repo.add_image(inspection_id, image_record)
 
     await repo.append_log({
@@ -225,6 +238,18 @@ async def delete_image(
     deleted = await repo.delete_image(inspection_id, image_id)
     return {"success": deleted}
 
+@router.get("/{inspection_id}/required-surfaces", response_model=Dict[str, Any])
+async def get_required_surfaces(
+    inspection_id: str,
+    user_payload: dict = Depends(get_current_user_payload)
+):
+    """Authoritative real-time validation of required package surfaces for an inspection."""
+    repo = get_repository()
+    ins = await repo.get_by_id(inspection_id)
+    if not ins:
+        raise HTTPException(status_code=404, detail="Inspection not found")
+    return validate_inspection_surfaces(ins)
+
 @router.post("/{inspection_id}/analyze", response_model=Dict[str, Any])
 async def analyze_product(
     inspection_id: str,
@@ -244,9 +269,23 @@ async def analyze_product(
     if not ins:
         raise HTTPException(status_code=404, detail="Inspection not found")
 
+    # Validate ALL required product surfaces BEFORE executing any AI, OCR, CV, or Rule engines
+    validation = validate_inspection_surfaces(ins)
+    if not validation["valid"]:
+        missing_str = ", ".join(validation["missing_surfaces"])
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "REQUIRED_IMAGES_MISSING",
+                "message": f"All required product images must be uploaded before analysis. Missing: {missing_str}",
+                "required_count": validation["required_count"],
+                "completed_count": validation["completed_count"],
+                "missing_surfaces": validation["missing_surfaces"],
+                "completed_surfaces": validation["completed_surfaces"],
+            }
+        )
+
     images = ins.get("images", [])
-    if not images:
-        raise HTTPException(status_code=400, detail="Capture at least one package image before analysis.")
 
     # ── Restore missing image files from database-persisted base64 ──
     # Railway (like Render) uses an ephemeral filesystem; uploaded images

@@ -14,6 +14,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../inspections/inspections_controller.dart';
 import 'widgets/scanner_web_workspace.dart';
+import 'models/scanner_surface_state.dart';
 
 class ScannerScreen extends ConsumerStatefulWidget {
   final String? inspectionId;
@@ -36,6 +37,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   // Map of surface to captured image bytes and name
   final Map<int, Uint8List> _surfaceImages = {};
   final Map<int, String> _surfaceImageNames = {};
+  Map<String, SurfaceState> _surfacesState = RequiredSurfaceValidator.createInitialStates();
 
   Future<Uint8List> _generateSamplePng({required bool hasViolation, required String surface}) async {
     final recorder = ui.PictureRecorder();
@@ -52,6 +54,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       text = hasViolation
           ? "Manufactured by: ABC Agro Foods Ltd.\nBatch: BAS-2026-04\nConsumer Care: care@abc.com"
           : "Manufactured & Packed by: ABC Agro Foods Ltd., Plot 42, Karnal, Haryana - 132001\nPacked on: 08/2026\nBest Before: 24 months from packaging\nConsumer Care: 1800-111-2222 | care@abcagro.com\nCountry of Origin: India";
+    } else if (surface == 'SIDE') {
+      text = hasViolation
+          ? "Consumer Helpline: 1800-000-000\nFeedback: contact@consumer-desk.in\nFSSAI Lic: 10014011000123"
+          : "Customer Care Cell: ABC Agro Foods Ltd.\nHelpline: 1800-111-2222\nEmail: care@abcagro.com\nWebsite: www.abcagro.com";
     } else {
       text = hasViolation
           ? "MRP Rs 500\nDate: 08/2026"
@@ -123,11 +129,87 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           context.go('/scanner?inspectionId=${draft.id}');
         }
       }
+
+      await _syncPersistedImages(draft.id);
     } else {
       setState(() {
         _isInitializing = false;
         _initError = "Unable to start inspection. Please check connection and retry.";
       });
+    }
+  }
+
+  Future<void> _syncPersistedImages(String inspectionId) async {
+    try {
+      final detail = await ref.read(inspectionsProvider.notifier).fetchInspectionDetail(inspectionId);
+      if (detail != null && mounted) {
+        setState(() {
+          for (final img in detail.images) {
+            if (img is Map) {
+              final surfaceCode = (img['surface_type'] ?? '').toString().toUpperCase();
+              if (_surfacesState.containsKey(surfaceCode)) {
+                _surfacesState[surfaceCode] = _surfacesState[surfaceCode]!.copyWith(
+                  status: SurfaceUploadStatus.success,
+                  serverImageId: img['id']?.toString(),
+                  imageName: 'Persisted $surfaceCode',
+                );
+                final idx = _canonicalSurfaces.indexOf(surfaceCode);
+                if (idx != -1) {
+                  _surfaceImageNames[idx] = 'Persisted $surfaceCode';
+                }
+              }
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Could not sync persisted images for $inspectionId: $e");
+    }
+  }
+
+  Future<void> _uploadSurfaceImage(String surfaceCode, Uint8List bytes, String filename) async {
+    if (_currentInspectionId == null) return;
+    final isPng = filename.toLowerCase().endsWith('.png');
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(
+        bytes,
+        filename: filename,
+        contentType: MediaType('image', isPng ? 'png' : 'jpeg'),
+      ),
+      'surface_type': surfaceCode,
+    });
+
+    try {
+      final client = ref.read(apiClientProvider);
+      final res = await client.uploadFile(
+        "${ApiConstants.inspections}/$_currentInspectionId/images",
+        formData,
+      );
+      if (mounted) {
+        final serverId = res.data is Map ? res.data['id']?.toString() : null;
+        setState(() {
+          _surfacesState[surfaceCode] = _surfacesState[surfaceCode]!.copyWith(
+            status: SurfaceUploadStatus.success,
+            serverImageId: serverId,
+            errorMessage: null,
+          );
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _surfacesState[surfaceCode] = _surfacesState[surfaceCode]!.copyWith(
+            status: SurfaceUploadStatus.failed,
+            errorMessage: e.toString(),
+          );
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Upload failed for ${_surfacesState[surfaceCode]?.definition.name ?? surfaceCode}: $e'),
+            backgroundColor: AppColors.violation,
+          ),
+        );
+      }
     }
   }
 
@@ -142,10 +224,20 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       );
       if (picked != null) {
         final bytes = await picked.readAsBytes();
+        final surfaceCode = _canonicalSurfaces[_selectedSurfaceIndex];
+
         setState(() {
+          _surfacesState[surfaceCode] = _surfacesState[surfaceCode]!.copyWith(
+            status: SurfaceUploadStatus.uploading,
+            imageBytes: bytes,
+            imageName: picked.name,
+            errorMessage: null,
+          );
           _surfaceImages[_selectedSurfaceIndex] = bytes;
           _surfaceImageNames[_selectedSurfaceIndex] = picked.name;
         });
+
+        await _uploadSurfaceImage(surfaceCode, bytes, picked.name);
       }
     } catch (e) {
       if (mounted) {
@@ -157,26 +249,51 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   }
 
   Future<void> _loadSamplePackage(bool hasViolation) async {
-    final frontBytes = await _generateSamplePng(hasViolation: hasViolation, surface: 'FRONT');
-    final backBytes = await _generateSamplePng(hasViolation: hasViolation, surface: 'BACK');
-    final mrpBytes = await _generateSamplePng(hasViolation: hasViolation, surface: 'MRP_AREA');
-
+    if (_currentInspectionId == null) return;
     setState(() {
-      _surfaceImages[0] = frontBytes;
-      _surfaceImageNames[0] = hasViolation ? 'sample_violation_front.png' : 'sample_compliant_front.png';
-      _surfaceImages[1] = backBytes;
-      _surfaceImageNames[1] = 'sample_back_declarations.png';
-      _surfaceImages[3] = mrpBytes;
-      _surfaceImageNames[3] = 'sample_mrp_area.png';
+      _isUploading = true;
+      _uploadStatusMessage = 'Loading and uploading 4 required package surfaces...';
     });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(hasViolation ? 'Loaded Sample Package with Rule 7 & MRP issues' : 'Loaded Standard Compliant Package Sample'),
-          backgroundColor: AppColors.secondary,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+
+    try {
+      for (int i = 0; i < _canonicalSurfaces.length; i++) {
+        final code = _canonicalSurfaces[i];
+        final bytes = await _generateSamplePng(hasViolation: hasViolation, surface: code);
+        final filename = hasViolation && i == 0 ? 'sample_violation_front.png' : 'sample_${code.toLowerCase()}.png';
+
+        if (!mounted) return;
+        setState(() {
+          _surfacesState[code] = _surfacesState[code]!.copyWith(
+            status: SurfaceUploadStatus.uploading,
+            imageBytes: bytes,
+            imageName: filename,
+            errorMessage: null,
+          );
+          _surfaceImages[i] = bytes;
+          _surfaceImageNames[i] = filename;
+        });
+
+        await _uploadSurfaceImage(code, bytes, filename);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(hasViolation
+                ? 'Loaded 4 Sample Surfaces with Rule 7 & MRP issues'
+                : 'Loaded 4 Standard Compliant Package Surfaces'),
+            backgroundColor: AppColors.secondary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadStatusMessage = null;
+        });
+      }
     }
   }
 
@@ -203,82 +320,53 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       return;
     }
 
-    if (_surfaceImages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please capture or load at least one package surface image before running the audit.'),
-          backgroundColor: AppColors.warning,
-        ),
-      );
+    // MANDATORY VALIDATION: All 4 package surfaces must be successfully uploaded and available
+    final validation = RequiredSurfaceValidator.validate(_surfacesState);
+    if (!validation.isValid) {
+      _showMissingImagesValidation(validation);
       return;
     }
 
-    setState(() {
-      _isUploading = true;
-      _uploadStatusMessage = 'Uploading commodity package surfaces...';
-    });
-
-    final client = ref.read(apiClientProvider);
-
-    try {
-      // 1. Upload any captured images with canonical surface codes
-      for (final entry in _surfaceImages.entries) {
-        final surfaceCode = entry.key < _canonicalSurfaces.length
-            ? _canonicalSurfaces[entry.key]
-            : 'FRONT';
-        final bytes = entry.value;
-        final filename = _surfaceImageNames[entry.key] ?? 'surface_${entry.key}.png';
-        final isPng = filename.toLowerCase().endsWith('.png');
-
-        final formData = FormData.fromMap({
-          'file': MultipartFile.fromBytes(
-            bytes,
-            filename: filename,
-            contentType: MediaType('image', isPng ? 'png' : 'jpeg'),
-          ),
-          'surface_type': surfaceCode,
-        });
-
-        await client.uploadFile(
-          "${ApiConstants.inspections}/$_currentInspectionId/images",
-          formData,
-        );
-      }
-
-      setState(() {
-        _uploadStatusMessage = 'Launching AI OCR & Legal Metrology Engine...';
-      });
-
-      if (mounted) {
-        context.push('/analysis-progress/$_currentInspectionId');
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isUploading = false);
-        String message = 'Pipeline error: $e';
-        if (e is DioException) {
-          final responseData = e.response?.data;
-          if (responseData is Map && responseData['detail'] is String) {
-            message = responseData['detail'] as String;
-          } else if (responseData is Map && responseData['error'] is Map) {
-            final errorMap = responseData['error'] as Map;
-            message = (errorMap['details'] as String?) ??
-                (errorMap['message'] as String?) ??
-                e.message ??
-                message;
-          } else if (e.message != null && e.message!.isNotEmpty) {
-            message = e.message!;
-          }
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: AppColors.violation,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
+    if (mounted) {
+      context.push('/analysis-progress/$_currentInspectionId');
     }
+  }
+
+  void _showMissingImagesValidation(RequiredImagesValidationResult validation) {
+    final missingList = validation.missingSurfaceNames;
+    String missingMessage;
+    if (validation.uploadingSurfaceNames.isNotEmpty) {
+      missingMessage = "Please wait: Uploading ${validation.uploadingSurfaceNames.join(', ')}...";
+    } else if (missingList.length == 1) {
+      missingMessage = "Please upload ${missingList.first} before running the AI compliance audit.";
+    } else {
+      missingMessage = "Cannot run AI Compliance Audit yet.\n${validation.completedCount} of ${validation.requiredCount} required images uploaded.\n\nMissing:\n• ${missingList.join('\n• ')}";
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 24),
+            SizedBox(width: 8),
+            Text('Required Images Incomplete', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(missingMessage, style: const TextStyle(fontSize: 14, height: 1.4)),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Continue Scanning'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -343,11 +431,20 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
 
     if (ResponsiveLayout.isWebDesktop(context)) {
+      final validation = RequiredSurfaceValidator.validate(_surfacesState);
 
       return ScannerWebWorkspace(
         currentInspectionId: _currentInspectionId,
         onInspectionChanged: (val) {
-          if (val != null) setState(() => _currentInspectionId = val);
+          if (val != null) {
+            setState(() {
+              _currentInspectionId = val;
+              _surfacesState = RequiredSurfaceValidator.createInitialStates();
+              _surfaceImages.clear();
+              _surfaceImageNames.clear();
+            });
+            _syncPersistedImages(val);
+          }
         },
         selectedSurfaceIndex: _selectedSurfaceIndex,
         surfaces: _surfaces,
@@ -355,16 +452,32 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         surfaceImages: _surfaceImages,
         surfaceImageNames: _surfaceImageNames,
         onClearActiveSurface: () {
+          final surfaceCode = _canonicalSurfaces[_selectedSurfaceIndex];
+          final existingId = _surfacesState[surfaceCode]?.serverImageId;
+
           setState(() {
+            _surfacesState[surfaceCode] = _surfacesState[surfaceCode]!.copyWith(
+              status: SurfaceUploadStatus.empty,
+              clearImage: true,
+            );
             _surfaceImages.remove(_selectedSurfaceIndex);
             _surfaceImageNames.remove(_selectedSurfaceIndex);
           });
+
+          if (existingId != null && _currentInspectionId != null) {
+            final client = ref.read(apiClientProvider);
+            try {
+              client.delete("${ApiConstants.inspections}/$_currentInspectionId/images/$existingId");
+            } catch (_) {}
+          }
         },
         onPickImage: _pickImage,
         onLoadSamplePackage: _loadSamplePackage,
         onRunPipeline: _runPipeline,
         isUploading: _isUploading,
         uploadStatusMessage: _uploadStatusMessage,
+        surfacesState: _surfacesState,
+        validation: validation,
       );
     }
 
@@ -404,7 +517,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               child: Row(
                 children: List.generate(_surfaces.length, (index) {
                   final isSelected = _selectedSurfaceIndex == index;
-                  final hasImage = _surfaceImages.containsKey(index);
+                  final canonicalCode = _canonicalSurfaces[index];
+                  final surfaceState = _surfacesState[canonicalCode];
+                  final isComplete = surfaceState?.isComplete ?? _surfaceImages.containsKey(index);
+                  final isSurfaceUploading = surfaceState?.isUploading ?? false;
+                  final isSurfaceFailed = surfaceState?.isFailed ?? false;
 
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -413,7 +530,17 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                       label: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (hasImage) ...[
+                          if (isSurfaceUploading) ...[
+                            const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.secondary),
+                            ),
+                            const SizedBox(width: 4),
+                          ] else if (isSurfaceFailed) ...[
+                            const Icon(Icons.error_outline, size: 14, color: AppColors.violation),
+                            const SizedBox(width: 4),
+                          ] else if (isComplete) ...[
                             const Icon(Icons.check_circle, size: 14, color: AppColors.compliant),
                             const SizedBox(width: 4),
                           ],
@@ -477,19 +604,68 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                 ],
               ),
               const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.secondary),
-                  icon: const Icon(Icons.auto_awesome, color: Colors.white),
-                  label: const Text(
-                    'Run AI Compliance Audit',
-                    style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: _runPipeline,
-                ),
-              ),
+              // Statutory Completeness Progress Indicator
+              Builder(builder: (context) {
+                final validation = RequiredSurfaceValidator.validate(_surfacesState);
+                return Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: validation.isValid
+                            ? AppColors.compliant.withValues(alpha: 0.1)
+                            : AppColors.warning.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: validation.isValid
+                              ? AppColors.compliant.withValues(alpha: 0.3)
+                              : AppColors.warning.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            validation.isValid ? Icons.check_circle : Icons.info_outline,
+                            size: 16,
+                            color: validation.isValid ? AppColors.compliant : AppColors.warning,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              validation.isValid
+                                  ? 'All 4 required surfaces ready for AI analysis'
+                                  : '${validation.completedCount} of 4 surfaces uploaded (${validation.missingSurfaceNames.join(', ')} missing)',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: validation.isValid ? AppColors.compliant : AppColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: validation.isValid ? AppColors.secondary : AppColors.neutral400,
+                        ),
+                        icon: const Icon(Icons.auto_awesome, color: Colors.white),
+                        label: Text(
+                          validation.isValid
+                              ? 'Run AI Compliance Audit'
+                              : 'Run AI Compliance Audit (${validation.completedCount}/4 Complete)',
+                          style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: _runPipeline,
+                      ),
+                    ),
+                  ],
+                );
+              }),
             ],
             const SizedBox(height: 20),
           ],
@@ -569,7 +745,15 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                 );
               }).toList(),
               onChanged: (val) {
-                if (val != null) setState(() => _currentInspectionId = val);
+                if (val != null) {
+                  setState(() {
+                    _currentInspectionId = val;
+                    _surfacesState = RequiredSurfaceValidator.createInitialStates();
+                    _surfaceImages.clear();
+                    _surfaceImageNames.clear();
+                  });
+                  _syncPersistedImages(val);
+                }
               },
             ),
             Builder(builder: (context) {
