@@ -298,6 +298,10 @@ class NeonPostgresRepository(
                 stmt = stmt.where(or_(Inspection.inspector_id == inspector_id, Inspection.inspector_id.is_(None)))
             if status:
                 stmt = stmt.where(Inspection.status == status)
+            else:
+                # Archived inspections remain recoverable, but are hidden from
+                # the active registry unless explicitly requested by status.
+                stmt = stmt.where(Inspection.status != "ARCHIVED")
             if query:
                 stmt = stmt.where(or_(
                     Inspection.inspection_code.ilike(f"%{query}%"),
