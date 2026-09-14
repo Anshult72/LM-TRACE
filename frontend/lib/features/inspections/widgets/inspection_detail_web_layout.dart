@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
 import '../../../core/widgets/widgets.dart';
@@ -197,66 +199,586 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                 'Package Surface Evidence',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.primaryNavy),
               ),
-              Text(
-                '${images.length} Surfaces Captured',
-                style: const TextStyle(fontSize: 12, color: AppColors.neutral500),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.touch_app_outlined, size: 14, color: AppColors.secondaryBlue),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${images.length} Surfaces Captured • Click any photo to zoom',
+                    style: const TextStyle(fontSize: 12, color: AppColors.neutral600, fontWeight: FontWeight.w500),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           if (images.isEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 24),
+              padding: const EdgeInsets.symmetric(vertical: 28),
               alignment: Alignment.center,
               child: Column(
                 children: const [
-                  Icon(Icons.image_not_supported_outlined, size: 36, color: AppColors.neutral400),
-                  SizedBox(height: 6),
-                  Text('No packaging photos attached yet.', style: TextStyle(fontSize: 12, color: AppColors.neutral500)),
+                  Icon(Icons.image_not_supported_outlined, size: 40, color: AppColors.neutral400),
+                  SizedBox(height: 8),
+                  Text('No packaging photos attached yet.', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.neutral600)),
+                  SizedBox(height: 4),
+                  Text('Capture or upload package surfaces during scan ingestion.', style: TextStyle(fontSize: 11.5, color: AppColors.neutral500)),
                 ],
               ),
             )
           else
             Row(
-              children: images.map<Widget>((img) {
-                final surface = img['surface_type'] ?? 'SURFACE';
+              children: List.generate(images.length, (index) {
+                final img = images[index] as Map<String, dynamic>;
+                final surface = img['surface_type']?.toString() ?? 'SURFACE';
+                final quality = (img['quality_score'] as num?)?.toDouble();
+
                 return Expanded(
-                  child: Container(
-                    height: 160,
-                    margin: const EdgeInsets.only(right: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.neutral100,
+                  child: Tooltip(
+                    message: 'Click to inspect & zoom $surface surface evidence',
+                    child: InkWell(
+                      onTap: () => _showImageZoomDialog(context, initialIndex: index, images: images),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.neutral300),
-                    ),
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: Icon(Icons.document_scanner_outlined, size: 40, color: AppColors.neutral400),
-                        ),
-                        Positioned(
-                          bottom: 8,
-                          left: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.75),
-                              borderRadius: BorderRadius.circular(4),
+                      child: Container(
+                        height: 175,
+                        margin: EdgeInsets.only(right: index < images.length - 1 ? 12 : 0),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.neutral300),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.06),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
-                            child: Text(
-                              surface,
-                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                            ),
-                          ),
+                          ],
                         ),
-                      ],
+                        clipBehavior: Clip.antiAlias,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // 1. Real Uploaded Package Surface Image
+                            _buildSurfaceImage(img, fit: BoxFit.cover),
+
+                            // 2. Bottom Gradient Shade for clear badge legibility
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              height: 52,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withValues(alpha: 0.85),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // 3. Top-right Interactive Zoom Badge
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.65),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white24),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(Icons.zoom_in_rounded, size: 13, color: Colors.white),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'Zoom',
+                                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            // 4. Bottom-left Surface Name Badge
+                            Positioned(
+                              bottom: 8,
+                              left: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryNavy.withValues(alpha: 0.90),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: Colors.white24),
+                                ),
+                                child: Text(
+                                  surface,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            // 5. Bottom-right Quality Indicator
+                            if (quality != null)
+                              Positioned(
+                                bottom: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.70),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: BoxDecoration(
+                                          color: quality >= 0.70 ? AppColors.passGreen : AppColors.reviewAmber,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${(quality * 100).toInt()}%',
+                                        style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 );
-              }).toList(),
+              }),
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSurfaceImage(
+    Map<String, dynamic> img, {
+    BoxFit fit = BoxFit.cover,
+  }) {
+    // 1. Try base64 direct decode (instant zero-latency render)
+    final qualityDetails = img['quality_details'] as Map<String, dynamic>?;
+    final b64 = qualityDetails?['_image_b64'] as String? ?? img['_image_b64'] as String?;
+
+    if (b64 != null && b64.isNotEmpty) {
+      try {
+        final cleanB64 = b64.contains(',') ? b64.split(',').last : b64;
+        final bytes = base64Decode(cleanB64);
+        return Image.memory(
+          bytes,
+          fit: fit,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (ctx, err, stack) => _buildNetworkOrFallbackImage(img, fit: fit),
+        );
+      } catch (_) {
+        // Fallback to network
+      }
+    }
+
+    return _buildNetworkOrFallbackImage(img, fit: fit);
+  }
+
+  Widget _buildNetworkOrFallbackImage(
+    Map<String, dynamic> img, {
+    BoxFit fit = BoxFit.cover,
+  }) {
+    final imgId = img['id']?.toString() ?? '';
+    final primaryUrl = "${ApiConstants.baseUrl}/api/inspections/${inspection.id}/images/$imgId";
+
+    if (imgId.isNotEmpty) {
+      return Image.network(
+        primaryUrl,
+        fit: fit,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (ctx, err, stack) {
+          final origPath = img['original_path']?.toString().replaceAll(RegExp(r'^[/\\]*'), '') ?? '';
+          final cleanRel = origPath.replaceFirst(RegExp(r'^storage[/\\\\]?'), '');
+          final storageUrl = "${ApiConstants.baseUrl}/storage/$cleanRel";
+
+          return Image.network(
+            storageUrl,
+            fit: fit,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (c, e, s) => _buildFallbackSurfacePlaceholder(img['surface_type']?.toString() ?? 'SURFACE'),
+          );
+        },
+        loadingBuilder: (ctx, child, progress) {
+          if (progress == null) return child;
+          return Container(
+            color: const Color(0xFF1E293B),
+            alignment: Alignment.center,
+            child: const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.secondaryBlue),
+            ),
+          );
+        },
+      );
+    }
+
+    return _buildFallbackSurfacePlaceholder(img['surface_type']?.toString() ?? 'SURFACE');
+  }
+
+  Widget _buildFallbackSurfacePlaceholder(String surface) {
+    return Container(
+      color: const Color(0xFF1E293B),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.document_scanner_outlined, size: 36, color: Colors.white38),
+            const SizedBox(height: 6),
+            Text(
+              surface,
+              style: const TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showImageZoomDialog(
+    BuildContext context, {
+    required int initialIndex,
+    required List<dynamic> images,
+  }) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.85),
+      builder: (ctx) {
+        int selectedIndex = initialIndex;
+        final transformationController = TransformationController();
+
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            final currentImg = (selectedIndex >= 0 && selectedIndex < images.length)
+                ? images[selectedIndex] as Map<String, dynamic>
+                : <String, dynamic>{};
+            final surfaceName = currentImg['surface_type']?.toString() ?? 'SURFACE';
+            final width = currentImg['width'] ?? 1200;
+            final height = currentImg['height'] ?? 1600;
+            final qualityScore = (currentImg['quality_score'] as num?)?.toDouble();
+            final qualityAssessment = currentImg['quality_assessment']?.toString() ?? 'GOOD';
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Container(
+                width: MediaQuery.of(ctx).size.width * 0.90,
+                height: MediaQuery.of(ctx).size.height * 0.90,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // 1. Header Bar
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                        border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondaryBlue,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '$surfaceName SURFACE EVIDENCE',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Case: ${inspection.inspectionCode} • ${inspection.businessName ?? "Legal Metrology Inspection"}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Resolution: $width × $height px${qualityScore != null ? " • Quality: ${(qualityScore * 100).toInt()}% ($qualityAssessment)" : ""}',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.6),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            'Surface ${selectedIndex + 1} of ${images.length}',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, color: Colors.white, size: 22),
+                            tooltip: 'Close Preview (Esc)',
+                            splashRadius: 20,
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // 2. Central Interactive Zoom Canvas
+                    Expanded(
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          ClipRect(
+                            child: InteractiveViewer(
+                              transformationController: transformationController,
+                              minScale: 0.5,
+                              maxScale: 6.0,
+                              boundaryMargin: const EdgeInsets.all(100),
+                              child: Center(
+                                child: Container(
+                                  constraints: BoxConstraints(
+                                    maxWidth: MediaQuery.of(ctx).size.width * 0.75,
+                                    maxHeight: MediaQuery.of(ctx).size.height * 0.68,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.5),
+                                        blurRadius: 20,
+                                      ),
+                                    ],
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: _buildSurfaceImage(currentImg, fit: BoxFit.contain),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Previous Surface Arrow
+                          if (selectedIndex > 0)
+                            Positioned(
+                              left: 16,
+                              child: Material(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                shape: const CircleBorder(),
+                                child: IconButton(
+                                  icon: const Icon(Icons.chevron_left_rounded, color: Colors.white, size: 32),
+                                  tooltip: 'Previous Surface',
+                                  onPressed: () {
+                                    setDialogState(() {
+                                      selectedIndex--;
+                                      transformationController.value = Matrix4.identity();
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+
+                          // Next Surface Arrow
+                          if (selectedIndex < images.length - 1)
+                            Positioned(
+                              right: 16,
+                              child: Material(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                shape: const CircleBorder(),
+                                child: IconButton(
+                                  icon: const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 32),
+                                  tooltip: 'Next Surface',
+                                  onPressed: () {
+                                    setDialogState(() {
+                                      selectedIndex++;
+                                      transformationController.value = Matrix4.identity();
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // 3. Bottom Controls & Thumbnails Strip
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+                      ),
+                      child: Row(
+                        children: [
+                          // Surface Thumbnails
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: List.generate(images.length, (idx) {
+                                  final thumbImg = images[idx] as Map<String, dynamic>;
+                                  final thumbSurface = thumbImg['surface_type']?.toString() ?? 'SURF';
+                                  final isSelected = idx == selectedIndex;
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setDialogState(() {
+                                        selectedIndex = idx;
+                                        transformationController.value = Matrix4.identity();
+                                      });
+                                    },
+                                    child: Container(
+                                      width: 80,
+                                      height: 52,
+                                      margin: const EdgeInsets.only(right: 12),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: isSelected ? const Color(0xFF38BDF8) : Colors.white24,
+                                          width: isSelected ? 2 : 1,
+                                        ),
+                                        boxShadow: isSelected
+                                            ? [
+                                                BoxShadow(
+                                                  color: const Color(0xFF38BDF8).withValues(alpha: 0.3),
+                                                  blurRadius: 8,
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          _buildSurfaceImage(thumbImg, fit: BoxFit.cover),
+                                          Positioned(
+                                            bottom: 0,
+                                            left: 0,
+                                            right: 0,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(vertical: 2),
+                                              color: Colors.black.withValues(alpha: 0.7),
+                                              alignment: Alignment.center,
+                                              child: Text(
+                                                thumbSurface,
+                                                style: TextStyle(
+                                                  color: isSelected ? const Color(0xFF38BDF8) : Colors.white,
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 16),
+
+                          // Zoom controls
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.zoom_out_rounded, color: Colors.white70, size: 20),
+                                tooltip: 'Zoom Out',
+                                onPressed: () {
+                                  final currentScale = transformationController.value.getMaxScaleOnAxis();
+                                  if (currentScale > 0.6) {
+                                    final next = (currentScale * 0.8).clamp(0.5, 6.0);
+                                    transformationController.value = Matrix4.diagonal3Values(next, next, 1.0);
+                                  }
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.restart_alt_rounded, color: Colors.white70, size: 20),
+                                tooltip: 'Reset Zoom (100%)',
+                                onPressed: () {
+                                  transformationController.value = Matrix4.identity();
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.zoom_in_rounded, color: Colors.white70, size: 20),
+                                tooltip: 'Zoom In',
+                                onPressed: () {
+                                  final currentScale = transformationController.value.getMaxScaleOnAxis();
+                                  if (currentScale < 5.0) {
+                                    final next = (currentScale * 1.25).clamp(0.5, 6.0);
+                                    transformationController.value = Matrix4.diagonal3Values(next, next, 1.0);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
