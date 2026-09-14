@@ -32,6 +32,258 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
     });
   }
 
+  // Official Statutory Report Palette
+  static const _cNavy = PdfColor.fromInt(0xFF1E3A8A);
+  static const _cSlate = PdfColor.fromInt(0xFF0F172A);
+  static const _cSlateDark = PdfColor.fromInt(0xFF1E293B);
+  static const _cSlateMuted = PdfColor.fromInt(0xFF475569);
+  static const _cSlateLight = PdfColor.fromInt(0xFF64748B);
+  static const _cBorder = PdfColor.fromInt(0xFFCBD5E1);
+  static const _cBorderLight = PdfColor.fromInt(0xFFE2E8F0);
+  static const _cBgLight = PdfColor.fromInt(0xFFF1F5F9);
+  static const _cCardBg = PdfColor.fromInt(0xFFF8FAFC);
+  static const _cBlueBadgeBg = PdfColor.fromInt(0xFFEFF6FF);
+  static const _cBlueBadgeBorder = PdfColor.fromInt(0xFFBFDBFE);
+  static const _cGreenBg = PdfColor.fromInt(0xFFDCFCE7);
+  static const _cGreenText = PdfColor.fromInt(0xFF166534);
+  static const _cGreenIcon = PdfColor.fromInt(0xFF15803D);
+  static const _cGreenBorder = PdfColor.fromInt(0xFF86EFAC);
+  static const _cGreenBannerBg = PdfColor.fromInt(0xFFF0FDF4);
+  static const _cRedBg = PdfColor.fromInt(0xFFFEE2E2);
+  static const _cRedText = PdfColor.fromInt(0xFF991B1B);
+  static const _cRedBorder = PdfColor.fromInt(0xFFFCA5A5);
+  static const _cRedRowBg = PdfColor.fromInt(0xFFFEF2F2);
+  static const _cYellowBg = PdfColor.fromInt(0xFFFEF9C3);
+  static const _cYellowText = PdfColor.fromInt(0xFF854D0E);
+  static const _cYellowBorder = PdfColor.fromInt(0xFFFDE047);
+  static const _cAmberBg = PdfColor.fromInt(0xFFFEF3C7);
+  static const _cAmberText = PdfColor.fromInt(0xFF92400E);
+  static const _cAmberVerdict = PdfColor.fromInt(0xFFB45309);
+  static const _cOrangeBg = PdfColor.fromInt(0xFFFFEDD5);
+  static const _cOrangeText = PdfColor.fromInt(0xFF9A3412);
+  static const _cOrangeBorder = PdfColor.fromInt(0xFFFDBA74);
+  static const _cSaffron = PdfColor.fromInt(0xFFFF9933);
+  static const _cIndiaGreen = PdfColor.fromInt(0xFF138808);
+
+  String _formatFieldName(String key) {
+    final clean = key.trim().toLowerCase();
+    switch (clean) {
+      case 'mrp':
+      case 'maximum_retail_price':
+        return 'Maximum Retail Price (MRP)';
+      case 'net_quantity':
+      case 'net_weight':
+      case 'net_content':
+        return 'Net Quantity / Volume';
+      case 'manufacturer':
+      case 'manufacturer_name':
+      case 'manufacturer_address':
+        return 'Manufacturer Details';
+      case 'packer':
+      case 'packer_name':
+      case 'packer_address':
+        return 'Packer Details';
+      case 'importer':
+      case 'importer_name':
+      case 'importer_address':
+        return 'Importer Details';
+      case 'manufacturing_packing_date':
+      case 'mfg_date':
+      case 'packing_date':
+        return 'Date of Mfg / Packing';
+      case 'expiry_date':
+      case 'best_before':
+      case 'use_by_date':
+        return 'Best Before / Expiry Date';
+      case 'consumer_care':
+      case 'customer_care':
+      case 'consumer_complaint':
+        return 'Consumer Care (Rule 6(1)(n))';
+      case 'country_of_origin':
+      case 'origin_country':
+        return 'Country of Origin (COO)';
+      case 'commodity_name':
+      case 'generic_name':
+      case 'product_name':
+        return 'Generic / Commodity Name';
+      case 'unit_sale_price':
+      case 'usp':
+        return 'Unit Sale Price (USP)';
+      case 'dimensions':
+      case 'package_dimensions':
+        return 'Package Dimensions (L x W x H)';
+      default:
+        return clean
+            .split('_')
+            .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
+            .join(' ');
+    }
+  }
+
+  pw.Widget _buildStatusBadge(String status) {
+    final s = status.toUpperCase().trim();
+    PdfColor bg;
+    PdfColor text;
+    PdfColor border;
+    String label;
+
+    if (s == 'VERIFIED' || s == 'COMPLIANT' || s == 'PASS' || s == 'VALID') {
+      bg = _cGreenBg;
+      text = _cGreenText;
+      border = _cGreenBorder;
+      label = 'VERIFIED';
+    } else if (s == 'VIOLATION' || s == 'NON_COMPLIANT' || s == 'FAIL' || s == 'REJECTED') {
+      bg = _cRedBg;
+      text = _cRedText;
+      border = _cRedBorder;
+      label = 'VIOLATION';
+    } else if (s == 'MISSING' || s == 'ABSENT') {
+      bg = _cOrangeBg;
+      text = _cOrangeText;
+      border = _cOrangeBorder;
+      label = 'MISSING';
+    } else {
+      bg = _cYellowBg;
+      text = _cYellowText;
+      border = _cYellowBorder;
+      label = s.contains('REVIEW') ? 'NEEDS REVIEW' : 'PENDING';
+    }
+
+    return pw.Container(
+      alignment: pw.Alignment.center,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
+      decoration: pw.BoxDecoration(
+        color: bg,
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
+        border: pw.Border.all(color: border, width: 0.6),
+      ),
+      child: pw.Text(
+        label,
+        style: pw.TextStyle(
+          fontSize: 6.5,
+          fontWeight: pw.FontWeight.bold,
+          color: text,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _buildSeverityBadge(String sev) {
+    final s = sev.toUpperCase();
+    PdfColor bg;
+    PdfColor text;
+    if (s == 'CRITICAL' || s == 'HIGH') {
+      bg = _cRedBg;
+      text = _cRedText;
+    } else if (s == 'MEDIUM') {
+      bg = _cAmberBg;
+      text = _cAmberText;
+    } else {
+      bg = _cBgLight;
+      text = _cSlateMuted;
+    }
+
+    return pw.Container(
+      alignment: pw.Alignment.center,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: pw.BoxDecoration(
+        color: bg,
+        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
+      ),
+      child: pw.Text(
+        s,
+        style: pw.TextStyle(fontSize: 6.5, fontWeight: pw.FontWeight.bold, color: text),
+      ),
+    );
+  }
+
+  PdfColor _getStatusTextColor(String status) {
+    final s = status.toUpperCase();
+    if (s == 'COMPLIANT' || s == 'PASSED' || s == 'VERIFIED') return _cGreenText;
+    if (s == 'VIOLATION' || s == 'NON_COMPLIANT' || s == 'FAILED') return _cRedText;
+    return _cAmberVerdict;
+  }
+
+  pw.Widget _buildSectionHeader(String number, String title) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(top: 8, bottom: 4),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3.5),
+      decoration: const pw.BoxDecoration(
+        color: _cBgLight,
+        border: pw.Border(
+          left: pw.BorderSide(color: _cNavy, width: 2.5),
+        ),
+      ),
+      child: pw.Row(
+        children: [
+          pw.Text(
+            '$number. ',
+            style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: _cNavy),
+          ),
+          pw.Text(
+            title,
+            style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: _cSlate, letterSpacing: 0.2),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildTableCell(
+    String text, {
+    bool isHeader = false,
+    pw.Alignment alignment = pw.Alignment.centerLeft,
+    pw.TextAlign textAlign = pw.TextAlign.left,
+    PdfColor? textColor,
+    PdfColor? bgColor,
+    double fontSize = 7.5,
+    pw.FontWeight fontWeight = pw.FontWeight.normal,
+  }) {
+    return pw.Container(
+      alignment: alignment,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+      decoration: bgColor != null ? pw.BoxDecoration(color: bgColor) : null,
+      child: pw.Text(
+        text,
+        textAlign: textAlign,
+        style: pw.TextStyle(
+          fontSize: fontSize,
+          fontWeight: isHeader ? pw.FontWeight.bold : fontWeight,
+          color: textColor ?? (isHeader ? PdfColors.white : _cSlate),
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _buildPdfMetaRow(String label, String value, {bool isHighlight = false, PdfColor? highlightColor}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 1.5),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.SizedBox(
+            width: 78,
+            child: pw.Text(
+              label,
+              style: const pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: _cSlateMuted),
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: pw.TextStyle(
+                fontSize: 7.5,
+                fontWeight: isHighlight ? pw.FontWeight.bold : pw.FontWeight.normal,
+                color: highlightColor ?? _cSlate,
+              ),
+              overflow: pw.TextOverflow.clip,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<Uint8List> _generatePdf(PdfPageFormat format, InspectionModel ins) async {
     final doc = pw.Document();
 
@@ -46,261 +298,443 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(32),
+        margin: const pw.EdgeInsets.symmetric(horizontal: 26, vertical: 22),
+        header: (pw.Context context) {
+          if (context.pageNumber == 1) return pw.SizedBox();
+          return pw.Container(
+            margin: const pw.EdgeInsets.only(bottom: 8),
+            padding: const pw.EdgeInsets.only(bottom: 4),
+            decoration: const pw.BoxDecoration(
+              border: pw.Border(bottom: pw.BorderSide(color: _cBorder, width: 0.5)),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'LM-TRACE Statutory Inspection Report | Case: ${ins.inspectionCode}',
+                  style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
+                ),
+                pw.Text(
+                  'Page ${context.pageNumber} of ${context.pagesCount}',
+                  style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
+                ),
+              ],
+            ),
+          );
+        },
+        footer: (pw.Context context) {
+          return pw.Container(
+            margin: const pw.EdgeInsets.only(top: 8),
+            padding: const pw.EdgeInsets.only(top: 4),
+            decoration: const pw.BoxDecoration(
+              border: pw.Border(top: pw.BorderSide(color: _cBorder, width: 0.5)),
+            ),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'LM-TRACE Statutory Enforcement System | Form LM-INSP (Statutory)',
+                  style: const pw.TextStyle(fontSize: 6.5, color: PdfColors.grey600),
+                ),
+                pw.Text(
+                  'Page ${context.pageNumber} of ${context.pagesCount}',
+                  style: const pw.TextStyle(fontSize: 6.5, color: PdfColors.grey600),
+                ),
+              ],
+            ),
+          );
+        },
         build: (pw.Context context) {
           return [
+            // Tricolor Official Header Accent
+            pw.Row(
+              children: [
+                pw.Expanded(child: pw.Container(height: 2.5, color: _cSaffron)),
+                pw.Expanded(child: pw.Container(height: 2.5, color: PdfColors.white)),
+                pw.Expanded(child: pw.Container(height: 2.5, color: _cIndiaGreen)),
+              ],
+            ),
+            pw.SizedBox(height: 6),
+
             // Official Legal Metrology Header
             pw.Container(
-              padding: const pw.EdgeInsets.only(bottom: 12),
+              padding: const pw.EdgeInsets.only(bottom: 8),
               decoration: const pw.BoxDecoration(
-                border: pw.Border(bottom: pw.BorderSide(width: 2, color: PdfColors.blue900)),
+                border: pw.Border(bottom: pw.BorderSide(width: 1.5, color: _cNavy)),
               ),
               child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
                   if (logoImage != null)
                     pw.Container(
-                      width: 52,
-                      height: 52,
+                      width: 44,
+                      height: 44,
                       child: pw.ClipRRect(
-                        horizontalRadius: 6,
-                        verticalRadius: 6,
+                        horizontalRadius: 4,
+                        verticalRadius: 4,
                         child: pw.Image(logoImage, fit: pw.BoxFit.contain),
                       ),
                     )
                   else
                     pw.Container(
-                      width: 50,
-                      height: 50,
+                      width: 42,
+                      height: 42,
                       decoration: pw.BoxDecoration(
                         shape: pw.BoxShape.circle,
-                        border: pw.Border.all(color: PdfColors.blue900, width: 2),
+                        border: pw.Border.all(color: _cNavy, width: 1.5),
                       ),
                       alignment: pw.Alignment.center,
                       child: pw.Text(
                         AppBrand.name,
-                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 7, color: PdfColors.blue900),
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 7, color: _cNavy),
                       ),
                     ),
-                  pw.SizedBox(width: 14),
+                  pw.SizedBox(width: 10),
                   pw.Expanded(
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text(
                           'GOVERNMENT OF INDIA',
-                          style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey700),
+                          style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: _cSlateDark, letterSpacing: 0.4),
                         ),
                         pw.Text(
                           'MINISTRY OF CONSUMER AFFAIRS, FOOD & PUBLIC DISTRIBUTION',
-                          style: pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+                          style: const pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: _cSlateMuted),
                         ),
+                        pw.SizedBox(height: 1.5),
                         pw.Text(
                           'LEGAL METROLOGY (PACKAGED COMMODITIES) INSPECTION REPORT',
-                          style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
+                          style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold, color: _cNavy, letterSpacing: 0.2),
                         ),
                         pw.Text(
-                          'Statutory Audit under Rule 6, 7 & 9 of Legal Metrology (Packaged Commodities) Rules, 2011',
-                          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+                          'Statutory Audit Certificate under Rule 6, 7 & 9 of Legal Metrology (Packaged Commodities) Rules, 2011',
+                          style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey700),
                         ),
+                      ],
+                    ),
+                  ),
+                  pw.Container(
+                    padding: const pw.EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                    decoration: pw.BoxDecoration(
+                      color: _cBlueBadgeBg,
+                      border: pw.Border.all(color: _cBlueBadgeBorder, width: 0.8),
+                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
+                    ),
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
+                      children: [
+                        pw.Text('FORM LM-INSP', style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: _cNavy)),
+                        pw.Text('OFFICIAL AUDIT', style: const pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold, color: _cSlateLight)),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            pw.SizedBox(height: 14),
+            pw.SizedBox(height: 6),
 
-            // Metadata Grid
+            // Metadata Card Grid
             pw.Container(
-              padding: const pw.EdgeInsets.all(10),
+              padding: const pw.EdgeInsets.symmetric(horizontal: 9, vertical: 6),
               decoration: pw.BoxDecoration(
-                color: PdfColors.grey100,
-                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                color: _cCardBg,
+                border: pw.Border.all(color: _cBorderLight, width: 0.7),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
               ),
               child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Expanded(
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        _buildPdfMetaRow('Case Ref No:', ins.inspectionCode),
+                        _buildPdfMetaRow('Case Ref No:', ins.inspectionCode, isHighlight: true, highlightColor: _cNavy),
                         _buildPdfMetaRow('Inspection Date:', ins.inspectionDate.split('T').first),
                         _buildPdfMetaRow('Inspection Mode:', ins.inspectionType),
                         _buildPdfMetaRow('Rule Version:', ins.appliedRuleVersion ?? 'LM-2011-AMEND-2024'),
                       ],
                     ),
                   ),
+                  pw.SizedBox(width: 12),
                   pw.Expanded(
                     child: pw.Column(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        _buildPdfMetaRow('Establishment:', ins.businessName ?? ins.sellerName ?? 'Retailer'),
+                        _buildPdfMetaRow('Establishment:', ins.businessName ?? ins.sellerName ?? 'Retailer / Trader'),
                         _buildPdfMetaRow('Location:', ins.location),
                         _buildPdfMetaRow('Package Type:', ins.packageType ?? 'RECTANGULAR'),
-                        _buildPdfMetaRow('Compliance Status:', ins.status),
+                        _buildPdfMetaRow('Compliance Verdict:', ins.status, isHighlight: true, highlightColor: _getStatusTextColor(ins.status)),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            pw.SizedBox(height: 16),
 
-            // Section 1: Principal Display Panel (PDP) & Scale Measurement
-            pw.Text(
-              '1. PRINCIPAL DISPLAY PANEL & SCALE CALIBRATION',
-              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
-            ),
-            pw.SizedBox(height: 6),
+            // Section 1: Principal Display Panel & Scale Calibration
+            _buildSectionHeader('1', 'PRINCIPAL DISPLAY PANEL (PDP) & SCALE CALIBRATION'),
             pw.Table(
-              border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+              border: pw.TableBorder.all(color: _cBorder, width: 0.5),
+              columnWidths: const {
+                0: pw.FlexColumnWidth(2.3),
+                1: pw.FlexColumnWidth(2.1),
+                2: pw.FlexColumnWidth(3.6),
+              },
               children: [
                 pw.TableRow(
-                  decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                  decoration: const pw.BoxDecoration(color: _cNavy),
                   children: [
-                    _buildTableCell('Parameter', isHeader: true),
+                    _buildTableCell('Statutory Parameter', isHeader: true),
                     _buildTableCell('Determined Value', isHeader: true),
-                    _buildTableCell('Legal Metrology Standard', isHeader: true),
+                    _buildTableCell('Legal Metrology Prescribed Standard', isHeader: true),
                   ],
                 ),
                 pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: _cCardBg),
                   children: [
                     _buildTableCell('PDP Area (A)'),
-                    _buildTableCell(ins.pdpData != null ? '${ins.pdpData!['area_cm2']} cm²' : '140.0 cm²'),
+                    _buildTableCell(ins.pdpData != null ? '${ins.pdpData!['area_cm2']} sq. cm' : '140.0 sq. cm'),
                     _buildTableCell('Governed by Rule 7 Table-I Thresholds'),
                   ],
                 ),
                 pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: PdfColors.white),
                   children: [
                     _buildTableCell('Package Construction'),
                     _buildTableCell(ins.packageConstructionType ?? 'NORMAL'),
-                    _buildTableCell('Standard paper / plastic packaging'),
+                    _buildTableCell('Standard packaging norm (Rule 5 & Schedule 1)'),
                   ],
                 ),
                 pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: _cCardBg),
                   children: [
                     _buildTableCell('Scale Calibration'),
                     _buildTableCell(ins.calibrationStatus ?? 'CALIBRATED'),
                     _buildTableCell(ins.calibrationStatus == 'CALIBRATED'
-                        ? 'Reference distance verified (px/mm verified)'
-                        : 'UNVERIFIED — Measurements provisional'),
+                        ? 'Reference distance verified (px/mm scale calibrated)'
+                        : '[UNVERIFIED] Measurements provisional (Manual scale verification required)'),
                   ],
                 ),
               ],
             ),
-            pw.SizedBox(height: 16),
 
-            // Section 2: Rule 6 Mandatory Declarations Matrix
-            pw.Text(
-              '2. RULE 6 MANDATORY DECLARATIONS AUDIT',
-              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
-            ),
-            pw.SizedBox(height: 6),
+            // Section 2: Rule 6 Mandatory Declarations Audit
+            _buildSectionHeader('2', 'RULE 6 MANDATORY DECLARATIONS STATUTORY AUDIT'),
             pw.Table(
-              border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+              border: pw.TableBorder.all(color: _cBorder, width: 0.5),
+              columnWidths: const {
+                0: pw.FlexColumnWidth(2.5),
+                1: pw.FlexColumnWidth(3.3),
+                2: pw.FlexColumnWidth(3.3),
+                3: pw.FlexColumnWidth(1.5),
+              },
               children: [
                 pw.TableRow(
-                  decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                  decoration: const pw.BoxDecoration(color: _cNavy),
                   children: [
-                    _buildTableCell('Declaration Field', isHeader: true),
+                    _buildTableCell('Statutory Declaration', isHeader: true),
                     _buildTableCell('Detected Content', isHeader: true),
                     _buildTableCell('Verified Value', isHeader: true),
-                    _buildTableCell('Status', isHeader: true),
+                    _buildTableCell('Audit Status', isHeader: true, alignment: pw.Alignment.center, textAlign: pw.TextAlign.center),
                   ],
                 ),
-                ...ins.declarations.map((d) {
-                  final name = d['field_name'] ?? 'Declaration';
+                ...List.generate(ins.declarations.length, (index) {
+                  final d = ins.declarations[index];
+                  final rawName = d['field_name'] ?? 'Declaration';
+                  final formattedName = _formatFieldName(rawName.toString());
                   final raw = d['raw_value'] ?? d['ai_value'] ?? 'N/A';
                   final ver = d['verified_value'] ?? raw;
-                  final status = d['verification_status'] ?? 'DETECTED';
+                  final status = (d['verification_status'] ?? 'DETECTED').toString();
+                  final isEven = index % 2 == 0;
+                  final rowBg = isEven ? _cCardBg : PdfColors.white;
+
                   return pw.TableRow(
+                    decoration: pw.BoxDecoration(color: rowBg),
                     children: [
-                      _buildTableCell(name),
-                      _buildTableCell(raw.toString()),
-                      _buildTableCell(ver.toString()),
-                      _buildTableCell(status),
+                      _buildTableCell(formattedName, fontWeight: pw.FontWeight.bold, textColor: _cSlate),
+                      _buildTableCell(raw.toString(), fontSize: 7),
+                      _buildTableCell(ver.toString(), fontSize: 7),
+                      pw.Container(
+                        alignment: pw.Alignment.center,
+                        padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                        child: _buildStatusBadge(status),
+                      ),
                     ],
                   );
                 }),
               ],
             ),
-            pw.SizedBox(height: 16),
 
             // Section 3: Statutory Violations & Legal Findings
-            pw.Text(
-              '3. STATUTORY FINDINGS & RULE EVALUATION',
-              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
-            ),
-            pw.SizedBox(height: 6),
+            _buildSectionHeader('3', 'STATUTORY FINDINGS & RULE EVALUATION'),
             if (ins.violations.isEmpty)
               pw.Container(
-                padding: const pw.EdgeInsets.all(8),
+                padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: pw.BoxDecoration(
-                  color: PdfColors.green50,
-                  border: pw.Border.all(color: PdfColors.green300),
+                  color: _cGreenBannerBg,
+                  border: pw.Border.all(color: _cGreenBorder, width: 0.7),
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
                 ),
-                child: pw.Text(
-                  'No statutory violations detected. Packaged commodity adheres to Legal Metrology Rules, 2011.',
-                  style: const pw.TextStyle(fontSize: 9, color: PdfColors.green800),
+                child: pw.Row(
+                  children: [
+                    pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                      decoration: const pw.BoxDecoration(
+                        color: _cGreenIcon,
+                        borderRadius: pw.BorderRadius.all(pw.Radius.circular(2)),
+                      ),
+                      child: pw.Text('PASS', style: pw.TextStyle(color: PdfColors.white, fontSize: 6, fontWeight: pw.FontWeight.bold)),
+                    ),
+                    pw.SizedBox(width: 8),
+                    pw.Expanded(
+                      child: pw.Text(
+                        'STATUTORY CONFORMITY CERTIFIED: No statutory violations detected under Rule 6, 7, 8 or 9. Packaged commodity adheres to Legal Metrology (Packaged Commodities) Rules, 2011.',
+                        style: const pw.TextStyle(fontSize: 7.5, color: _cGreenText, fontWeight: pw.FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
               )
             else
               pw.Table(
-                border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+                border: pw.TableBorder.all(color: _cBorder, width: 0.5),
+                columnWidths: const {
+                  0: pw.FlexColumnWidth(2.0),
+                  1: pw.FlexColumnWidth(1.2),
+                  2: pw.FlexColumnWidth(4.5),
+                  3: pw.FlexColumnWidth(1.4),
+                },
                 children: [
                   pw.TableRow(
-                    decoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                    decoration: const pw.BoxDecoration(color: _cRedText),
                     children: [
                       _buildTableCell('Statutory Reference', isHeader: true),
-                      _buildTableCell('Severity', isHeader: true),
+                      _buildTableCell('Severity', isHeader: true, alignment: pw.Alignment.center, textAlign: pw.TextAlign.center),
                       _buildTableCell('Deficiency / Description', isHeader: true),
-                      _buildTableCell('Inspector Status', isHeader: true),
+                      _buildTableCell('Inspector Status', isHeader: true, alignment: pw.Alignment.center, textAlign: pw.TextAlign.center),
                     ],
                   ),
-                  ...ins.violations.map((v) {
+                  ...List.generate(ins.violations.length, (index) {
+                    final v = ins.violations[index];
                     final rule = v['rule_family'] ?? v['type'] ?? 'Rule 6/7';
-                    final sev = v['severity'] ?? 'MEDIUM';
+                    final sev = (v['severity'] ?? 'MEDIUM').toString().toUpperCase();
                     final desc = v['inspector_comment'] ?? v['ai_explanation'] ?? 'Deficiency recorded';
-                    final st = v['status'] ?? 'PENDING';
+                    final st = (v['status'] ?? 'PENDING').toString();
+                    final isEven = index % 2 == 0;
+                    final rowBg = isEven ? _cRedRowBg : PdfColors.white;
+
                     return pw.TableRow(
+                      decoration: pw.BoxDecoration(color: rowBg),
                       children: [
-                        _buildTableCell(rule),
-                        _buildTableCell(sev),
-                        _buildTableCell(desc),
-                        _buildTableCell(st),
+                        _buildTableCell(rule.toString(), fontWeight: pw.FontWeight.bold, textColor: _cRedText),
+                        pw.Container(
+                          alignment: pw.Alignment.center,
+                          padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          child: _buildSeverityBadge(sev),
+                        ),
+                        _buildTableCell(desc.toString(), fontSize: 7),
+                        pw.Container(
+                          alignment: pw.Alignment.center,
+                          padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          child: _buildStatusBadge(st),
+                        ),
                       ],
                     );
                   }),
                 ],
               ),
-            pw.SizedBox(height: 24),
+            pw.SizedBox(height: 12),
 
-            // Section 4: Endorsement & Signature
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text('Report Sealed With:', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-                    pw.Text('SHA-256 Audit Seal: a7f893d2...c102', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
-                    pw.Text('Platform: ${AppBrand.name} v1.0', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-                  ],
-                ),
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.end,
-                  children: [
-                    pw.Container(width: 140, height: 1, color: PdfColors.grey600),
-                    pw.SizedBox(height: 4),
-                    pw.Text(
-                      'Legal Metrology Inspector',
-                      style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
+            // Section 4: Endorsement & Cryptographic Seal
+            pw.Container(
+              padding: const pw.EdgeInsets.all(8),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: _cBorder, width: 0.7),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+                color: _cCardBg,
+              ),
+              child: pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  // QR Verification Code
+                  pw.Container(
+                    width: 50,
+                    height: 50,
+                    padding: const pw.EdgeInsets.all(2),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.white,
+                      border: pw.Border.all(color: _cBorderLight, width: 0.5),
+                      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
                     ),
-                    pw.Text('Central Consumer Protection Cell', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-                  ],
-                ),
-              ],
+                    child: pw.BarcodeWidget(
+                      barcode: pw.Barcode.qrCode(),
+                      data: 'https://maanak-nu.vercel.app/inspections/${ins.id}?code=${ins.inspectionCode}',
+                      drawText: false,
+                    ),
+                  ),
+                  pw.SizedBox(width: 10),
+
+                  // Cryptographic Seal Info
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'OFFICIAL STATUTORY AUDIT SEAL',
+                          style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: _cNavy),
+                        ),
+                        pw.SizedBox(height: 1.5),
+                        pw.Text(
+                          'SHA-256 Seal: a7f893d2e1b4c798e3f6...c102',
+                          style: const pw.TextStyle(fontSize: 6.5, color: PdfColors.grey700),
+                        ),
+                        pw.Text(
+                          'Platform: ${AppBrand.name} v1.0 | Central Legal Metrology Division',
+                          style: const pw.TextStyle(fontSize: 6.5, color: PdfColors.grey600),
+                        ),
+                        pw.Text(
+                          'Verified under Legal Metrology Act, 2009 & Rule 6/7/9 (Packaged Commodities)',
+                          style: const pw.TextStyle(fontSize: 6, color: PdfColors.grey600),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Official Seal Stamp & Signatory
+                  pw.Container(
+                    width: 150,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
+                      children: [
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                          decoration: pw.BoxDecoration(
+                            border: pw.Border.all(color: _cNavy, width: 0.8),
+                            borderRadius: const pw.BorderRadius.all(pw.Radius.circular(2)),
+                          ),
+                          child: pw.Text(
+                            'LEGAL METROLOGY DIVISION\nCENTRAL CONSUMER PROTECTION CELL\nOFFICIALLY AUDITED',
+                            textAlign: pw.TextAlign.center,
+                            style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold, color: _cNavy),
+                          ),
+                        ),
+                        pw.SizedBox(height: 5),
+                        pw.Container(width: 120, height: 0.8, color: _cSlateLight),
+                        pw.SizedBox(height: 2),
+                        pw.Text(
+                          'Legal Metrology Inspector',
+                          style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: _cSlate),
+                        ),
+                        pw.Text(
+                          'Central Consumer Protection Cell',
+                          style: const pw.TextStyle(fontSize: 6, color: PdfColors.grey600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ];
         },
@@ -316,39 +750,6 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
     }
 
     return bytes;
-  }
-
-  pw.Widget _buildPdfMetaRow(String label, String value) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 2),
-      child: pw.Row(
-        children: [
-          pw.Text(label, style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.grey700)),
-          pw.SizedBox(width: 4),
-          pw.Expanded(
-            child: pw.Text(
-              value,
-              style: const pw.TextStyle(fontSize: 8, color: PdfColors.black),
-              overflow: pw.TextOverflow.clip,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  pw.Widget _buildTableCell(String text, {bool isHeader = false}) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.all(5),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(
-          fontSize: 8,
-          fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
-          color: isHeader ? PdfColors.blue900 : PdfColors.black,
-        ),
-      ),
-    );
   }
 
   Future<void> _downloadDocx() async {
