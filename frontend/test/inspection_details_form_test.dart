@@ -77,10 +77,15 @@ void main() {
     final submitFinder = find.text('Create & Proceed to Capture');
     expect(submitFinder, findsOneWidget);
 
+    final bizField = find.byType(TextFormField).first;
+    await tester.enterText(bizField, 'Heritage Fresh Supermarket');
+
+    final locField = find.byType(TextFormField).at(1);
+    await tester.enterText(locField, 'Khan Market, Shop 14, New Delhi');
+
     await tester.ensureVisible(submitFinder);
     await tester.tap(submitFinder);
     await tester.pumpAndSettle();
-
 
     expect(capturedData, isNotNull);
     expect(capturedData!.businessName, 'Heritage Fresh Supermarket');

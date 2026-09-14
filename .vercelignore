@@ -2,6 +2,9 @@
 
 # Backend directory (hosted on Railway)
 backend/
+storage/
+tools/
+*.png
 
 # Native platform directories
 frontend/android/
@@ -29,10 +32,18 @@ frontend/build/windows/
 frontend/build/linux/
 frontend/build/macos/
 frontend/build/ios/
-
-# Keep ONLY the compiled web distribution
-!frontend/build/web/
-!frontend/build/web/**
+frontend/build/reports/
+frontend/build/jni/
+frontend/build/native_assets/
+frontend/build/test_cache/
+frontend/build/unit_test_assets/
+frontend/build/*.dill
+frontend/build/*.cache
+frontend/build/.cxx/
+frontend/build/*android*
+frontend/build/*flutter*
+frontend/build/printing/
+frontend/build/3f8af40aa5241426932f1da8b5d7e72b/
 
 # Sensitive or local files
 .env*

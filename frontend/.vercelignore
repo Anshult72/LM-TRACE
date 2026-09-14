@@ -17,17 +17,25 @@ test/
 # Dart & Flutter source files (not needed for precompiled web deployment)
 lib/
 
-# Intermediate Android & OS build artifacts
+# Intermediate build artifacts and caches
 build/app/
 build/flutter_assets/
 build/windows/
 build/linux/
 build/macos/
 build/ios/
-
-# Keep ONLY the compiled web distribution
-!build/web/
-!build/web/**
+build/reports/
+build/jni/
+build/native_assets/
+build/test_cache/
+build/unit_test_assets/
+build/*.dill
+build/*.cache
+build/.cxx/
+build/*android*
+build/*flutter*
+build/printing/
+build/3f8af40aa5241426932f1da8b5d7e72b/
 
 # Sensitive or local files
 .env*

@@ -325,19 +325,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   icon,
                   size: 14,
                   color: isSelected ? Colors.white : AppColors.neutral600,
                 ),
-                const SizedBox(width: 5),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                    color: isSelected ? Colors.white : AppColors.neutral700,
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      color: isSelected ? Colors.white : AppColors.neutral700,
+                    ),
                   ),
                 ),
               ],
