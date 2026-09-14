@@ -9,7 +9,6 @@ import '../../core/responsive/web_page_container.dart';
 import '../../core/widgets/stat_metric_card.dart';
 import '../../core/widgets/app_card.dart';
 import '../../core/widgets/section_header.dart';
-import '../../core/widgets/app_status_badge.dart';
 
 final supervisorDashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final client = ref.watch(apiClientProvider);

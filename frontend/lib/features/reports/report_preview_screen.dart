@@ -265,7 +265,7 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
             width: 78,
             child: pw.Text(
               label,
-              style: const pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: _cSlateMuted),
+              style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: _cSlateMuted),
             ),
           ),
           pw.Expanded(
@@ -400,7 +400,7 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
                         ),
                         pw.Text(
                           'MINISTRY OF CONSUMER AFFAIRS, FOOD & PUBLIC DISTRIBUTION',
-                          style: const pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: _cSlateMuted),
+                          style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: _cSlateMuted),
                         ),
                         pw.SizedBox(height: 1.5),
                         pw.Text(
@@ -425,7 +425,7 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
                       crossAxisAlignment: pw.CrossAxisAlignment.center,
                       children: [
                         pw.Text('FORM LM-INSP', style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: _cNavy)),
-                        pw.Text('OFFICIAL AUDIT', style: const pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold, color: _cSlateLight)),
+                        pw.Text('OFFICIAL AUDIT', style: pw.TextStyle(fontSize: 6, fontWeight: pw.FontWeight.bold, color: _cSlateLight)),
                       ],
                     ),
                   ),
@@ -590,7 +590,7 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
                     pw.Expanded(
                       child: pw.Text(
                         'STATUTORY CONFORMITY CERTIFIED: No statutory violations detected under Rule 6, 7, 8 or 9. Packaged commodity adheres to Legal Metrology (Packaged Commodities) Rules, 2011.',
-                        style: const pw.TextStyle(fontSize: 7.5, color: _cGreenText, fontWeight: pw.FontWeight.bold),
+                        style: pw.TextStyle(fontSize: 7.5, color: _cGreenText, fontWeight: pw.FontWeight.bold),
                       ),
                     ),
                   ],
