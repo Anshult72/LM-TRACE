@@ -68,6 +68,7 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) {
           return WebAppShell(
+            location: state.matchedLocation,
             mobileChild: ScaffoldWithBottomNavBar(child: child),
             child: child,
           );

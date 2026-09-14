@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/responsive/responsive_layout.dart';
+import '../../core/responsive/web_page_container.dart';
 import 'inspections_controller.dart';
 import 'widgets/inspection_details_form.dart';
 
@@ -35,8 +37,6 @@ class _NewInspectionScreenState extends ConsumerState<NewInspectionScreen> {
       if (data.inspectionType == 'ONLINE_LISTING') {
         context.push('/online-listing?inspectionId=${inspection.id}');
       } else {
-        // Use go() not push() — /scanner is inside ShellRoute and
-        // push() from outside the shell creates a duplicate shell page key.
         context.go('/scanner?inspectionId=${inspection.id}');
       }
     } else if (mounted) {
@@ -52,6 +52,49 @@ class _NewInspectionScreenState extends ConsumerState<NewInspectionScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(inspectionsProvider);
+
+    if (ResponsiveLayout.isWebDesktop(context)) {
+      return WebPageContainer(
+        maxWidth: 860,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded, size: 20),
+                  tooltip: 'Return to Registry',
+                  onPressed: () => context.go('/inspections'),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Initiate New Inspection',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Record establishment particulars and select inspection channel',
+                      style: TextStyle(fontSize: 13, color: AppColors.neutral600),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            InspectionDetailsForm(
+              isFinalizing: false,
+              isLoading: state.isLoading,
+              submitButtonLabel: 'Create & Proceed to Capture',
+              onSubmit: _handleCreate,
+            ),
+            const SizedBox(height: 32),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.neutral50,

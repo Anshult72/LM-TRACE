@@ -202,7 +202,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           child: StatMetricCard(
             title: 'Compliance Rate',
             value: compRate != null ? '${compRate.toStringAsFixed(1)}%' : '—',
-            subtitle: compRate != null ? 'Rule 6 & 7 verified' : 'No audits completed',
+            subtitle: compRate != null ? 'Rule 6 & 7 Compliant' : 'No audits completed',
             icon: Icons.verified_outlined,
             accentColor: AppColors.passGreen,
             trendText: compRate != null ? (compRate >= 70 ? 'Optimal' : 'Needs Review') : null,
@@ -214,7 +214,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           child: StatMetricCard(
             title: 'Violations Flagged',
             value: '$violations',
-            subtitle: violations == 0 ? 'Zero active non-compliances' : 'Non-compliant packages',
+            subtitle: violations == 0 ? 'Zero active violations' : 'Non-compliant Goods',
             icon: Icons.gavel_outlined,
             accentColor: AppColors.violationRed,
             trendText: violations > 0 ? '$violations Alerts' : '0 Alerts',
@@ -227,7 +227,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           child: StatMetricCard(
             title: 'Pending Review',
             value: '$pending',
-            subtitle: pending == 0 ? 'All reviews completed' : 'Awaiting inspector sign-off',
+            subtitle: pending == 0 ? 'All reviews completed' : 'Awaiting Sign-off',
             icon: Icons.pending_actions_outlined,
             accentColor: AppColors.reviewAmber,
             trendText: pending > 0 ? '$pending pending' : 'All clear',
@@ -386,19 +386,23 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               const Text(
                 'Inspection Activity & Commodity Spread',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
               ),
-              Row(
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   _buildLegendIndicator('Compliant', AppColors.passGreen),
-                  const SizedBox(width: 12),
                   _buildLegendIndicator('Under Review', AppColors.reviewAmber),
-                  const SizedBox(width: 12),
                   _buildLegendIndicator('Violation', AppColors.violationRed),
                 ],
               ),
@@ -687,105 +691,132 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           // Table Toolbar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            child: Row(
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
               children: [
-                const Text(
-                  'Recent Inspection Cases',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '(${inspections.length} total)',
-                  style: const TextStyle(fontSize: 12, color: AppColors.neutral500),
-                ),
-                const Spacer(),
-                // Filter chips
-                _buildTableFilterChip('ALL', 'All Cases'),
-                const SizedBox(width: 6),
-                _buildTableFilterChip('COMPLIANT', 'Compliant'),
-                const SizedBox(width: 6),
-                _buildTableFilterChip('REVIEW', 'Needs Review'),
-                const SizedBox(width: 6),
-                _buildTableFilterChip('VIOLATIONS', 'Violations'),
-                const SizedBox(width: 14),
-                TextButton(
-                  onPressed: () => context.go('/inspections'),
-                  child: const Text('View All Registry →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: AppColors.neutral200),
-
-          // Data Table Header
-          Container(
-            color: AppColors.neutral100,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Row(
-              children: const [
-                Expanded(flex: 2, child: Text('CASE ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                Expanded(flex: 3, child: Text('ESTABLISHMENT / TRADER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                Expanded(flex: 3, child: Text('LOCATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                Expanded(flex: 2, child: Text('INSPECTION TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                Expanded(flex: 2, child: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                Expanded(flex: 2, child: Text('DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                Expanded(flex: 2, child: Align(alignment: Alignment.centerRight, child: Text('ACTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600)))),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: AppColors.neutral200),
-
-          // Data Rows or Clean Empty States
-          if (inspections.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-              child: Center(
-                child: Column(
+                Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.neutral100,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.assignment_outlined, size: 32, color: AppColors.neutral400),
-                    ),
-                    const SizedBox(height: 12),
                     const Text(
-                      'No Inspections Recorded Yet',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primaryNavy),
+                      'Recent Inspection Cases',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
                     ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Create your first inspection or launch a physical scan to begin statutory audits.',
-                      style: TextStyle(fontSize: 12, color: AppColors.neutral600),
+                    const SizedBox(width: 8),
+                    Text(
+                      '(${inspections.length} total)',
+                      style: const TextStyle(fontSize: 12, color: AppColors.neutral500),
                     ),
                   ],
                 ),
-              ),
-            )
-          else if (filtered.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 36),
-              child: Center(
-                child: Text(
-                  'No inspection cases match selected filter "$_tableFilter".',
-                  style: const TextStyle(color: AppColors.neutral500, fontSize: 13),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _buildTableFilterChip('ALL', 'All Cases'),
+                    _buildTableFilterChip('COMPLIANT', 'Compliant'),
+                    _buildTableFilterChip('REVIEW', 'Needs Review'),
+                    _buildTableFilterChip('VIOLATIONS', 'Violations'),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () => context.go('/inspections'),
+                      child: const Text('View All Registry →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: filtered.length,
-              separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.neutral200),
-              itemBuilder: (context, index) {
-                final ins = filtered[index];
-                return _buildTableRow(context, ins);
-              },
+              ],
             ),
+          ),
+          const Divider(height: 1, color: AppColors.neutral200),
+
+          // Horizontally scrollable table container for complete responsive safety
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final minTableWidth = constraints.maxWidth < 940 ? 940.0 : constraints.maxWidth;
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: minTableWidth,
+                  child: Column(
+                    children: [
+                      // Data Table Header
+                      Container(
+                        color: AppColors.neutral100,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        child: Row(
+                          children: const [
+                            Expanded(flex: 2, child: Text('CASE ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
+                            Expanded(flex: 4, child: Text('ESTABLISHMENT / TRADER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
+                            Expanded(flex: 3, child: Text('LOCATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
+                            Expanded(flex: 2, child: Text('INSPECTION TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
+                            Expanded(flex: 3, child: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
+                            Expanded(flex: 2, child: Text('DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
+                            Expanded(flex: 2, child: Align(alignment: Alignment.centerRight, child: Text('ACTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600)))),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1, color: AppColors.neutral200),
+
+                      // Data Rows or Clean Empty States
+                      if (inspections.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.neutral100,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.assignment_outlined, size: 32, color: AppColors.neutral400),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'No Inspections Recorded Yet',
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.primaryNavy),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Create your first inspection or launch a physical scan to begin statutory audits.',
+                                  style: TextStyle(fontSize: 12, color: AppColors.neutral600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else if (filtered.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 36),
+                          child: Center(
+                            child: Text(
+                              'No inspection cases match selected filter "$_tableFilter".',
+                              style: const TextStyle(color: AppColors.neutral500, fontSize: 13),
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: filtered.length,
+                          separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.neutral200),
+                          itemBuilder: (context, index) {
+                            final ins = filtered[index];
+                            return _buildTableRow(context, ins);
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -833,7 +864,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               ),
             ),
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Text(
                 ins.businessName ?? ins.sellerName ?? 'Retail Enterprise',
                 style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
@@ -856,7 +887,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               ),
             ),
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: AppStatusBadge(
@@ -878,12 +909,12 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  icon: const Icon(Icons.open_in_new, size: 13),
-                  label: const Text('View Case', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.open_in_new, size: 12),
+                  label: const Text('View', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
                   onPressed: () => context.push('/inspections/${ins.id}'),
                 ),
               ),

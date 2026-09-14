@@ -47,3 +47,9 @@ frontend/android/*.iml
 Thumbs.db
 
 .vercel
+
+# Local tools, node_modules & temp images
+tools/
+node_modules/
+storage/
+after_click_*.png

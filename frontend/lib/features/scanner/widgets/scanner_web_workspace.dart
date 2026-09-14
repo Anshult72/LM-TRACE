@@ -454,7 +454,7 @@ class ScannerWebWorkspace extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         const Text(
-                          'Upload a high-resolution commodity package photo or choose an SIH Preset below.',
+                          'Upload a high-resolution commodity package photo or load a benchmark reference below.',
                           style: TextStyle(fontSize: 12, color: AppColors.neutral500),
                         ),
                         const SizedBox(height: 16),
@@ -488,33 +488,34 @@ class ScannerWebWorkspace extends StatelessWidget {
           ),
           const Divider(height: 1, color: AppColors.neutral200),
 
-          // Presets Toolbar
+          // Benchmark Reference Standards Toolbar (Responsive Wrap to prevent overflow)
           Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Text(
-                  'SIH Demo Presets:',
+                  'Benchmark Standards:',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.neutral700),
                 ),
-                const SizedBox(width: 10),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.passGreen),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   ),
-                  icon: const Icon(Icons.check_circle, size: 14, color: AppColors.passGreen),
-                  label: const Text('Load Compliant Pack (Rice 5kg)', style: TextStyle(fontSize: 11.5, color: AppColors.passGreen, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.check_circle_outline, size: 14, color: AppColors.passGreen),
+                  label: const Text('Compliant Standard (5kg)', style: TextStyle(fontSize: 11.5, color: AppColors.passGreen, fontWeight: FontWeight.bold)),
                   onPressed: () => onLoadSamplePackage(false),
                 ),
-                const SizedBox(width: 8),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.violationRed),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   ),
-                  icon: const Icon(Icons.warning, size: 14, color: AppColors.violationRed),
-                  label: const Text('Load Violation Pack (Rule 7 Font Issue)', style: TextStyle(fontSize: 11.5, color: AppColors.violationRed, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.violationRed),
+                  label: const Text('Non-Compliant (Rule 7 Font)', style: TextStyle(fontSize: 11.5, color: AppColors.violationRed, fontWeight: FontWeight.bold)),
                   onPressed: () => onLoadSamplePackage(true),
                 ),
               ],

@@ -8,30 +8,36 @@ import 'responsive_layout.dart';
 
 /// Compact enterprise topbar for LM-TRACE desktop and tablet web.
 class WebTopBar extends ConsumerWidget {
-  const WebTopBar({super.key});
+  final String? location;
 
-  String _getPageTitle(String location) {
-    if (location.startsWith('/dashboard') || location == '/') return 'Operational Dashboard';
-    if (location.startsWith('/inspections/')) return 'Inspection Case File';
-    if (location.startsWith('/inspections')) return 'Inspections Registry';
-    if (location.startsWith('/scanner')) return 'Package Scanner & OCR Workspace';
-    if (location.startsWith('/products')) return 'Product Intelligence & Label Versions';
-    if (location.startsWith('/rules')) return 'Statutory Rule Engine Registry';
-    if (location.startsWith('/calibration')) return 'Scale & Metric Calibration';
-    if (location.startsWith('/supervisor')) return 'Supervisor Enforcement Review';
-    if (location.startsWith('/audit-trail')) return 'Chain of Custody Audit Trail';
-    if (location.startsWith('/settings')) return 'System Configuration';
-    if (location.startsWith('/about')) return 'Statutory Standards & About';
-    if (location.startsWith('/new-inspection')) return 'New Inspection Case';
+  const WebTopBar({super.key, this.location});
+
+  String _getPageTitle(String loc) {
+    if (loc.startsWith('/new-inspection')) return 'New Inspection Case';
+    if (loc.startsWith('/dashboard') || loc == '/') return 'Operational Dashboard';
+    if (loc.startsWith('/inspections/')) return 'Inspection Case File';
+    if (loc.startsWith('/inspections')) return 'Inspections Registry';
+    if (loc.startsWith('/scanner')) return 'Package Scanner & OCR Workspace';
+    if (loc.startsWith('/products')) return 'Product Intelligence & Label Versions';
+    if (loc.startsWith('/rules')) return 'Statutory Rule Engine Registry';
+    if (loc.startsWith('/calibration')) return 'Scale & Metric Calibration';
+    if (loc.startsWith('/supervisor')) return 'Supervisor Enforcement Review';
+    if (loc.startsWith('/audit-trail')) return 'Chain of Custody Audit Trail';
+    if (loc.startsWith('/settings')) return 'System Configuration';
+    if (loc.startsWith('/about')) return 'Statutory Standards & About';
     return 'Legal Metrology Compliance';
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final location = GoRouterState.of(context).matchedLocation;
+    final effectiveLocation = location ?? GoRouterState.of(context).matchedLocation;
     final authState = ref.watch(authProvider);
     final user = authState.user;
     final isDesktop = ResponsiveLayout.isDesktop(context);
+    final isFocusedWorkflow = effectiveLocation.startsWith('/new-inspection') ||
+        effectiveLocation.endsWith('/finalize') ||
+        effectiveLocation.startsWith('/scanner') ||
+        effectiveLocation.startsWith('/analysis-progress');
 
     return Container(
       height: Breakpoints.topBarHeight,
@@ -70,7 +76,7 @@ class WebTopBar extends ConsumerWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    _getPageTitle(location),
+                    _getPageTitle(effectiveLocation),
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -81,7 +87,7 @@ class WebTopBar extends ConsumerWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                _getPageTitle(location),
+                _getPageTitle(effectiveLocation),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -93,23 +99,25 @@ class WebTopBar extends ConsumerWidget {
 
           const Spacer(),
 
-          // Primary "+ New Inspection" Action Button
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondaryBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-              elevation: 0,
+          // Primary "New Inspection" Action Button (hidden on focused workflows)
+          if (!isFocusedWorkflow) ...[
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondaryBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.add, size: 16, color: Colors.white),
+              label: const Text(
+                'New Inspection',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+              onPressed: () => context.go('/new-inspection'),
             ),
-            icon: const Icon(Icons.add, size: 16, color: Colors.white),
-            label: const Text(
-              '+ New Inspection',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-            onPressed: () => context.push('/new-inspection'),
-          ),
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
+          ],
 
           const SizedBox(
             height: 28,

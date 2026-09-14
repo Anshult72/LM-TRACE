@@ -16,11 +16,13 @@ import 'web_top_bar.dart';
 class WebAppShell extends StatelessWidget {
   final Widget child;
   final Widget mobileChild;
+  final String? location;
 
   const WebAppShell({
     super.key,
     required this.child,
     required this.mobileChild,
+    this.location,
   });
 
   @override
@@ -43,8 +45,8 @@ class WebAppShell extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                // Compact topbar
-                const WebTopBar(),
+                // Compact topbar with live location tracking
+                WebTopBar(location: location),
 
                 // Scrollable main page content
                 Expanded(

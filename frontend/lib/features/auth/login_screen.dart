@@ -32,6 +32,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
   }
 
+  String get _roleTitle {
+    switch (_selectedRole) {
+      case 'supervisor':
+        return 'Supervisor';
+      case 'admin':
+        return 'Administrator';
+      default:
+        return 'Inspector';
+    }
+  }
+
   Future<void> _handleLogin() async {
     await ref.read(authProvider.notifier).login(
       _emailController.text.trim(),
@@ -166,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         AppTextField(
                           controller: _emailController,
                           label: "Officer ID / Email",
-                          hintText: "inspector@demo.gov.in",
+                          hintText: "officer@lmtrace.gov.in",
                           prefixIcon: Icons.badge_outlined,
                           keyboardType: TextInputType.emailAddress,
                         ),
@@ -184,9 +195,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // Login Action Button
+                        // Login Action Button with dynamic role title
                         AppButton(
-                          label: "Secure Inspector Access",
+                          label: "Authorize $_roleTitle Access",
                           icon: Icons.login_rounded,
                           size: AppButtonSize.lg,
                           isFullWidth: true,
@@ -195,19 +206,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 24),
 
-                        // Quick Demo Account Selector
+                        // Authorized Role Selection Header
                         Row(
                           children: [
                             const Expanded(child: Divider(color: AppColors.borderLight)),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 10),
                               child: Text(
-                                "DEMO ROLE ACCESS",
+                                "AUTHORIZED ENFORCEMENT ROLES",
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.6,
-                                  color: AppColors.textMuted.withValues(alpha: 0.8),
+                                  letterSpacing: 0.8,
+                                  color: AppColors.textMuted.withValues(alpha: 0.85),
                                 ),
                               ),
                             ),
@@ -216,14 +227,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 14),
 
-                        // Role Selector Pills
+                        // Role Selector Pills with official icons
                         Row(
                           children: [
-                            _buildRoleChip("Inspector", "inspector", "inspector@demo.gov.in", "Inspector@123"),
+                            _buildRoleChip(
+                              "Inspector",
+                              "inspector",
+                              Icons.policy_outlined,
+                              "inspector@demo.gov.in",
+                              "Inspector@123",
+                            ),
                             const SizedBox(width: 8),
-                            _buildRoleChip("Supervisor", "supervisor", "supervisor@demo.gov.in", "Supervisor@123"),
+                            _buildRoleChip(
+                              "Supervisor",
+                              "supervisor",
+                              Icons.verified_user_outlined,
+                              "supervisor@demo.gov.in",
+                              "Supervisor@123",
+                            ),
                             const SizedBox(width: 8),
-                            _buildRoleChip("Admin", "admin", "admin@demo.gov.in", "Admin@123"),
+                            _buildRoleChip(
+                              "Admin",
+                              "admin",
+                              Icons.admin_panel_settings_outlined,
+                              "admin@demo.gov.in",
+                              "Admin@123",
+                            ),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -266,7 +295,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildRoleChip(String label, String roleKey, String email, String password) {
+  Widget _buildRoleChip(String label, String roleKey, IconData icon, String email, String password) {
     final isSelected = _selectedRole == roleKey;
     return Expanded(
       child: Material(
@@ -276,7 +305,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           borderRadius: AppRadii.sm,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 140),
-            padding: const EdgeInsets.symmetric(vertical: 9),
+            padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
             decoration: BoxDecoration(
               color: isSelected ? AppColors.primaryNavy : AppColors.neutral50,
               borderRadius: AppRadii.sm,
@@ -284,15 +313,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 color: isSelected ? AppColors.primaryNavy : AppColors.borderLight,
                 width: 1.1,
               ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primaryNavy.withValues(alpha: 0.18),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
             ),
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.neutral700,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 14,
+                  color: isSelected ? Colors.white : AppColors.neutral600,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    color: isSelected ? Colors.white : AppColors.neutral700,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

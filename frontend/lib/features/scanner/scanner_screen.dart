@@ -1067,12 +1067,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'SIH Demo Commodity Presets',
+            'Regulatory Benchmark Standards',
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
           ),
           const SizedBox(height: 4),
           const Text(
-            'Load synthetic sample packages to test the full pipeline without external camera:',
+            'Standard calibration packages for verification of OCR and Rule 7 compliance pipelines:',
             style: TextStyle(fontSize: 11, color: AppColors.neutral600),
           ),
           const SizedBox(height: 8),
@@ -1082,7 +1082,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                 child: TextButton.icon(
                   style: TextButton.styleFrom(backgroundColor: Colors.white),
                   icon: const Icon(Icons.check_box_outlined, size: 16, color: AppColors.compliant),
-                  label: const Text('Load Compliant Pack', style: TextStyle(fontSize: 11)),
+                  label: const Text('Compliant Standard (5kg)', style: TextStyle(fontSize: 11)),
                   onPressed: () => _loadSamplePackage(false),
                 ),
               ),
@@ -1091,7 +1091,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                 child: TextButton.icon(
                   style: TextButton.styleFrom(backgroundColor: Colors.white),
                   icon: const Icon(Icons.warning_amber_outlined, size: 16, color: AppColors.violation),
-                  label: const Text('Load Violation Pack', style: TextStyle(fontSize: 11)),
+                  label: const Text('Non-Compliant (Rule 7)', style: TextStyle(fontSize: 11)),
                   onPressed: () => _loadSamplePackage(true),
                 ),
               ),

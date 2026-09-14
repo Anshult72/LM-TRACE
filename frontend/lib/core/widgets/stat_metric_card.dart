@@ -77,9 +77,12 @@ class StatMetricCard extends StatelessWidget {
           ),
           if (subtitle != null || trendText != null) ...[
             const SizedBox(height: 8),
-            Row(
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              runSpacing: 4,
               children: [
-                if (trendText != null) ...[
+                if (trendText != null)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
@@ -114,19 +117,16 @@ class StatMetricCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                ],
                 if (subtitle != null)
-                  Expanded(
-                    child: Text(
-                      subtitle!,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        color: AppColors.textMuted,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  Text(
+                    subtitle!,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.textMuted,
+                      height: 1.25,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
               ],
             ),

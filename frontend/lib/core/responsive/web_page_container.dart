@@ -5,7 +5,7 @@ import 'responsive_layout.dart';
 /// Standard container for desktop and tablet web pages.
 /// Enforces maximum width constraint (1440px), centers content on ultra-wide screens,
 /// and applies consistent institutional spacing and background.
-class WebPageContainer extends StatelessWidget {
+class WebPageContainer extends StatefulWidget {
   final Widget child;
   final double maxWidth;
   final EdgeInsetsGeometry? padding;
@@ -22,9 +22,25 @@ class WebPageContainer extends StatelessWidget {
   });
 
   @override
+  State<WebPageContainer> createState() => _WebPageContainerState();
+}
+
+class _WebPageContainerState extends State<WebPageContainer> {
+  ScrollController? _internalController;
+
+  ScrollController get _effectiveController =>
+      widget.scrollController ?? (_internalController ??= ScrollController());
+
+  @override
+  void dispose() {
+    _internalController?.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDesktopTier = ResponsiveLayout.isDesktop(context);
-    final effectivePadding = padding ??
+    final effectivePadding = widget.padding ??
         EdgeInsets.symmetric(
           horizontal: isDesktopTier ? 28.0 : 20.0,
           vertical: isDesktopTier ? 24.0 : 16.0,
@@ -33,15 +49,15 @@ class WebPageContainer extends StatelessWidget {
     final constrainedContent = Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: maxWidth),
+        constraints: BoxConstraints(maxWidth: widget.maxWidth),
         child: Padding(
           padding: effectivePadding,
-          child: child,
+          child: widget.child,
         ),
       ),
     );
 
-    if (!scrollable) {
+    if (!widget.scrollable) {
       return Container(
         color: AppColors.neutral50,
         width: double.infinity,
@@ -50,15 +66,17 @@ class WebPageContainer extends StatelessWidget {
       );
     }
 
+    final controller = _effectiveController;
+
     return Container(
       color: AppColors.neutral50,
       width: double.infinity,
       height: double.infinity,
       child: Scrollbar(
-        controller: scrollController,
+        controller: controller,
         thumbVisibility: true,
         child: SingleChildScrollView(
-          controller: scrollController,
+          controller: controller,
           physics: const AlwaysScrollableScrollPhysics(),
           child: constrainedContent,
         ),

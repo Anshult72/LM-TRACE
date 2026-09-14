@@ -89,22 +89,16 @@ class _InspectionDetailsFormState extends State<InspectionDetailsForm> {
       if (init.location.isNotEmpty && !init.location.contains('Pending Finalisation')) {
         initialLoc = init.location;
       }
-    } else {
-      initialLoc = 'Khan Market, Shop 14, New Delhi';
     }
 
     String initialBiz = '';
     if (init != null) {
       initialBiz = init.businessName ?? '';
-    } else {
-      initialBiz = 'Heritage Fresh Supermarket';
     }
 
     String initialSeller = '';
     if (init != null) {
       initialSeller = init.sellerName ?? '';
-    } else {
-      initialSeller = 'Retail Traders Pvt Ltd';
     }
 
     String initialNotes = '';
@@ -265,7 +259,7 @@ class _InspectionDetailsFormState extends State<InspectionDetailsForm> {
             controller: _sellerController,
             decoration: const InputDecoration(
               labelText: 'Dealer / Seller Licensee (Optional)',
-              hintText: 'e.g. Retail Traders Pvt Ltd',
+              hintText: 'e.g. Registered Distributor or Packer',
               prefixIcon: Icon(Icons.badge_outlined),
             ),
           ),

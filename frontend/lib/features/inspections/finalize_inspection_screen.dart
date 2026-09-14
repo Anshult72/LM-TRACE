@@ -71,6 +71,21 @@ class _FinalizeInspectionScreenState extends ConsumerState<FinalizeInspectionScr
     final isDesktop = ResponsiveLayout.isWebDesktop(context);
 
     if (_isLoadingDetail && inspection == null) {
+      if (isDesktop) {
+        return const WebPageContainer(
+          maxWidth: 800,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 14),
+                Text('Loading inspection details...', style: TextStyle(color: AppColors.textMuted)),
+              ],
+            ),
+          ),
+        );
+      }
       return Scaffold(
         appBar: AppBar(title: const Text('Finalise Inspection')),
         body: const Center(
@@ -153,6 +168,44 @@ class _FinalizeInspectionScreenState extends ConsumerState<FinalizeInspectionScr
       ],
     );
 
+    if (isDesktop) {
+      return WebPageContainer(
+        maxWidth: 800,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded, size: 20),
+                  tooltip: 'Return to Case File',
+                  onPressed: () => context.go('/inspections/${widget.inspectionId}'),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Finalise Inspection',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Case File: $code • Statutory Metrology Sealing',
+                      style: const TextStyle(fontSize: 13, color: AppColors.neutral600),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            formContent,
+            const SizedBox(height: 32),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
@@ -164,12 +217,7 @@ class _FinalizeInspectionScreenState extends ConsumerState<FinalizeInspectionScr
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: isDesktop
-            ? WebPageContainer(
-                maxWidth: 800,
-                child: formContent,
-              )
-            : formContent,
+        child: formContent,
       ),
     );
   }

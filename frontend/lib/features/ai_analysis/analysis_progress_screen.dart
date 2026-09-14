@@ -22,7 +22,7 @@ class _AnalysisProgressScreenState extends ConsumerState<AnalysisProgressScreen>
 
   final List<String> _steps = [
     "Checking captured image quality",
-    "Reading visible package text with Groq Vision OCR",
+    "Extracting visible package text with High-Precision OCR",
     "Extracting product declarations from captured text",
     "Checking declaration completeness and consistency",
     "Applying applicable Legal Metrology rules",
@@ -218,12 +218,15 @@ class _AnalysisProgressScreenState extends ConsumerState<AnalysisProgressScreen>
                 ],
               ),
               if (idx < _steps.length - 1)
-                Padding(
-                  padding: const EdgeInsets.only(left: 11),
-                  child: Container(
-                    width: 2,
-                    height: 16,
-                    color: idx < _currentStep || _isComplete ? AppColors.passGreen : AppColors.borderLight,
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 11),
+                    child: Container(
+                      width: 2,
+                      height: 16,
+                      color: idx < _currentStep || _isComplete ? AppColors.passGreen : AppColors.borderLight,
+                    ),
                   ),
                 ),
             ],

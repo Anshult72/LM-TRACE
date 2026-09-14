@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
+import '../../../core/widgets/widgets.dart';
 import '../inspections_controller.dart';
 
 /// Professional government desktop layout for Inspection Case File & Evidence.
@@ -42,82 +43,88 @@ class InspectionDetailWebLayout extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. Navigation Breadcrumb & Header
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 12,
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.primaryNavy),
-                tooltip: 'Back to Inspections',
-                onPressed: () => context.go('/inspections'),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primaryNavy),
+                    tooltip: 'Back to Inspections',
+                    onPressed: () => context.go('/inspections'),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Case: ${inspection.inspectionCode}',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Case: ${inspection.inspectionCode}',
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                          ),
+                          const SizedBox(width: 10),
+                          AppStatusBadge(
+                            status: inspection.status,
+                            size: BadgeSize.sm,
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: statusBg,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          status,
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: statusColor),
-                        ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${inspection.businessName ?? inspection.sellerName ?? "Retail Enterprise"} • ${inspection.location}',
+                        style: const TextStyle(fontSize: 12.5, color: AppColors.neutral600),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${inspection.businessName ?? inspection.sellerName ?? "Retail Enterprise"} • ${inspection.location}',
-                    style: const TextStyle(fontSize: 12.5, color: AppColors.neutral600),
-                  ),
                 ],
               ),
-              const Spacer(),
-              if (status != 'FINALIZED') ...[
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.passGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                    elevation: 0,
+              Wrap(
+                spacing: 10,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  if (status != 'FINALIZED')
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.passGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.lock_outline, size: 15, color: Colors.white),
+                      label: const Text('Finalise Inspection', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      onPressed: () => context.push('/inspections/${inspection.id}/finalize'),
+                    ),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                      side: const BorderSide(color: AppColors.neutral300),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    icon: const Icon(Icons.qr_code_scanner, size: 15),
+                    label: const Text('Open Scanner', style: TextStyle(fontSize: 12)),
+                    onPressed: () => context.go('/scanner?inspectionId=${inspection.id}'),
                   ),
-                  icon: const Icon(Icons.lock_outline, size: 16, color: Colors.white),
-                  label: const Text('Finalise Inspection', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  onPressed: () => context.push('/inspections/${inspection.id}/finalize'),
-                ),
-                const SizedBox(width: 10),
-              ],
-              OutlinedButton.icon(
-
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  side: const BorderSide(color: AppColors.neutral300),
-                ),
-                icon: const Icon(Icons.qr_code_scanner, size: 16),
-                label: const Text('Open Scanner', style: TextStyle(fontSize: 12)),
-                onPressed: () => context.go('/scanner?inspectionId=${inspection.id}'),
-              ),
-              const SizedBox(width: 10),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondaryBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  elevation: 0,
-                ),
-                icon: const Icon(Icons.picture_as_pdf_outlined, size: 16, color: Colors.white),
-                label: const Text('View Official Report', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                onPressed: () => context.push('/reports/${inspection.id}'),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.secondaryBlue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.picture_as_pdf_outlined, size: 15, color: Colors.white),
+                    label: const Text('View Report', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    onPressed: () => context.push('/reports/${inspection.id}'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -283,79 +290,111 @@ class InspectionDetailWebLayout extends ConsumerWidget {
           ),
           const Divider(height: 1, color: AppColors.neutral200),
 
-          // Table Header
-          Container(
-            color: AppColors.neutral100,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            child: Row(
-              children: const [
-                Expanded(flex: 3, child: Text('STATUTORY FIELD', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                Expanded(flex: 4, child: Text('EXTRACTED AI VALUE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                Expanded(flex: 4, child: Text('VERIFIED VALUE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                Expanded(flex: 2, child: Text('CONFIDENCE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                Expanded(flex: 2, child: Align(alignment: Alignment.centerRight, child: Text('ACTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: AppColors.neutral200),
-
-          if (declarations.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: Center(child: Text('No declarations extracted yet.', style: TextStyle(color: AppColors.neutral500))),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: declarations.length,
-              separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.neutral200),
-              itemBuilder: (context, index) {
-                final dec = declarations[index];
-                final field = dec['field_name'] ?? 'Field';
-                final aiVal = dec['ai_value'] ?? '—';
-                final verVal = dec['verified_value'] ?? aiVal;
-                final conf = ((dec['confidence'] ?? 0.95) * 100).toInt();
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  child: Row(
+          // Horizontally scrollable declarations table container
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final minTableWidth = constraints.maxWidth < 640 ? 640.0 : constraints.maxWidth;
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: minTableWidth,
+                  child: Column(
                     children: [
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          field.replaceAll('_', ' ').toUpperCase(),
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.primaryNavy),
+                      // Table Header
+                      Container(
+                        color: AppColors.neutral100,
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        child: Row(
+                          children: const [
+                            Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('STATUTORY FIELD', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                            Expanded(flex: 4, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('EXTRACTED AI VALUE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                            Expanded(flex: 4, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('VERIFIED VALUE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                            Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('CONFIDENCE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                            Expanded(flex: 2, child: Align(alignment: Alignment.centerRight, child: Text('ACTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                          ],
                         ),
                       ),
-                      Expanded(
-                        flex: 4,
-                        child: Text(aiVal, style: const TextStyle(fontSize: 12, color: AppColors.neutral800)),
-                      ),
-                      Expanded(
-                        flex: 4,
-                        child: Text(verVal, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.neutral900)),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text('$conf%', style: const TextStyle(fontSize: 12, color: AppColors.secondaryBlue, fontWeight: FontWeight.bold)),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                            onPressed: () => onEditDeclaration(dec),
-                            child: const Text('Edit / Verify', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
-                          ),
+                      const Divider(height: 1, color: AppColors.neutral200),
+
+                      if (declarations.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: Center(child: Text('No declarations extracted yet.', style: TextStyle(color: AppColors.neutral500))),
+                        )
+                      else
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: declarations.length,
+                          separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.neutral200),
+                          itemBuilder: (context, index) {
+                            final dec = declarations[index];
+                            final field = dec['field_name'] ?? 'Field';
+                            final aiVal = dec['ai_value'] ?? '—';
+                            final verVal = dec['verified_value'] ?? aiVal;
+                            final conf = ((dec['confidence'] ?? 0.95) * 100).toInt();
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: Text(
+                                        field.replaceAll('_', ' ').toUpperCase(),
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.primaryNavy),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 4,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: Text(aiVal, style: const TextStyle(fontSize: 12, color: AppColors.neutral800)),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 4,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: Text(verVal, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.neutral900)),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 8),
+                                      child: Text('$conf%', style: const TextStyle(fontSize: 12, color: AppColors.secondaryBlue, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton(
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        onPressed: () => onEditDeclaration(dec),
+                                        child: const Text('Edit / Verify', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      ),
                     ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

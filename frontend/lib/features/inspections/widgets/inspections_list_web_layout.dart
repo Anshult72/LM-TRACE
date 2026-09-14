@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
+import '../../../core/widgets/widgets.dart';
 import '../inspections_controller.dart';
 
 /// Desktop enterprise data table layout for Inspections Registry.
@@ -64,7 +65,7 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Page Header & Primary Action
+          // 1. Page Header (adhering to single primary CTA in topbar)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -86,34 +87,15 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      side: const BorderSide(color: AppColors.neutral300),
-                    ),
-                    icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('Refresh', style: TextStyle(fontSize: 12)),
-                    onPressed: () => ref.read(inspectionsProvider.notifier).fetchInspections(),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.secondaryBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      elevation: 0,
-                    ),
-                    icon: const Icon(Icons.add, size: 16, color: Colors.white),
-                    label: const Text(
-                      '+ New Inspection',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () => context.push('/new-inspection'),
-                  ),
-                ],
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  side: const BorderSide(color: AppColors.neutral300),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
+                icon: const Icon(Icons.refresh_rounded, size: 16, color: AppColors.neutral700),
+                label: const Text('Refresh Registry', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.neutral800)),
+                onPressed: () => ref.read(inspectionsProvider.notifier).fetchInspections(),
               ),
             ],
           ),
@@ -209,69 +191,85 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
             ),
             child: Column(
               children: [
-                // Table Column Headers
-                Container(
-                  color: AppColors.neutral100,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: Row(
-                    children: const [
-                      Expanded(flex: 2, child: Text('CASE ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                      Expanded(flex: 3, child: Text('ESTABLISHMENT / TRADER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                      Expanded(flex: 3, child: Text('LOCATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                      Expanded(flex: 2, child: Text('INSPECTION TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                      Expanded(flex: 2, child: Text('PACKAGE TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                      Expanded(flex: 2, child: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                      Expanded(flex: 2, child: Text('AUDIT DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700))),
-                      Expanded(flex: 2, child: Align(alignment: Alignment.centerRight, child: Text('ACTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1, color: AppColors.neutral200),
+                // Horizontally scrollable table container for complete responsive safety
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final minTableWidth = constraints.maxWidth < 1140 ? 1140.0 : constraints.maxWidth;
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: minTableWidth,
+                        child: Column(
+                          children: [
+                            // Table Column Headers
+                            Container(
+                              color: AppColors.neutral100,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              child: Row(
+                                children: const [
+                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('CASE ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                                  Expanded(flex: 4, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('ESTABLISHMENT / TRADER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                                  Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('LOCATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('INSPECTION TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('PACKAGE TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                                  Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('AUDIT DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                                  Expanded(flex: 3, child: Align(alignment: Alignment.centerRight, child: Text('ACTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                                ],
+                              ),
+                            ),
+                            const Divider(height: 1, color: AppColors.neutral200),
 
-                // Table Rows or Empty State
-                if (state.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 48),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (filtered.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 48),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          const Icon(Icons.folder_open, size: 44, color: AppColors.neutral400),
-                          const SizedBox(height: 10),
-                          const Text('No inspection cases match your filter criteria.', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.neutral700)),
-                          const SizedBox(height: 4),
-                          const Text('Try clearing search terms or selecting "All Cases".', style: TextStyle(fontSize: 12, color: AppColors.neutral500)),
-                          const SizedBox(height: 12),
-                          OutlinedButton(
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                                _statusFilter = 'ALL';
-                                _typeFilter = 'ALL';
-                              });
-                            },
-                            child: const Text('Reset Filters'),
-                          ),
-                        ],
+                            // Table Rows or Empty State
+                            if (state.isLoading)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 48),
+                                child: Center(child: CircularProgressIndicator()),
+                              )
+                            else if (filtered.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 48),
+                                child: Center(
+                                  child: Column(
+                                    children: [
+                                      const Icon(Icons.folder_open, size: 44, color: AppColors.neutral400),
+                                      const SizedBox(height: 10),
+                                      const Text('No inspection cases match your filter criteria.', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.neutral700)),
+                                      const SizedBox(height: 4),
+                                      const Text('Try clearing search terms or selecting "All Cases".', style: TextStyle(fontSize: 12, color: AppColors.neutral500)),
+                                      const SizedBox(height: 12),
+                                      OutlinedButton(
+                                        onPressed: () {
+                                          _searchController.clear();
+                                          setState(() {
+                                            _searchQuery = '';
+                                            _statusFilter = 'ALL';
+                                            _typeFilter = 'ALL';
+                                          });
+                                        },
+                                        child: const Text('Reset Filters'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            else
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: filtered.length,
+                                separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.neutral200),
+                                itemBuilder: (context, index) {
+                                  final ins = filtered[index];
+                                  return _buildTableRow(context, ins);
+                                },
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                  )
-                else
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: filtered.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.neutral200),
-                    itemBuilder: (context, index) {
-                      final ins = filtered[index];
-                      return _buildTableRow(context, ins);
-                    },
-                  ),
+                    );
+                  },
+                ),
 
                 // Table Footer / Counts
                 Container(
@@ -328,21 +326,6 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
   }
 
   Widget _buildTableRow(BuildContext context, InspectionModel ins) {
-    final status = ins.status.toUpperCase();
-    Color statusBg = AppColors.neutral200;
-    Color statusText = AppColors.neutral700;
-
-    if (['COMPLIANT', 'FINALIZED', 'COMPLETED'].contains(status)) {
-      statusBg = AppColors.passGreen.withValues(alpha: 0.12);
-      statusText = AppColors.passGreen;
-    } else if (['VIOLATION', 'POTENTIAL_VIOLATION'].contains(status)) {
-      statusBg = AppColors.violationRed.withValues(alpha: 0.12);
-      statusText = AppColors.violationRed;
-    } else if (['NEEDS_REVIEW', 'REVIEW_REQUIRED', 'IN_REVIEW', 'DRAFT'].contains(status)) {
-      statusBg = AppColors.reviewAmber.withValues(alpha: 0.12);
-      statusText = AppColors.reviewAmber;
-    }
-
     final dateStr = ins.inspectionDate.length >= 10 ? ins.inspectionDate.substring(0, 10) : ins.inspectionDate;
 
     return InkWell(
@@ -354,67 +337,85 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
           children: [
             Expanded(
               flex: 2,
-              child: Text(
-                ins.inspectionCode,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primaryNavy),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  ins.inspectionCode,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: AppColors.primaryNavy),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  ins.businessName ?? ins.sellerName ?? 'Enterprise',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
             Expanded(
               flex: 3,
-              child: Text(
-                ins.businessName ?? ins.sellerName ?? 'Enterprise',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                overflow: TextOverflow.ellipsis,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  ins.location,
+                  style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  ins.inspectionType,
+                  style: const TextStyle(fontSize: 12, color: AppColors.neutral700),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  ins.packageType ?? 'RECTANGULAR',
+                  style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
             Expanded(
               flex: 3,
-              child: Text(
-                ins.location,
-                style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                ins.inspectionType,
-                style: const TextStyle(fontSize: 12, color: AppColors.neutral700),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                ins.packageType ?? 'RECTANGULAR',
-                style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: statusBg,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    status,
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusText),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppStatusBadge(
+                    status: ins.status,
+                    size: BadgeSize.sm,
                   ),
                 ),
               ),
             ),
             Expanded(
               flex: 2,
-              child: Text(
-                dateStr,
-                style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  dateStr,
+                  style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
+                ),
               ),
             ),
             Expanded(
-              flex: 2,
+              flex: 3,
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Row(
