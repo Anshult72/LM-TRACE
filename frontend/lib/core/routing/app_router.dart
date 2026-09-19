@@ -25,6 +25,7 @@ import '../../features/profile/officer_profile_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/audit/audit_trail_screen.dart';
 import '../../features/about/help_about_screen.dart';
+import '../../features/landing/landing_page_screen.dart';
 
 import '../responsive/web_app_shell.dart';
 
@@ -43,21 +44,47 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
 GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: '/dashboard',
+    initialLocation: kIsWeb ? '/' : '/login',
     refreshListenable: authNotifier,
     redirect: (context, state) {
       final isAuth = ref.read(authProvider).isAuthenticated;
-      final isLoggingIn = state.matchedLocation == '/login';
+      final loc = state.matchedLocation;
+      final isLogin = loc == '/login';
+      final isLanding = loc == '/';
 
-      if (!isAuth && !isLoggingIn) {
+      if (!kIsWeb) {
+        // Native mobile application flow: Login -> Authenticated Application
+        if (!isAuth && !isLogin) {
+          return '/login';
+        }
+        if (isAuth && (isLogin || isLanding)) {
+          return '/dashboard';
+        }
+        return null;
+      }
+
+      // Web application flow: Public Landing (/) -> Login (/login) -> Authenticated Dashboard (/dashboard)
+      if (!isAuth) {
+        // Public routes on Web:
+        if (isLanding || isLogin) {
+          return null;
+        }
+        // Protected routes on Web visited while unauthenticated redirect to /login
         return '/login';
+      } else {
+        // Authenticated user on Web:
+        // Visiting landing page or login redirects to operational dashboard
+        if (isLanding || isLogin) {
+          return '/dashboard';
+        }
+        return null;
       }
-      if (isAuth && isLoggingIn) {
-        return '/dashboard';
-      }
-      return null;
     },
     routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const LandingPageScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
