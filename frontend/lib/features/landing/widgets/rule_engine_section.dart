@@ -142,18 +142,22 @@ class RuleEngineSection extends StatelessWidget {
                 child: const Icon(Icons.history_toggle_off_rounded, color: AppColors.accentBlue, size: 20),
               ),
               const SizedBox(width: 12),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Versioned Legal Rules',
-                    style: TextStyle(color: AppColors.textDark, fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
-                  Text(
-                    'Gazette Amendment Lineage & Traceability',
-                    style: TextStyle(color: AppColors.textMuted, fontSize: 12),
-                  ),
-                ],
+              Expanded(
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Versioned Legal Rules',
+                      style: TextStyle(color: AppColors.textDark, fontSize: 16, fontWeight: FontWeight.w700),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'Gazette Amendment Lineage & Traceability',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -233,7 +237,10 @@ class RuleEngineSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       version,
@@ -243,7 +250,6 @@ class RuleEngineSection extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(width: 8),
                     if (isActive)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
@@ -294,20 +300,27 @@ class RuleEngineSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Row(
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.terminal_rounded, color: Color(0xFF60A5FA), size: 20),
-                  SizedBox(width: 10),
-                  Text(
-                    'RULE EXECUTION DEFINITION',
-                    style: TextStyle(
-                      color: Color(0xFF93C5FD),
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
+                  const Icon(Icons.terminal_rounded, color: Color(0xFF60A5FA), size: 20),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: const Text(
+                      'RULE EXECUTION DEFINITION',
+                      style: TextStyle(
+                        color: Color(0xFF93C5FD),
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

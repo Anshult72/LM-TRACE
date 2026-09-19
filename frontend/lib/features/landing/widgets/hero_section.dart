@@ -136,13 +136,16 @@ class _HeroSectionState extends State<HeroSection> {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'LEGAL METROLOGY COMPLIANCE & INSPECTION PLATFORM',
-                style: TextStyle(
-                  color: Color(0xFFBAE6FD),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
+              const Flexible(
+                child: Text(
+                  'LEGAL METROLOGY COMPLIANCE & INSPECTION PLATFORM',
+                  style: TextStyle(
+                    color: Color(0xFFBAE6FD),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -200,9 +203,12 @@ class _HeroSectionState extends State<HeroSection> {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'Access Platform',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+                  Flexible(
+                    child: Text(
+                      'Access Platform',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.2),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   SizedBox(width: 8),
                   Icon(Icons.arrow_forward_rounded, size: 18),
@@ -224,9 +230,12 @@ class _HeroSectionState extends State<HeroSection> {
                 children: [
                   Icon(Icons.play_circle_outline_rounded, size: 18, color: Color(0xFF93C5FD)),
                   SizedBox(width: 8),
-                  Text(
-                    'Explore How It Works',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  Flexible(
+                    child: Text(
+                      'Explore How It Works',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -364,14 +373,17 @@ class _HeroSectionState extends State<HeroSection> {
               color: Color(0xFF091624),
               border: Border(bottom: BorderSide(color: Color(0xFF162D47), width: 1)),
             ),
-            child: Row(
-              children: [
-                _buildTerminalTab(0, 'Declarations (6)', Icons.text_snippet_outlined),
-                const SizedBox(width: 8),
-                _buildTerminalTab(1, 'PDP Table-I', Icons.straighten_outlined),
-                const SizedBox(width: 8),
-                _buildTerminalTab(2, 'Rule Engine', Icons.gavel_outlined),
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildTerminalTab(0, 'Declarations (6)', Icons.text_snippet_outlined),
+                  const SizedBox(width: 8),
+                  _buildTerminalTab(1, 'PDP Table-I', Icons.straighten_outlined),
+                  const SizedBox(width: 8),
+                  _buildTerminalTab(2, 'Rule Engine', Icons.gavel_outlined),
+                ],
+              ),
             ),
           ),
 
@@ -479,8 +491,11 @@ class _HeroSectionState extends State<HeroSection> {
       key: const ValueKey(0),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             const Text(
               'EXTRACTED STATUTORY DECLARATIONS',

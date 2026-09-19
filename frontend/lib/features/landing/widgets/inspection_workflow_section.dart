@@ -94,8 +94,9 @@ class _InspectionWorkflowSectionState extends State<InspectionWorkflowSection> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppColors.neutral200),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
                   children: [
                     _buildToggleBtn(0, 'Physical Package Inspection', Icons.inventory_2_outlined),
                     _buildToggleBtn(1, 'E-Commerce Listing Scan', Icons.shopping_bag_outlined),
@@ -140,12 +141,15 @@ class _InspectionWorkflowSectionState extends State<InspectionWorkflowSection> {
               color: isActive ? AppColors.primaryNavy : AppColors.neutral500,
             ),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? AppColors.primaryNavy : AppColors.neutral600,
-                fontSize: 13,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? AppColors.primaryNavy : AppColors.neutral600,
+                  fontSize: 13,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
