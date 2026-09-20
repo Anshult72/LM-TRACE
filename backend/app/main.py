@@ -1,4 +1,5 @@
 import os
+import asyncio
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,17 +9,34 @@ from app.core.config import settings
 from app.core.logging import setup_logging, logger, RequestLoggingMiddleware
 from app.api.routes import (
     auth, inspections, declarations, findings, reports, products, rules,
-    dashboard, audit_logs, online_listings
+    dashboard, audit_logs, online_listings, reference_library
 )
 
 setup_logging()
+
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan handler:
+    On startup, safely triggers an asynchronous backfill task to reconcile
+    any legacy or unlinked historical inspections with the Product Intelligence Registry.
+    """
+    try:
+        from app.services.product.product_intelligence_service import product_intelligence_service
+        asyncio.create_task(product_intelligence_service.backfill_historical_inspections())
+    except Exception as e:
+        logger.warning("Historical backfill on startup notice: %s", e)
+    yield
 
 app = FastAPI(
     title="LM-TRACE — Legal Metrology Inspection & Compliance Platform",
     description="AI-Assisted Legal Metrology Inspection & Compliance Platform",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # Request logging middleware — logs method, path, status, duration for Railway debugging
@@ -59,6 +77,7 @@ app.include_router(rules.legal_docs_router)
 app.include_router(dashboard.router)
 app.include_router(audit_logs.router)
 app.include_router(online_listings.router)
+app.include_router(reference_library.router)
 
 # Consistent API error response handler (Rule 81)
 @app.exception_handler(Exception)

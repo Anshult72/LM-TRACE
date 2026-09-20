@@ -90,6 +90,8 @@ class InspectionModel {
   final Map<String, dynamic>? pdpData;
   final String? appliedRuleVersion;
   final String? notes;
+  final String productCategory;
+  final Map<String, dynamic> applicabilityContext;
   final List<dynamic> images;
   final List<dynamic> declarations;
   final List<dynamic> checks;
@@ -115,6 +117,8 @@ class InspectionModel {
     this.pdpData,
     this.appliedRuleVersion,
     this.notes,
+    this.productCategory = 'General Packaged Commodity',
+    this.applicabilityContext = const {},
     this.images = const [],
     this.declarations = const [],
     this.checks = const [],
@@ -151,6 +155,10 @@ class InspectionModel {
       pdpData: json['pdp_data'],
       appliedRuleVersion: json['applied_rule_version'],
       notes: json['notes'],
+      productCategory: json['rule_snapshot']?['product_category'] ?? json['product_category'] ?? 'General Packaged Commodity',
+      applicabilityContext: Map<String, dynamic>.from(
+        json['rule_snapshot']?['applicability_context'] ?? json['applicability_context'] ?? const {},
+      ),
       images: json['images'] ?? [],
       declarations: json['declarations'] ?? [],
       checks: json['checks'] ?? [],
@@ -342,6 +350,9 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
     String? businessName,
     String productCategory = "Packaged Food",
     String inspectionType = "PHYSICAL",
+    String packageType = "RECTANGULAR",
+    String packageConstructionType = "NORMAL",
+    Map<String, dynamic> applicabilityContext = const {},
     String? notes,
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
@@ -354,6 +365,9 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
           'business_name': businessName,
           'product_category': productCategory,
           'inspection_type': inspectionType,
+          'package_type': packageType,
+          'package_construction_type': packageConstructionType,
+          'applicability_context': applicabilityContext,
           'notes': notes,
         },
       );

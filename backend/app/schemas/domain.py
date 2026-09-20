@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Literal
 from pydantic import BaseModel, Field
 
 # --- AUTH SCHEMAS ---
@@ -193,6 +193,26 @@ class RuleApplicationContextSchema(BaseModel):
     pdpAreaCm2: Optional[float] = None
     otherApplicableFlags: Dict[str, Any] = {}
 
+
+class PackageApplicabilityInput(BaseModel):
+    """Officer-supplied facts that determine which Rule 6 declarations apply.
+
+    Optional booleans deliberately preserve an UNKNOWN state so the analysis
+    service can infer a value from OCR evidence without silently treating an
+    unanswered legal-applicability question as false.
+    """
+    market_scope: Literal["RETAIL", "INDUSTRIAL", "INSTITUTIONAL"] = "RETAIL"
+    origin_type: Literal["DOMESTIC", "IMPORTED", "UNKNOWN"] = "UNKNOWN"
+    is_packer_distinct: Optional[bool] = None
+    shelf_life_declaration_required: Optional[bool] = None
+    dimensions_declaration_required: Optional[bool] = None
+    unit_sale_price_required: Optional[bool] = None
+    is_multi_piece_package: bool = False
+    electronic_declarations_via_qr: bool = False
+    has_outer_wrapper: bool = False
+    outer_wrapper_transparent: bool = False
+    declaration_read_through_liquid: bool = False
+
 # --- COMPLIANCE SCHEMAS ---
 class ComplianceCheckResult(BaseModel):
     check_type: str  # MANDATORY_DECLARATION, CHARACTER_HEIGHT, CHARACTER_PROPORTION, READABILITY, PLACEMENT
@@ -226,6 +246,9 @@ class InspectionCreate(BaseModel):
     business_name: Optional[str] = None
     product_category: str = "Packaged Food"
     inspection_type: str = "PHYSICAL"  # PHYSICAL, ONLINE_LISTING
+    package_type: str = "RECTANGULAR"
+    package_construction_type: str = "NORMAL"
+    applicability_context: PackageApplicabilityInput = Field(default_factory=PackageApplicabilityInput)
     notes: Optional[str] = None
 
 class InspectionUpdate(BaseModel):
@@ -235,6 +258,8 @@ class InspectionUpdate(BaseModel):
     notes: Optional[str] = None
     package_type: Optional[str] = None
     package_construction_type: Optional[str] = None
+    product_category: Optional[str] = None
+    applicability_context: Optional[PackageApplicabilityInput] = None
 
 class FinalizeInspectionRequest(BaseModel):
     business_name: Optional[str] = None
@@ -244,6 +269,7 @@ class FinalizeInspectionRequest(BaseModel):
     inspection_type: Optional[str] = None
     package_type: Optional[str] = None
     package_construction_type: Optional[str] = None
+    applicability_context: Optional[PackageApplicabilityInput] = None
     notes: Optional[str] = None
 
 

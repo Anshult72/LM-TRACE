@@ -3,6 +3,14 @@ import io
 from PIL import Image
 from httpx import AsyncClient, ASGITransport
 from app.main import app
+from app.services.inspection.surface_validator import ALLOWED_SURFACE_CODES, REQUIRED_SURFACE_CODES
+
+
+def test_wrapper_surfaces_are_allowed_but_not_globally_required():
+    assert "OUTER_WRAPPER" in ALLOWED_SURFACE_CODES
+    assert "INNER_PACKAGE" in ALLOWED_SURFACE_CODES
+    assert "OUTER_WRAPPER" not in REQUIRED_SURFACE_CODES
+    assert "INNER_PACKAGE" not in REQUIRED_SURFACE_CODES
 
 def _make_sample_png_bytes() -> bytes:
     img = Image.new('RGB', (100, 100), color=(73, 109, 137))

@@ -242,7 +242,7 @@ class ScannerWebWorkspace extends StatelessWidget {
       child: Row(
         children: List.generate(surfaces.length, (index) {
           final isSelected = selectedSurfaceIndex == index;
-          final canonicalCodes = ['FRONT', 'BACK', 'SIDE', 'MRP_AREA'];
+          final canonicalCodes = ['FRONT', 'BACK', 'SIDE', 'MRP_AREA', 'OUTER_WRAPPER', 'INNER_PACKAGE'];
           final code = index < canonicalCodes.length ? canonicalCodes[index] : 'FRONT';
           final surfaceState = surfacesState?[code];
           final isComplete = surfaceState?.isComplete ?? surfaceImages.containsKey(index);
@@ -302,7 +302,7 @@ class ScannerWebWorkspace extends StatelessWidget {
   }
 
   Widget _buildLeftImagePanel(BuildContext context) {
-    const canonicalCodes = ['FRONT', 'BACK', 'SIDE', 'MRP_AREA'];
+    const canonicalCodes = ['FRONT', 'BACK', 'SIDE', 'MRP_AREA', 'OUTER_WRAPPER', 'INNER_PACKAGE'];
     final canonicalCode = selectedSurfaceIndex < canonicalCodes.length ? canonicalCodes[selectedSurfaceIndex] : 'FRONT';
     final surfaceState = surfacesState?[canonicalCode];
     final localBytes = surfaceImages[selectedSurfaceIndex];

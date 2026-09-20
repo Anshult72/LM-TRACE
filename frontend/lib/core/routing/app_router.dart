@@ -18,6 +18,8 @@ import '../../features/ai_analysis/analysis_progress_screen.dart';
 import '../../features/reports/report_preview_screen.dart';
 import '../../features/products/product_list_screen.dart';
 import '../../features/products/product_history_screen.dart';
+import '../../features/reference_library/reference_library_screen.dart';
+import '../../features/reference_library/reference_detail_screen.dart';
 import '../../features/online_listing/online_listing_screen.dart';
 import '../../features/rule_management/rule_admin_screen.dart';
 import '../../features/supervisor/supervisor_screen.dart';
@@ -126,6 +128,17 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
           GoRoute(
             path: '/products',
             builder: (context, state) => const ProductListScreen(),
+          ),
+          GoRoute(
+            path: '/reference-library',
+            builder: (context, state) => const ReferenceLibraryScreen(),
+          ),
+          GoRoute(
+            path: '/reference-library/:id',
+            builder: (context, state) {
+              final id = state.pathParameters['id'] ?? '';
+              return ReferenceDetailScreen(productId: id);
+            },
           ),
           GoRoute(
             path: '/rules',

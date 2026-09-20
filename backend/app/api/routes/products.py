@@ -23,14 +23,19 @@ async def list_products(
         category_filter=category
     )
 
+@router.post("/backfill", response_model=Dict[str, Any])
 @router.post("/sync", response_model=Dict[str, Any])
-async def sync_inspections(user_payload: dict = Depends(get_current_user_payload)):
+async def backfill_historical_products(user_payload: dict = Depends(get_current_user_payload)):
     """
-    Reconciles all unlinked inspection cases in the database, automatically extracting
-    product identities and linking them to the Product Intelligence Registry.
+    Backfill / Migration endpoint for historical inspection data:
+    Scans all historical inspection records in the database, extracts actual product declarations,
+    establishes canonical product identities, generates fingerprints without fabrication,
+    links historical inspections, builds chronological label version progression, and returns detailed metrics.
+    Safe, idempotent, and repeatable.
     """
-    synced = await product_intelligence_service.sync_unlinked_inspections()
-    return {"success": True, "synced_inspections_count": synced}
+    res = await product_intelligence_service.backfill_historical_inspections()
+    res["synced_inspections_count"] = res.get("inspections_linked", 0)
+    return res
 
 @router.get("/{product_id}", response_model=Dict[str, Any])
 async def get_product(

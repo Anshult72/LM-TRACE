@@ -377,7 +377,7 @@ class NeonPostgresRepository(
             return [
                 {
                     "id": ins.id, "inspection_code": ins.inspection_code, "status": ins.status,
-                    "inspector_id": ins.inspector_id,
+                    "inspector_id": ins.inspector_id, "product_id": ins.product_id,
                     "inspection_type": ins.inspection_type, "location": ins.location,
                     "seller_name": ins.seller_name, "business_name": ins.business_name,
                     "score": ins.score,

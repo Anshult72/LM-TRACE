@@ -9,7 +9,8 @@ class ComplianceEngine:
         extracted_declarations: Dict[str, Any],
         correctness_data: Dict[str, Any],
         context: Dict[str, Any],
-        readability_data: Optional[Dict[str, Any]] = None
+        readability_data: Optional[Dict[str, Any]] = None,
+        placement_data: Optional[List[Dict[str, Any]]] = None,
     ) -> ComplianceAssessmentResponse:
         applicable_rules = await rule_engine.get_applicable_rules(context)
         requirements = rule_engine.determine_required_declarations(applicable_rules, context)
@@ -17,6 +18,37 @@ class ComplianceEngine:
         checks: List[ComplianceCheckResult] = []
         review_items: List[Dict[str, Any]] = []
         violations: List[Dict[str, Any]] = []
+
+        if context.get("rulesApplicable") is False:
+            scope = context.get("marketScope", "NON_RETAIL")
+            scope_check = ComplianceCheckResult(
+                check_type="APPLICABILITY_SCOPE",
+                field_name="market_scope",
+                rule_code="RULE-003-SCOPE",
+                rule_version="1.0",
+                input_value=str(scope),
+                expected_condition="Retail package within the applicable declaration scope",
+                result="PASS",
+                confidence=1.0,
+                explanation=f"Package recorded as {scope}; retail-package declaration checks were not applied.",
+                source_reference="Rule 3, Legal Metrology (Packaged Commodities) Rules, 2011",
+            )
+            return ComplianceAssessmentResponse(
+                overall_status="PASS",
+                score=100.0,
+                score_breakdown={
+                    "declarations_score": 100.0,
+                    "legibility_score": 100.0,
+                    "overall_score": 100.0,
+                },
+                passed_count=1,
+                review_count=0,
+                violation_count=0,
+                unverified_count=0,
+                checks=[scope_check],
+                review_items=[],
+                potential_violations=[],
+            )
 
         matrix = correctness_data.get("matrix", []) if isinstance(correctness_data, dict) else []
         matrix_by_field = {
@@ -32,7 +64,13 @@ class ComplianceEngine:
         matrix_aliases = {
             "manufacturer_name": "manufacturer",
             "manufacturer_address": "manufacturer",
+            "packer_name": "packer",
+            "packer_address": "packer",
+            "importer_name": "importer",
+            "importer_address": "importer",
             "manufacturing_date": "manufacturing_packing_date",
+            "packing_date": "manufacturing_packing_date",
+            "import_date": "manufacturing_packing_date",
         }
 
         def extracted_value(field: str) -> Any:
@@ -65,7 +103,7 @@ class ComplianceEngine:
         mrp_rule = rule_engine.get_rule_by_code_or_category(applicable_rules, "RULE-006-MRP", "MRP")
         mrp_code = mrp_rule.get("rule_code", "RULE-006-MRP") if mrp_rule else "RULE-006-MRP"
         mrp_ver = mrp_rule.get("version", "2.0") if mrp_rule else "2.0"
-        mrp_ref = mrp_rule.get("statutory_reference", "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(d)") if mrp_rule else "Rule 6(1)(d)"
+        mrp_ref = mrp_rule.get("statutory_reference", "Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6(1)(e)") if mrp_rule else "Rule 6(1)(e)"
 
         usp_rule = rule_engine.get_rule_by_code_or_category(applicable_rules, "RULE-006-UNIT-SALE-PRICE", "MRP")
         usp_code = usp_rule.get("rule_code", "RULE-006-UNIT-SALE-PRICE") if usp_rule else "RULE-006-UNIT-SALE-PRICE"
@@ -83,6 +121,53 @@ class ComplianceEngine:
                 return val.get("source_block_id") or val.get("source_image_id")
             return getattr(val, "source_block_id", None) or getattr(val, "source_image_id", None)
 
+        def get_field_bbox(field: str) -> Optional[Dict[str, Any]]:
+            val = extracted_declarations.get(field)
+            bbox = val.get("bbox") if isinstance(val, dict) else getattr(val, "bbox", None)
+            return bbox.model_dump() if hasattr(bbox, "model_dump") else bbox
+
+        if context.get("rulesApplicable", True) and not context.get("originTypeConfirmed", True):
+            checks.append(ComplianceCheckResult(
+                check_type="APPLICABILITY_CONTEXT",
+                field_name="country_of_origin_type",
+                rule_code="RULE-006-NAME-ADDR",
+                rule_version="2.0",
+                input_value="UNKNOWN",
+                expected_condition="Officer must classify the commodity as domestic or imported",
+                result="REVIEW",
+                confidence=0.0,
+                explanation="Import status could not be proven from package OCR; importer and country-of-origin applicability requires officer confirmation.",
+                source_reference="Rule 6(1)(a), LM (Packaged Commodities) Rules, 2011",
+            ))
+            review_items.append({
+                "type": "APPLICABILITY_REVIEW",
+                "field": "country_of_origin_type",
+                "severity": "HIGH",
+                "confidence": 0.0,
+                "explanation": "Confirm whether the packaged commodity is domestic or imported.",
+            })
+
+        if context.get("rulesApplicable", True) and context.get("electronicDeclarationsViaQr", False):
+            checks.append(ComplianceCheckResult(
+                check_type="DIGITAL_DECLARATION_ACCESS",
+                field_name="qr_declarations",
+                rule_code="RULE-006-DIGITAL",
+                rule_version="1.0",
+                input_value="Officer marked declarations as QR/electronically accessible",
+                expected_condition="Open the code and capture the permitted digital declarations as evidence",
+                result="REVIEW",
+                confidence=0.0,
+                explanation="A QR/electronic declaration cannot be treated as verified until its destination and declaration content are captured.",
+                source_reference="Legal Metrology (Packaged Commodities) Rules, 2011 - Rule 6",
+            ))
+            review_items.append({
+                "type": "DIGITAL_DECLARATION_REVIEW",
+                "field": "qr_declarations",
+                "severity": "HIGH",
+                "confidence": 0.0,
+                "explanation": "Open the QR/electronic declaration and capture its contents before final compliance confirmation.",
+            })
+
         # 1. Evaluate Declaration Presence & Completeness against Requirements
         for field, req in requirements.items():
             is_req = req["required"]
@@ -90,10 +175,16 @@ class ComplianceEngine:
             rule_c = req.get("rule_code") or decl_code
             rule_v = req.get("rule_version") or decl_ver
             stat_ref = req.get("statutory_reference") or decl_ref
-            mat_item = matrix_by_field.get(field) or matrix_by_field.get(matrix_aliases.get(field, ""))
-            actual_value = extracted_value(field)
-            is_present = bool(actual_value) or bool(mat_item and mat_item.get("presence"))
-            evidence_id = get_field_evidence(field) or (mat_item.get("source_block_id") if isinstance(mat_item, dict) else None)
+            candidate_fields = [field] + list(req.get("alternatives") or [])
+            matched_field = next((candidate for candidate in candidate_fields if extracted_value(candidate)), field)
+            mat_item = matrix_by_field.get(matched_field) or matrix_by_field.get(matrix_aliases.get(matched_field, ""))
+            actual_value = extracted_value(matched_field)
+            # Grouped correctness rows (manufacturer/importer/packer) may be
+            # present when only one component exists. They must never make a
+            # missing individual name/address look present.
+            direct_matrix_match = isinstance(mat_item, dict) and mat_item.get("field_name") == matched_field
+            is_present = bool(actual_value) or bool(direct_matrix_match and mat_item.get("presence"))
+            evidence_id = get_field_evidence(matched_field) or (mat_item.get("source_block_id") if isinstance(mat_item, dict) else None)
 
             if is_req:
                 if not is_present:
@@ -116,7 +207,8 @@ class ComplianceEngine:
                         "field": field,
                         "severity": "HIGH",
                         "confidence": 0.98,
-                        "explanation": f"Mandatory declaration '{field}' missing."
+                        "explanation": f"Mandatory declaration '{field}' missing.",
+                        "source_reference": stat_ref,
                     })
                 else:
                     matrix_item = mat_item or {}
@@ -137,8 +229,9 @@ class ComplianceEngine:
                             evidence_id=evidence_id
                         ))
                     elif corr_status == "REVIEW":
+                        completeness = matrix_item.get("completeness")
                         checks.append(ComplianceCheckResult(
-                            check_type="DECLARATION_CORRECTNESS",
+                            check_type="DECLARATION_COMPLETENESS" if completeness == "INCOMPLETE" else "DECLARATION_CORRECTNESS",
                             field_name=field,
                             rule_code=rule_c,
                             rule_version=rule_v,
@@ -146,7 +239,7 @@ class ComplianceEngine:
                             expected_condition="Complete and standard declaration format",
                             result="REVIEW",
                             confidence=matrix_item.get("confidence", 0.85),
-                            explanation=f"Declaration '{field}' requires inspector review for completeness/standard formatting.",
+                            explanation=matrix_item.get("details") or f"Declaration '{field}' requires inspector review for completeness/standard formatting.",
                             source_reference=stat_ref,
                             evidence_id=evidence_id
                         ))
@@ -167,7 +260,7 @@ class ComplianceEngine:
                             expected_condition="Statutory compliant declaration",
                             result="POTENTIAL_VIOLATION",
                             confidence=0.92,
-                            explanation=f"Declaration '{field}' fails correctness validation.",
+                            explanation=matrix_item.get("details") or f"Declaration '{field}' fails correctness validation.",
                             source_reference=stat_ref,
                             evidence_id=evidence_id
                         ))
@@ -176,7 +269,10 @@ class ComplianceEngine:
                             "field": field,
                             "severity": "HIGH",
                             "confidence": 0.92,
-                            "explanation": f"Declaration '{field}' fails correctness check."
+                            "explanation": matrix_item.get("details") or f"Declaration '{field}' fails correctness check.",
+                            "source_reference": stat_ref,
+                            "bbox": get_field_bbox(matched_field),
+                            "source_image_id": (extracted_declarations.get(matched_field) or {}).get("source_image_id") if isinstance(extracted_declarations.get(matched_field), dict) else None,
                         })
             else:
                 # Optional or conditional check that is not applicable
@@ -195,7 +291,45 @@ class ComplianceEngine:
                         evidence_id=evidence_id
                     ))
 
-        # 2. Rule 7: Principal Display Panel Character & Numeral Height Check
+        # 2. Rule 9 placement checks. A declaration is only auto-passed when
+        # OCR provenance ties it to a captured package surface and valid bbox.
+        for placement in placement_data or []:
+            result = placement.get("status", "UNVERIFIED")
+            field = placement.get("field_name", "package_declarations")
+            checks.append(ComplianceCheckResult(
+                check_type="PLACEMENT",
+                field_name=field,
+                rule_code=placement.get("rule_code", "RULE-009-PLACEMENT"),
+                rule_version="1.0",
+                input_value=placement.get("surface"),
+                expected_condition="Declaration must be on the package/secure label and on an opaque outer wrapper when present",
+                result=result,
+                confidence=0.98 if result in {"PASS", "POTENTIAL_VIOLATION"} else 0.5,
+                explanation=placement.get("explanation", "Placement could not be verified."),
+                source_reference=placement.get("statutory_reference", "Rule 9"),
+                evidence_id=placement.get("source_block_id") or placement.get("source_image_id"),
+            ))
+            if result == "POTENTIAL_VIOLATION":
+                violations.append({
+                    "type": "NON_COMPLIANT_PLACEMENT",
+                    "field": field,
+                    "severity": "HIGH",
+                    "confidence": 0.98,
+                    "explanation": placement.get("explanation"),
+                    "bbox": placement.get("bbox"),
+                    "source_image_id": placement.get("source_image_id"),
+                    "source_reference": placement.get("statutory_reference"),
+                })
+            elif result in {"REVIEW", "UNVERIFIED"}:
+                review_items.append({
+                    "type": "PLACEMENT_REVIEW",
+                    "field": field,
+                    "severity": "MEDIUM",
+                    "confidence": 0.5,
+                    "explanation": placement.get("explanation"),
+                })
+
+        # 3. Rule 7: Principal Display Panel Character & Numeral Height Check
         pdp_area = context.get("pdpAreaCm2")
         pkg_const = context.get("packageConstructionType") or "NORMAL"
         calib_status = context.get("calibrationStatus") or CalibrationStatus.NOT_CALIBRATED
@@ -287,8 +421,16 @@ class ComplianceEngine:
         # 4. E-Commerce Specific Checks (Rule 6(10) / RULE-006-ECOM)
         if context.get("isEcommerce", False):
             # Evaluate mandatory digital declarations for e-commerce listings
-            ecom_mandatory = ["commodity_name", "mrp", "net_quantity", "manufacturer_name", "consumer_care"]
-            ecom_missing = [f for f in ecom_mandatory if not extracted_value(f)]
+            ecom_exempt = {"manufacture_pack_import_date"}
+            ecom_requirements = {
+                field: req for field, req in requirements.items()
+                if req.get("required") and field not in ecom_exempt
+            }
+            ecom_missing = []
+            for field, req in ecom_requirements.items():
+                candidates = [field] + list(req.get("alternatives") or [])
+                if not any(extracted_value(candidate) for candidate in candidates):
+                    ecom_missing.append(field)
             if not ecom_missing:
                 checks.append(ComplianceCheckResult(
                     check_type="ECOMMERCE_DIGITAL_PDP",

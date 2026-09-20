@@ -20,4 +20,11 @@ class ApiConstants {
   static const String dashboard = "/api/dashboard";
   static const String auditLogs = "/api/audit-logs";
   static const String onlineListings = "/api/listings";
+  static const String referenceLibrarySearch = "/api/reference-library/search";
+  static String referenceLibraryDetail(String id, [String? version]) {
+    if (version != null && version.isNotEmpty) {
+      return "/api/reference-library/$id?version=$version";
+    }
+    return "/api/reference-library/$id";
+  }
 }

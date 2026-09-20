@@ -31,9 +31,14 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
   String? _currentInspectionId;
 
   int _selectedSurfaceIndex = 0;
-  final List<String> _surfaces = ['Front (PDP)', 'Back (Declarations)', 'Side (Consumer Care)', 'MRP & Date Stamp'];
+  final List<String> _surfaces = [
+    'Front (PDP)', 'Back (Declarations)', 'Side (Consumer Care)', 'MRP & Date Stamp',
+    'Outer Wrapper', 'Inner Package',
+  ];
   /// Canonical codes expected by backend mock OCR / placement logic.
-  static const List<String> _canonicalSurfaces = ['FRONT', 'BACK', 'SIDE', 'MRP_AREA'];
+  static const List<String> _canonicalSurfaces = [
+    'FRONT', 'BACK', 'SIDE', 'MRP_AREA', 'OUTER_WRAPPER', 'INNER_PACKAGE',
+  ];
 
   // Map of surface to captured image bytes and name
   final Map<int, Uint8List> _surfaceImages = {};
@@ -88,10 +93,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       text = hasViolation
           ? "Consumer Helpline: 1800-000-000\nFeedback: contact@consumer-desk.in\nFSSAI Lic: 10014011000123"
           : "Customer Care Cell: ABC Agro Foods Ltd.\nHelpline: 1800-111-2222\nEmail: care@abcagro.com\nWebsite: www.abcagro.com";
-    } else {
+    } else if (surface == 'MRP_AREA') {
       text = hasViolation
           ? "MRP Rs 500\nDate: 08/2026"
           : "MRP Rs 450.00 (Inclusive of all taxes)\nUnit Sale Price: Rs 90.00 / kg\nPacked on: 08/2026";
+    } else {
+      text = "ABC Premium Basmati Rice\nNet Weight: 5 kg\nMRP Rs 450.00 Inclusive of all taxes\nPacked on: 08/2026";
     }
 
     final textPainter = TextPainter(
@@ -307,7 +314,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     });
 
     try {
-      for (int i = 0; i < _canonicalSurfaces.length; i++) {
+      for (int i = 0; i < RequiredSurfaceValidator.canonicalSurfaces.length; i++) {
         final code = _canonicalSurfaces[i];
         final bytes = await _generateSamplePng(hasViolation: hasViolation, surface: code);
         final filename = hasViolation && i == 0 ? 'sample_violation_front.png' : 'sample_${code.toLowerCase()}.png';

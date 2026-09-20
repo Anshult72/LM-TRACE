@@ -123,9 +123,24 @@ class RequiredSurfaceValidator {
     ),
   ];
 
+  static const List<RequiredSurfaceDef> optionalSurfaces = [
+    RequiredSurfaceDef(
+      code: 'OUTER_WRAPPER',
+      name: 'Outer Wrapper',
+      description: 'Outside container / wrapper declarations',
+    ),
+    RequiredSurfaceDef(
+      code: 'INNER_PACKAGE',
+      name: 'Inner Package',
+      description: 'Constituent retail-package declarations',
+    ),
+  ];
+
+  static List<RequiredSurfaceDef> get allSurfaces => [...canonicalSurfaces, ...optionalSurfaces];
+
   static Map<String, SurfaceState> createInitialStates() {
     return {
-      for (final def in canonicalSurfaces)
+      for (final def in allSurfaces)
         def.code: SurfaceState(definition: def),
     };
   }

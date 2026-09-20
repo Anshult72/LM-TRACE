@@ -11,6 +11,7 @@ class InspectionFormData {
   final String inspectionType;
   final String packageType;
   final String packageConstructionType;
+  final Map<String, dynamic> applicabilityContext;
   final String? notes;
 
   const InspectionFormData({
@@ -21,6 +22,7 @@ class InspectionFormData {
     required this.inspectionType,
     required this.packageType,
     required this.packageConstructionType,
+    required this.applicabilityContext,
     this.notes,
   });
 
@@ -32,6 +34,7 @@ class InspectionFormData {
     'inspection_type': inspectionType,
     'package_type': packageType,
     'package_construction_type': packageConstructionType,
+    'applicability_context': applicabilityContext,
     'notes': notes,
   };
 }
@@ -68,6 +71,17 @@ class _InspectionDetailsFormState extends State<InspectionDetailsForm> {
   late String _category;
   late String _constructionType;
   late String _packageType;
+  late String _marketScope;
+  late String _originType;
+  late String _packerApplicability;
+  late String _shelfLifeApplicability;
+  late String _dimensionsApplicability;
+  late String _unitSalePriceApplicability;
+  late bool _isMultiPiecePackage;
+  late bool _electronicDeclarationsViaQr;
+  late bool _hasOuterWrapper;
+  late bool _outerWrapperTransparent;
+  late bool _declarationReadThroughLiquid;
 
   final List<String> _categories = [
     'Packaged Food',
@@ -112,9 +126,22 @@ class _InspectionDetailsFormState extends State<InspectionDetailsForm> {
     _notesController = TextEditingController(text: initialNotes);
 
     _inspectionType = init?.inspectionType ?? 'PHYSICAL';
-    _category = 'Packaged Food';
+    _category = init?.productCategory ?? 'Packaged Food';
     _constructionType = init?.packageConstructionType ?? 'NORMAL';
     _packageType = init?.packageType ?? 'RECTANGULAR';
+    final applicability = init?.applicabilityContext ?? const <String, dynamic>{};
+    _marketScope = (applicability['market_scope'] ?? 'RETAIL').toString();
+    _originType = (applicability['origin_type'] ?? 'UNKNOWN').toString();
+    String triState(dynamic value) => value is bool ? (value ? 'YES' : 'NO') : 'AUTO';
+    _packerApplicability = triState(applicability['is_packer_distinct']);
+    _shelfLifeApplicability = triState(applicability['shelf_life_declaration_required']);
+    _dimensionsApplicability = triState(applicability['dimensions_declaration_required']);
+    _unitSalePriceApplicability = triState(applicability['unit_sale_price_required']);
+    _isMultiPiecePackage = applicability['is_multi_piece_package'] == true;
+    _electronicDeclarationsViaQr = applicability['electronic_declarations_via_qr'] == true;
+    _hasOuterWrapper = applicability['has_outer_wrapper'] == true;
+    _outerWrapperTransparent = applicability['outer_wrapper_transparent'] == true;
+    _declarationReadThroughLiquid = applicability['declaration_read_through_liquid'] == true;
 
     // If initialBiz is empty, attempt to prefill from detected manufacturer/brand
     if (initialBiz.isEmpty && init != null && init.declarations.isNotEmpty) {
@@ -151,6 +178,19 @@ class _InspectionDetailsFormState extends State<InspectionDetailsForm> {
       inspectionType: _inspectionType,
       packageType: _packageType,
       packageConstructionType: _constructionType,
+      applicabilityContext: {
+        'market_scope': _marketScope,
+        'origin_type': _originType,
+        'is_packer_distinct': _triStateValue(_packerApplicability),
+        'shelf_life_declaration_required': _triStateValue(_shelfLifeApplicability),
+        'dimensions_declaration_required': _triStateValue(_dimensionsApplicability),
+        'unit_sale_price_required': _triStateValue(_unitSalePriceApplicability),
+        'is_multi_piece_package': _isMultiPiecePackage,
+        'electronic_declarations_via_qr': _electronicDeclarationsViaQr,
+        'has_outer_wrapper': _hasOuterWrapper,
+        'outer_wrapper_transparent': _outerWrapperTransparent,
+        'declaration_read_through_liquid': _declarationReadThroughLiquid,
+      },
       notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
     );
 
@@ -326,6 +366,107 @@ class _InspectionDetailsFormState extends State<InspectionDetailsForm> {
           ),
           const SizedBox(height: 16),
 
+          _buildSectionTitle('Declaration Applicability (Rule 6)'),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            initialValue: _marketScope,
+            decoration: const InputDecoration(
+              labelText: 'Intended Consumer / Market Scope',
+              helperText: 'Industrial and institutional packages may be outside retail declaration scope',
+              prefixIcon: Icon(Icons.business_center_outlined),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'RETAIL', child: Text('Retail consumer package')),
+              DropdownMenuItem(value: 'INDUSTRIAL', child: Text('Industrial consumer package')),
+              DropdownMenuItem(value: 'INSTITUTIONAL', child: Text('Institutional consumer package')),
+            ],
+            onChanged: (value) {
+              if (value != null) setState(() => _marketScope = value);
+            },
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: _originType,
+            decoration: const InputDecoration(
+              labelText: 'Commodity Origin',
+              helperText: 'Importer and country-of-origin declarations activate for imported goods',
+              prefixIcon: Icon(Icons.public_outlined),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'UNKNOWN', child: Text('Unknown — infer from package')),
+              DropdownMenuItem(value: 'DOMESTIC', child: Text('Domestic')),
+              DropdownMenuItem(value: 'IMPORTED', child: Text('Imported')),
+            ],
+            onChanged: (value) {
+              if (value != null) setState(() => _originType = value);
+            },
+          ),
+          const SizedBox(height: 8),
+          _buildApplicabilityDropdown(
+            label: 'Separate packer declaration',
+            helper: 'Requires packer name and complete address when manufacturer and packer differ',
+            value: _packerApplicability,
+            onChanged: (value) => setState(() => _packerApplicability = value),
+          ),
+          _buildApplicabilityDropdown(
+            label: 'Best Before / Use By declaration',
+            helper: 'Applicable when the commodity may become unfit for human consumption',
+            value: _shelfLifeApplicability,
+            onChanged: (value) => setState(() => _shelfLifeApplicability = value),
+          ),
+          _buildApplicabilityDropdown(
+            label: 'Commodity dimensions declaration',
+            helper: 'Applicable to size-dependent commodities',
+            value: _dimensionsApplicability,
+            onChanged: (value) => setState(() => _dimensionsApplicability = value),
+          ),
+          _buildApplicabilityDropdown(
+            label: 'Unit sale price declaration',
+            helper: 'Rule 6(11) retail unit-price declaration',
+            value: _unitSalePriceApplicability,
+            onChanged: (value) => setState(() => _unitSalePriceApplicability = value),
+          ),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Multi-piece / group / gift package', style: TextStyle(fontSize: 13)),
+            subtitle: const Text('Declarations must be checked on outer and constituent retail packages'),
+            value: _isMultiPiecePackage,
+            onChanged: (value) => setState(() => _isMultiPiecePackage = value),
+          ),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Declarations provided through QR / electronic link', style: TextStyle(fontSize: 13)),
+            subtitle: const Text('Creates a mandatory review to open and capture the digital declarations'),
+            value: _electronicDeclarationsViaQr,
+            onChanged: (value) => setState(() => _electronicDeclarationsViaQr = value),
+          ),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Package has an outside container / wrapper', style: TextStyle(fontSize: 13)),
+            subtitle: const Text('Capture the optional Outer Wrapper surface for Rule 9 placement checks'),
+            value: _hasOuterWrapper,
+            onChanged: (value) => setState(() {
+              _hasOuterWrapper = value;
+              if (!value) _outerWrapperTransparent = false;
+            }),
+          ),
+          if (_hasOuterWrapper)
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Outside wrapper is transparent', style: TextStyle(fontSize: 13)),
+              subtitle: const Text('Underlying declarations are clearly readable through it'),
+              value: _outerWrapperTransparent,
+              onChanged: (value) => setState(() => _outerWrapperTransparent = value),
+            ),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Declarations must be read through liquid', style: TextStyle(fontSize: 13)),
+            subtitle: const Text('Rule 9(2) placement violation indicator'),
+            value: _declarationReadThroughLiquid,
+            onChanged: (value) => setState(() => _declarationReadThroughLiquid = value),
+          ),
+          const SizedBox(height: 16),
+
           // Inspector Notes
           TextFormField(
             controller: _notesController,
@@ -362,6 +503,35 @@ class _InspectionDetailsFormState extends State<InspectionDetailsForm> {
         fontWeight: FontWeight.w700,
         color: AppColors.primaryNavy,
         letterSpacing: 0.1,
+      ),
+    );
+  }
+
+  bool? _triStateValue(String value) {
+    if (value == 'YES') return true;
+    if (value == 'NO') return false;
+    return null;
+  }
+
+  Widget _buildApplicabilityDropdown({
+    required String label,
+    required String helper,
+    required String value,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<String>(
+        initialValue: value,
+        decoration: InputDecoration(labelText: label, helperText: helper),
+        items: const [
+          DropdownMenuItem(value: 'AUTO', child: Text('Auto-detect / officer confirmation')),
+          DropdownMenuItem(value: 'YES', child: Text('Applicable')),
+          DropdownMenuItem(value: 'NO', child: Text('Not applicable / exempt')),
+        ],
+        onChanged: (next) {
+          if (next != null) onChanged(next);
+        },
       ),
     );
   }

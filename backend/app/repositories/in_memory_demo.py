@@ -831,7 +831,9 @@ class DemoInMemoryRepository(
         return [copy.deepcopy(lv) for lv in self.label_versions if lv.get("product_id") == product_id]
 
     async def get_inspections_for_product(self, product_id: str) -> List[Dict[str, Any]]:
-        return [copy.deepcopy(ins) for ins in self.inspections.values() if ins.get("product_id") == product_id]
+        res = [copy.deepcopy(ins) for ins in self.inspections.values() if ins.get("product_id") == product_id]
+        res.sort(key=lambda x: x.get("inspection_date") or x.get("created_at") or "", reverse=True)
+        return res
 
     # --- IInspectionRepository ---
     async def create(self, inspection_data: Dict[str, Any]) -> Dict[str, Any]:

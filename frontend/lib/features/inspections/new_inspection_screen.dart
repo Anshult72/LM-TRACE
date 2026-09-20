@@ -23,6 +23,9 @@ class _NewInspectionScreenState extends ConsumerState<NewInspectionScreen> {
       businessName: data.businessName,
       productCategory: data.productCategory,
       inspectionType: data.inspectionType,
+      packageType: data.packageType,
+      packageConstructionType: data.packageConstructionType,
+      applicabilityContext: data.applicabilityContext,
       notes: data.notes,
     );
 

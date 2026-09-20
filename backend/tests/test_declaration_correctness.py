@@ -42,7 +42,7 @@ def build_dummy_payload(
 
 # 1. Test Valid MRP
 def test_valid_mrp():
-    payload = build_dummy_payload(mrp_val="₹450.00")
+    payload = build_dummy_payload(mrp_val="MRP ₹450.00 Inclusive of all taxes")
     res = declaration_correctness_service.evaluate_correctness(payload, [], is_imported=False)
     mrp_item = next(i for i in res["matrix"] if i["field_name"] == "mrp")
     assert mrp_item["presence"] is True
@@ -93,7 +93,7 @@ def test_ambiguous_quantity():
     payload = build_dummy_payload(qty_val="5 packets", qty_unit="packets")
     res = declaration_correctness_service.evaluate_correctness(payload, [], is_imported=False)
     qty_item = next(i for i in res["matrix"] if i["field_name"] == "net_quantity")
-    assert qty_item["correctness"] == "REVIEW"
+    assert qty_item["correctness"] == "INVALID"
 
 # 7. Test Valid Date
 def test_valid_date():
@@ -108,7 +108,7 @@ def test_malformed_date():
     payload = build_dummy_payload(mfg_date="Someday in 2026")
     res = declaration_correctness_service.evaluate_correctness(payload, [], is_imported=False)
     date_item = next(i for i in res["matrix"] if i["field_name"] == "manufacturing_packing_date")
-    assert date_item["correctness"] == "REVIEW"
+    assert date_item["correctness"] == "INVALID"
 
 # 9. Test Separate Manufacturer vs Importer
 def test_separate_mfg_importer_roles():
@@ -135,7 +135,7 @@ def test_missing_importer_address_when_imported():
     )
     res = declaration_correctness_service.evaluate_correctness(payload, [], is_imported=True)
     imp_item = next(i for i in res["matrix"] if i["field_name"] == "importer")
-    assert imp_item["correctness"] == "REVIEW"
+    assert imp_item["correctness"] == "INVALID"
     assert imp_item["final_check"] == "POTENTIAL_VIOLATION"
 
 # 11. Test Country of Origin Presence
@@ -164,7 +164,7 @@ def test_incomplete_address_indicator():
     payload = build_dummy_payload(mfg_addr="Industrial Area")
     res = declaration_correctness_service.evaluate_correctness(payload, [], is_imported=False)
     mfg_item = next(i for i in res["matrix"] if i["field_name"] == "manufacturer")
-    assert mfg_item["correctness"] == "REVIEW"
+    assert mfg_item["correctness"] == "INVALID"
 
 # 14. Test Consumer Care Email Only (No Phone)
 def test_consumer_care_partial_contact():
@@ -172,12 +172,12 @@ def test_consumer_care_partial_contact():
     payload.consumer_care.value = "care@abcagro.com"  # Email only
     res = declaration_correctness_service.evaluate_correctness(payload, [], is_imported=False)
     cc_item = next(i for i in res["matrix"] if i["field_name"] == "consumer_care")
-    assert cc_item["correctness"] == "REVIEW"
+    assert cc_item["correctness"] == "INVALID"
 
 # 15. Test Consumer Care Complete Phone and Email
 def test_consumer_care_complete_contact():
     payload = build_dummy_payload()
-    payload.consumer_care.value = "1800-111-2222 or email care@abcagro.com"
+    payload.consumer_care.value = "Consumer Care: ABC Agro Foods, Karnal, Haryana 132001; 1800-111-2222; care@abcagro.com"
     res = declaration_correctness_service.evaluate_correctness(payload, [], is_imported=False)
     cc_item = next(i for i in res["matrix"] if i["field_name"] == "consumer_care")
     assert cc_item["correctness"] == "VALID"

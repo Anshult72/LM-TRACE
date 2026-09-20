@@ -18,6 +18,10 @@ class ProductFingerprintService:
         unit = (product_data.get("net_quantity_unit") or "").strip().upper()
         barcode = (product_data.get("barcode") or "").strip()
 
+        # Strict validation: do not fabricate fingerprint if identifying data is absent
+        if not name and not barcode and not brand:
+            return "", "Canonical representation unavailable: insufficient historical declaration data"
+
         canonical = f"brand:{brand}|name:{name}|mfg:{mfg}|cat:{category}|qty:{qty}{unit}|barcode:{barcode}"
         sha256 = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
         return sha256, canonical

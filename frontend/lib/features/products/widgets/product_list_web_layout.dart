@@ -31,6 +31,51 @@ class _ProductListWebLayoutState extends ConsumerState<ProductListWebLayout> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Tab switcher allowing instant navigation between Product Registry and Reference Library
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.neutral200.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 1)),
+                    ],
+                  ),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.inventory_2_outlined, size: 16, color: AppColors.primaryNavy),
+                      SizedBox(width: 8),
+                      Text('Product Registry', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)),
+                    ],
+                  ),
+                ),
+                InkWell(
+                  onTap: () => context.go('/reference-library'),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.auto_stories, size: 16, color: AppColors.neutral700),
+                        SizedBox(width: 8),
+                        Text('Compliance Reference Library', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.neutral700)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           // 1. Header & Actions
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

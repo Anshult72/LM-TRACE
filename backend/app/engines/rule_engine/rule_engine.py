@@ -44,21 +44,24 @@ class RuleEngine:
         Dynamically returns a dict of required declarations with statutory applicability reasons
         derived from active database rule definitions.
         """
+        if context.get("rulesApplicable") is False:
+            return {}
+
         # Map fields to their respective statutory rule codes
         field_rule_mapping = {
             "commodity_name": ("RULE-006-COMMODITY", "Rule 6(1)(b), LM (Packaged Commodities) Rules, 2011", "Mandatory generic identity under Rule 6(1)(b)"),
             "net_quantity": ("RULE-006-NET-QTY", "Rule 6(1)(c) & Rule 12, LM Rules, 2011", "Mandatory net quantity declaration under Rule 6(1)(c)"),
-            "mrp": ("RULE-006-MRP", "Rule 6(1)(d), LM Rules, 2011", "Mandatory Maximum Retail Price (inclusive of all taxes) under Rule 6(1)(d)"),
+            "mrp": ("RULE-006-MRP", "Rule 6(1)(e), LM (Packaged Commodities) Rules, 2011", "Mandatory Maximum Retail Price (inclusive of all taxes) under Rule 6(1)(e)"),
             "manufacturer_name": ("RULE-006-NAME-ADDR", "Rule 6(1)(a) & Rule 10, LM Rules, 2011", "Mandatory manufacturer identity under Rule 6(1)(a)"),
             "manufacturer_address": ("RULE-006-NAME-ADDR", "Rule 6(1)(a) & Rule 10, LM Rules, 2011", "Mandatory complete manufacturer address under Rule 6(1)(a) & Rule 10"),
-            "manufacturing_date": ("RULE-006-DATES", "Rule 6(1)(e), LM Rules, 2011", "Mandatory month and year of manufacture/packing under Rule 6(1)(e)"),
-            "consumer_care": ("RULE-006-CONSUMER-CARE", "Rule 6(1)(f) & (g), LM Rules, 2011", "Mandatory consumer grievance contact details under Rule 6(1)(f)/(g)")
+            "manufacture_pack_import_date": ("RULE-006-DATES", "Rule 6(1)(d), LM (Packaged Commodities) Rules, 2011", "Mandatory month and year of manufacture, packing or import"),
+            "consumer_care": ("RULE-006-CONSUMER-CARE", "Rule 6(2), LM (Packaged Commodities) Rules, 2011", "Mandatory consumer grievance contact details")
         }
 
         default_mandatory = [
             "commodity_name", "net_quantity", "mrp",
             "manufacturer_name", "manufacturer_address",
-            "manufacturing_date", "consumer_care"
+            "manufacture_pack_import_date", "consumer_care"
         ]
 
         requirements: Dict[str, Dict[str, Any]] = {}
@@ -72,17 +75,19 @@ class RuleEngine:
                 "rule_version": rule.get("version", "2.0") if rule else "2.0",
                 "statutory_reference": rule.get("statutory_reference", default_ref) if rule else default_ref
             }
+            if f == "manufacture_pack_import_date":
+                requirements[f]["alternatives"] = ["manufacturing_date", "packing_date", "import_date"]
 
         # Conditional declarations evaluation
         is_imported = context.get("isImported", False)
-        origin_rule = self.get_rule_by_code_or_category(applicable_rules, "RULE-006-COMMODITY", "DECLARATIONS")
+        origin_rule = self.get_rule_by_code_or_category(applicable_rules, "RULE-006-ORIGIN", "DECLARATIONS")
         importer_rule = self.get_rule_by_code_or_category(applicable_rules, "RULE-006-NAME-ADDR", "DECLARATIONS")
 
         if is_imported:
             requirements["country_of_origin"] = {
                 "required": True,
                 "reason": "Mandatory Country of Origin for imported commodities under Rule 6(1)(b) Proviso",
-                "rule_code": origin_rule.get("rule_code", "RULE-006-COMMODITY") if origin_rule else "RULE-006-COMMODITY",
+                "rule_code": origin_rule.get("rule_code", "RULE-006-ORIGIN") if origin_rule else "RULE-006-ORIGIN",
                 "statutory_reference": origin_rule.get("statutory_reference", "Rule 6(1)(b)") if origin_rule else "Rule 6(1)(b)"
             }
             requirements["importer_name"] = {
@@ -102,16 +107,31 @@ class RuleEngine:
             requirements["importer_name"] = {"required": False, "reason": "Not applicable for domestic commodities"}
             requirements["importer_address"] = {"required": False, "reason": "Not applicable for domestic commodities"}
 
+        if context.get("isPackerDistinct", False):
+            requirements["packer_name"] = {
+                "required": True,
+                "reason": "Packer identity is mandatory where the manufacturer is not the packer",
+                "rule_code": importer_rule.get("rule_code", "RULE-006-NAME-ADDR") if importer_rule else "RULE-006-NAME-ADDR",
+                "statutory_reference": importer_rule.get("statutory_reference", "Rule 6(1)(a)") if importer_rule else "Rule 6(1)(a)",
+            }
+            requirements["packer_address"] = {
+                "required": True,
+                "reason": "Complete packer address is mandatory where the manufacturer is not the packer",
+                "rule_code": importer_rule.get("rule_code", "RULE-006-NAME-ADDR") if importer_rule else "RULE-006-NAME-ADDR",
+                "statutory_reference": importer_rule.get("statutory_reference", "Rule 6(1)(a)") if importer_rule else "Rule 6(1)(a)",
+            }
+
         if context.get("bestBeforeApplicable", False):
             dates_rule = self.get_rule_by_code_or_category(applicable_rules, "RULE-006-DATES", "DECLARATIONS")
             requirements["best_before"] = {
                 "required": True,
-                "reason": "Mandatory Best Before / Use By date for perishable commodities under Rule 6(1)(e) Proviso",
+                "reason": "Mandatory Best Before / Use By date for commodities that may become unfit for human consumption under Rule 6(1)(da)",
                 "rule_code": dates_rule.get("rule_code", "RULE-006-DATES") if dates_rule else "RULE-006-DATES",
-                "statutory_reference": dates_rule.get("statutory_reference", "Rule 6(1)(e)") if dates_rule else "Rule 6(1)(e)"
+                "statutory_reference": dates_rule.get("statutory_reference", "Rule 6(1)(da)") if dates_rule else "Rule 6(1)(da)",
+                "alternatives": ["best_before", "use_by", "expiry_date"],
             }
         else:
-            requirements["best_before"] = {"required": False, "reason": "Best before not mandated for this category"}
+            requirements["best_before"] = {"required": False, "reason": "Best before/use by not applicable to this commodity"}
 
         if context.get("dimensionsRelevant", False):
             qty_rule = self.get_rule_by_code_or_category(applicable_rules, "RULE-006-NET-QUANTITY", "DECLARATIONS")
@@ -135,6 +155,11 @@ class RuleEngine:
             }
         else:
             requirements["unit_sale_price"] = {"required": False, "reason": "Unit sale price not applicable for this packaging"}
+
+        if context.get("isMultiPiecePackage", False):
+            for requirement in requirements.values():
+                if requirement.get("required"):
+                    requirement["package_scope"] = "OUTER_AND_EACH_INNER_RETAIL_PACKAGE"
 
         return requirements
 

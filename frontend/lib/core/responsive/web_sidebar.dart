@@ -83,6 +83,14 @@ class WebSidebar extends StatelessWidget {
                   ),
                   _buildNavItem(
                     context,
+                    label: 'Reference Library',
+                    icon: Icons.auto_stories_outlined,
+                    activeIcon: Icons.auto_stories,
+                    route: '/reference-library',
+                    isActive: location.startsWith('/reference-library'),
+                  ),
+                  _buildNavItem(
+                    context,
                     label: 'Statutory Rule Engine',
                     icon: Icons.gavel_outlined,
                     activeIcon: Icons.gavel,

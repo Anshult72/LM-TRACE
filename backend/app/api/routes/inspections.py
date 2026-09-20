@@ -17,11 +17,14 @@ from app.services.vision.cv_service import cv_service
 from app.services.ocr import get_ocr_service
 from app.services.llm import get_llm_service
 from app.services.declaration.correctness_service import declaration_correctness_service
+from app.services.declaration.applicability_service import declaration_applicability_service
+from app.services.declaration.placement_service import declaration_placement_service
 from app.engines.compliance_engine.compliance_engine import compliance_engine
+from app.engines.rule_engine.rule_engine import rule_engine
 from app.services.evidence.evidence_service import evidence_service
 from app.core.config import settings
 from app.core.logging import logger
-from app.services.inspection.surface_validator import validate_inspection_surfaces, REQUIRED_SURFACE_CODES
+from app.services.inspection.surface_validator import validate_inspection_surfaces, REQUIRED_SURFACE_CODES, ALLOWED_SURFACE_CODES
 from app.services.product.product_intelligence_service import product_intelligence_service
 
 router = APIRouter(prefix="/api/inspections", tags=["Inspections"])
@@ -51,9 +54,13 @@ async def create_inspection(
         "business_name": req.business_name,
         "status": "DRAFT",
         "score": None,
-        "package_type": "RECTANGULAR",
-        "package_construction_type": "NORMAL",
+        "package_type": req.package_type,
+        "package_construction_type": req.package_construction_type,
         "calibration_status": "NOT_CALIBRATED",
+        "rule_snapshot": {
+            "product_category": req.product_category,
+            "applicability_context": req.applicability_context.model_dump(),
+        },
         "notes": req.notes
     }
 
@@ -109,7 +116,18 @@ async def update_inspection(
         else:
             raise HTTPException(status_code=400, detail="Cannot modify a finalized inspection. Please select an in-progress case or create a new case.")
 
-    updated = await repo.update(inspection_id, req)
+    updates = dict(req)
+    if "applicability_context" in updates or "product_category" in updates:
+        snapshot = dict(ins.get("rule_snapshot") or {})
+        if "applicability_context" in updates:
+            context_value = updates.pop("applicability_context")
+            snapshot["applicability_context"] = (
+                context_value.model_dump() if hasattr(context_value, "model_dump") else context_value
+            )
+        if "product_category" in updates:
+            snapshot["product_category"] = updates.pop("product_category")
+        updates["rule_snapshot"] = snapshot
+    updated = await repo.update(inspection_id, updates)
     return updated
 
 @router.post("/{inspection_id}/images", response_model=Dict[str, Any])
@@ -134,10 +152,10 @@ async def upload_image(
             )
 
     normalized_surface = (surface_type or "").strip().upper()
-    if normalized_surface not in REQUIRED_SURFACE_CODES:
+    if normalized_surface not in ALLOWED_SURFACE_CODES:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid package surface. Use one of: {', '.join(REQUIRED_SURFACE_CODES)}.",
+            detail=f"Invalid package surface. Use one of: {', '.join(ALLOWED_SURFACE_CODES)}.",
         )
 
     file_bytes = await file.read()
@@ -350,7 +368,8 @@ async def analyze_product(
 
         # Step 2: LLM Normalization
         llm_service = get_llm_service()
-        extracted_payload = await llm_service.extract_declarations(ocr_results, product_category="Packaged Food")
+        configured_category = (ins.get("rule_snapshot") or {}).get("product_category") or "General Packaged Commodity"
+        extracted_payload = await llm_service.extract_declarations(ocr_results, product_category=configured_category)
 
         # Step 3: Declaration Correctness & Consistency
         all_ocr_blocks = []
@@ -378,8 +397,9 @@ async def analyze_product(
             for result in ocr_results
         ]
 
+        rule_context, applicability_inferences = declaration_applicability_service.build_context(ins, extracted_payload)
         correctness_data = declaration_correctness_service.evaluate_correctness(
-            extracted_payload, all_ocr_blocks, is_imported=False
+            extracted_payload, all_ocr_blocks, is_imported=rule_context["isImported"]
         )
 
         # Step 4: Map declarations to database records
@@ -408,31 +428,70 @@ async def analyze_product(
                 "provenance": "AI_EXTRACTED"
             })
 
+        # Persist the complete extraction schema, not only the smaller
+        # correctness matrix. This makes every prescribed/conditional field
+        # visible as DETECTED or MISSING and retains its OCR provenance.
+        extracted_fields = extracted_payload.model_dump()
+        matrix_by_field = {item.get("field_name"): item for item in matrix if item.get("field_name")}
+        correctness_aliases = {
+            "manufacturer_name": "manufacturer",
+            "manufacturer_address": "manufacturer",
+            "importer_name": "importer",
+            "importer_address": "importer",
+            "manufacturing_date": "manufacturing_packing_date",
+            "packing_date": "manufacturing_packing_date",
+            "import_date": "manufacturing_packing_date",
+        }
+        represented_fields = {record["field_name"] for record in declarations_records}
+        for field_name, semantic in extracted_fields.items():
+            if field_name in represented_fields:
+                continue
+            semantic = semantic or {}
+            value = semantic.get("value") if isinstance(semantic, dict) else None
+            source_block_id = semantic.get("source_block_id") if isinstance(semantic, dict) else None
+            source_block = blocks_by_id.get(source_block_id)
+            corr_item = matrix_by_field.get(field_name) or matrix_by_field.get(correctness_aliases.get(field_name)) or {}
+            declarations_records.append({
+                "id": f"dec-{inspection_id}-{len(declarations_records) + 1}",
+                "inspection_id": inspection_id,
+                "field_name": field_name,
+                "ai_value": value,
+                "verified_value": value,
+                "unit": semantic.get("canonical_unit") or semantic.get("unit") if isinstance(semantic, dict) else None,
+                "confidence": semantic.get("confidence", 0.0) if isinstance(semantic, dict) else 0.0,
+                "source_image_id": semantic.get("source_image_id") or (source_block.image_id if source_block else None) if isinstance(semantic, dict) else None,
+                "source_block_id": source_block_id,
+                "source_text": semantic.get("source_text") or (source_block.text if source_block else None) if isinstance(semantic, dict) else None,
+                "bbox": semantic.get("bbox") or (source_block.bbox.model_dump() if source_block else None) if isinstance(semantic, dict) else None,
+                "presence_status": "DETECTED" if value else "MISSING",
+                "correctness_status": corr_item.get("correctness", "UNVERIFIED"),
+                "verification_status": "PENDING",
+                "provenance": semantic.get("provenance", "AI_EXTRACTED") if isinstance(semantic, dict) else "AI_EXTRACTED",
+            })
+
         await repo.save_declarations(inspection_id, declarations_records)
 
         # Step 5: Rule & Compliance Engine
         pdp_info = ins.get("pdp_data")
-        rule_context = {
-            "inspectionDate": ins.get("inspection_date") or get_utc_now_iso(),
-            "productCategory": "Packaged Food",
-            "isImported": False,
-            "isEcommerce": ins.get("inspection_type") == "ONLINE_LISTING",
-            "packageType": ins.get("package_type") or "RECTANGULAR",
-            "packageConstructionType": ins.get("package_construction_type") or "NORMAL",
-            "calibrationStatus": ins.get("calibration_status") or "NOT_CALIBRATED",
-            "pdpAreaCm2": pdp_info.get("areaCm2") if isinstance(pdp_info, dict) else None
-        }
+        rule_context["inspectionDate"] = ins.get("inspection_date") or get_utc_now_iso()
+        rule_context["pdpAreaCm2"] = pdp_info.get("areaCm2") if isinstance(pdp_info, dict) else None
 
         # This is measured from the captured photo; no default quality values are
         # used when the image cannot be analysed.
         first_img_path = images[0].get("original_path") if isinstance(images[0], dict) else None
         readability_data = cv_service.evaluate_readability(first_img_path)
 
+        applicable_rules = await rule_engine.get_applicable_rules(rule_context)
+        required_declarations = rule_engine.determine_required_declarations(applicable_rules, rule_context)
+        placement_results = declaration_placement_service.evaluate(
+            required_declarations, declarations_records, rule_context, images
+        )
         compliance_assessment = await compliance_engine.evaluate_compliance(
             extracted_declarations=extracted_payload.model_dump(),
             correctness_data=correctness_data,
             context=rule_context,
             readability_data=readability_data,
+            placement_data=placement_results,
         )
 
         # Convert checks and violations to records
@@ -450,7 +509,8 @@ async def analyze_product(
                 "result": c.result,
                 "confidence": c.confidence,
                 "explanation": c.explanation,
-                "source_reference": c.source_reference
+                "source_reference": c.source_reference,
+                "evidence_id": c.evidence_id,
             })
 
         violation_records = []
@@ -474,7 +534,11 @@ async def analyze_product(
                 "status": "AI_DETECTED",
                 "provenance": "AI_DETECTED",
                 "ai_explanation": v_exp,
-                "inspector_comment": None
+                "inspector_comment": None,
+                "field": v.get("field") if isinstance(v, dict) else None,
+                "bbox": v.get("bbox") if isinstance(v, dict) else None,
+                "source_image_id": v.get("source_image_id") if isinstance(v, dict) else None,
+                "source_reference": v.get("source_reference") if isinstance(v, dict) else None,
             })
 
         await repo.save_compliance_results(inspection_id, check_records, violation_records)
@@ -498,10 +562,19 @@ async def analyze_product(
 
         # Update inspection status & score
         final_status = "NEEDS_REVIEW" if (compliance_assessment.review_count > 0 or compliance_assessment.violation_count > 0) else "READY"
+        analysis_snapshot = dict(ins.get("rule_snapshot") or {})
+        analysis_snapshot.update({
+            "resolved_applicability_context": rule_context,
+            "applicability_inferences": applicability_inferences,
+            "required_declarations": required_declarations,
+            "placement_results": placement_results,
+            "resolved_at": get_utc_now_iso(),
+        })
         await repo.update(inspection_id, {
             "status": final_status,
             "score": compliance_assessment.score,
-            "applied_rule_version": "2024.1"
+            "applied_rule_version": "2024.1",
+            "rule_snapshot": analysis_snapshot,
         })
 
         # Step 7: Automatic Product Identification, Fingerprinting & Version Linking
@@ -523,6 +596,12 @@ async def analyze_product(
             "declarations": declarations_records,
             "correctness_matrix": matrix,
             "ocr_summary": ocr_summary,
+            "applicability": {
+                "context": rule_context,
+                "inferences": applicability_inferences,
+            },
+            "required_declarations": required_declarations,
+            "placement_results": placement_results,
             "evidence": evidence_records,
             "product": product_detail.get("product") if product_detail else None,
         }
@@ -599,6 +678,14 @@ async def finalize_inspection(
             if field in req_dict and req_dict[field] is not None:
                 additional_updates[field] = req_dict[field]
 
+        if req_dict.get("product_category") is not None or req_dict.get("applicability_context") is not None:
+            snapshot = dict(ins.get("rule_snapshot") or {})
+            if req_dict.get("product_category") is not None:
+                snapshot["product_category"] = req_dict["product_category"]
+            if req_dict.get("applicability_context") is not None:
+                snapshot["applicability_context"] = req_dict["applicability_context"]
+            additional_updates["rule_snapshot"] = snapshot
+
     # Validate statutory requirements
     effective_business_name = (additional_updates.get("business_name") or ins.get("business_name") or "").strip()
     effective_location = (additional_updates.get("location") or ins.get("location") or "").strip()
@@ -625,7 +712,8 @@ async def finalize_inspection(
         )
 
     # Seal immutable snapshot
-    snapshot_data = {
+    snapshot_data = dict(ins.get("rule_snapshot") or {})
+    snapshot_data.update({
         "inspection_code": ins.get("inspection_code"),
         "finalized_at": get_utc_now_iso(),
         "finalized_by": user_payload["sub"],
@@ -633,7 +721,9 @@ async def finalize_inspection(
         "applied_rule_versions": ["RULE-006:v2024.1", "RULE-007:v2024.1", "RULE-009:v2024.1"],
         "score": ins.get("score"),
         "status": ins.get("status")
-    }
+    })
+    if "rule_snapshot" in additional_updates:
+        snapshot_data.update(additional_updates.pop("rule_snapshot"))
 
     finalized = await repo.finalize_inspection(inspection_id, snapshot_data, additional_updates=additional_updates)
 

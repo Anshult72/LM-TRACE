@@ -9,6 +9,11 @@ REQUIRED_SURFACES = [
 ]
 
 REQUIRED_SURFACE_CODES: List[str] = [s["code"] for s in REQUIRED_SURFACES]
+OPTIONAL_SURFACES = [
+    {"code": "OUTER_WRAPPER", "name": "Outer Wrapper", "description": "Declarations on opaque outside container/wrapper"},
+    {"code": "INNER_PACKAGE", "name": "Inner Retail Package", "description": "Declarations on constituent package"},
+]
+ALLOWED_SURFACE_CODES: List[str] = REQUIRED_SURFACE_CODES + [s["code"] for s in OPTIONAL_SURFACES]
 SURFACE_CODE_TO_NAME: Dict[str, str] = {s["code"]: s["name"] for s in REQUIRED_SURFACES}
 
 def validate_inspection_surfaces(inspection: Dict[str, Any]) -> Dict[str, Any]:
