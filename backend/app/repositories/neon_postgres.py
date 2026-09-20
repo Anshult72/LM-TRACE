@@ -81,6 +81,9 @@ class NeonPostgresRepository(
             ]
 
     # --- IProductRepository ---
+    async def get_product_by_id(self, product_id: str) -> Optional[Dict[str, Any]]:
+        return await self._get_product_by_id(product_id)
+
     async def _get_product_by_id(self, product_id: str) -> Optional[Dict[str, Any]]:
         async with await self._get_session() as session:
             stmt = select(Product).where(Product.id == product_id)
@@ -95,7 +98,9 @@ class NeonPostgresRepository(
                 "importer_name": p.importer_name, "importer_address": p.importer_address,
                 "net_quantity": p.net_quantity, "net_quantity_unit": p.net_quantity_unit,
                 "barcode": p.barcode, "country_of_origin": p.country_of_origin,
-                "product_identity_fingerprint": p.product_identity_fingerprint
+                "product_identity_fingerprint": p.product_identity_fingerprint,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+                "updated_at": p.updated_at.isoformat() if p.updated_at else None,
             }
 
     async def get_by_fingerprint(self, fingerprint_sha256: str) -> Optional[Dict[str, Any]]:
@@ -105,15 +110,32 @@ class NeonPostgresRepository(
             p = res.scalar_one_or_none()
             if not p:
                 return None
-            return {"id": p.id, "name": p.name, "brand": p.brand, "category": p.category}
+            return {
+                "id": p.id, "name": p.name, "brand": p.brand, "category": p.category,
+                "barcode": p.barcode, "net_quantity": p.net_quantity,
+                "product_identity_fingerprint": p.product_identity_fingerprint,
+            }
 
     async def list_products(self) -> List[Dict[str, Any]]:
         async with await self._get_session() as session:
-            stmt = select(Product)
+            stmt = select(Product).order_by(Product.updated_at.desc())
             res = await session.execute(stmt)
             products = res.scalars().all()
             return [
-                {"id": p.id, "name": p.name, "brand": p.brand, "category": p.category, "barcode": p.barcode}
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "brand": p.brand,
+                    "category": p.category,
+                    "net_quantity": p.net_quantity,
+                    "net_quantity_unit": p.net_quantity_unit,
+                    "barcode": p.barcode,
+                    "country_of_origin": p.country_of_origin,
+                    "product_identity_fingerprint": p.product_identity_fingerprint,
+                    "manufacturer_name": p.manufacturer_name,
+                    "created_at": p.created_at.isoformat() if p.created_at else None,
+                    "updated_at": p.updated_at.isoformat() if p.updated_at else None,
+                }
                 for p in products
             ]
 
@@ -125,34 +147,66 @@ class NeonPostgresRepository(
             existing = res.scalar_one_or_none()
             if existing:
                 for k, v in product_data.items():
-                    if hasattr(existing, k):
+                    if hasattr(existing, k) and k not in ["id", "created_at"]:
                         setattr(existing, k, v)
                 existing.updated_at = get_now_utc()
             else:
-                new_p = Product(**product_data)
+                clean_data = dict(product_data)
+                clean_data["id"] = p_id
+                if "created_at" in clean_data:
+                    clean_data["created_at"] = _parse_dt(clean_data["created_at"])
+                if "updated_at" in clean_data:
+                    clean_data["updated_at"] = _parse_dt(clean_data["updated_at"])
+                new_p = Product(**clean_data)
                 session.add(new_p)
             await session.commit()
             return product_data
 
     async def add_label_version(self, label_version_data: Dict[str, Any]) -> Dict[str, Any]:
         async with await self._get_session() as session:
-            lv = LabelVersion(**label_version_data)
+            clean_data = dict(label_version_data)
+            if "id" not in clean_data:
+                clean_data["id"] = str(uuid.uuid4())
+            if "captured_at" in clean_data:
+                clean_data["captured_at"] = _parse_dt(clean_data["captured_at"])
+            lv = LabelVersion(**clean_data)
             session.add(lv)
             await session.commit()
             return label_version_data
 
     async def get_label_versions(self, product_id: str) -> List[Dict[str, Any]]:
         async with await self._get_session() as session:
-            stmt = select(LabelVersion).where(LabelVersion.product_id == product_id)
+            stmt = select(LabelVersion).where(LabelVersion.product_id == product_id).order_by(LabelVersion.captured_at.asc())
             res = await session.execute(stmt)
             lvs = res.scalars().all()
             return [
                 {
-                    "id": lv.id, "product_id": lv.product_id, "label_version": lv.label_version,
-                    "visual_hash": lv.visual_hash, "ocr_summary": lv.ocr_summary, "mrp": lv.mrp,
-                    "net_quantity": lv.net_quantity
-                } for lv in lvs
+                    "id": lv.id,
+                    "product_id": lv.product_id,
+                    "inspection_id": lv.inspection_id,
+                    "image_id": lv.image_id,
+                    "label_version": lv.label_version,
+                    "visual_hash": lv.visual_hash,
+                    "ocr_summary": lv.ocr_summary,
+                    "mrp": lv.mrp,
+                    "net_quantity": lv.net_quantity,
+                    "captured_at": lv.captured_at.isoformat() if lv.captured_at else None,
+                }
+                for lv in lvs
             ]
+
+    async def get_inspections_for_product(self, product_id: str) -> List[Dict[str, Any]]:
+        async with await self._get_session() as session:
+            stmt = select(Inspection).where(Inspection.product_id == product_id).order_by(Inspection.created_at.desc())
+            res = await session.execute(stmt)
+            inspections = res.scalars().all()
+            results = []
+            for ins in inspections:
+                full_ins = await self._get_inspection_by_id(ins.id)
+                if full_ins:
+                    results.append(full_ins)
+            return results
+
 
     # --- IInspectionRepository ---
     async def create(self, inspection_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -276,8 +330,16 @@ class NeonPostgresRepository(
         if entity_id.startswith("u-"):
             return await self._get_user_by_id(entity_id)
         if entity_id.startswith("prod-"):
-            return await self._get_product_by_id(entity_id)
-        return await self._get_inspection_by_id(entity_id)
+            prod = await self._get_product_by_id(entity_id)
+            if prod:
+                return prod
+        # Check inspection
+        ins = await self._get_inspection_by_id(entity_id)
+        if ins:
+            return ins
+        # Fallback to product check for arbitrary UUIDs
+        return await self._get_product_by_id(entity_id)
+
 
     async def update(self, inspection_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         async with await self._get_session() as session:

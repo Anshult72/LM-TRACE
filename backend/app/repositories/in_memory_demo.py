@@ -797,7 +797,7 @@ class DemoInMemoryRepository(
         return copy.deepcopy(list(self.users.values()))
 
     # --- IProductRepository ---
-    async def get_by_id(self, product_id: str) -> Optional[Dict[str, Any]]:
+    async def get_product_by_id(self, product_id: str) -> Optional[Dict[str, Any]]:
         prod = self.products.get(product_id)
         return copy.deepcopy(prod) if prod else None
 
@@ -828,7 +828,10 @@ class DemoInMemoryRepository(
         return copy.deepcopy(label_version_data)
 
     async def get_label_versions(self, product_id: str) -> List[Dict[str, Any]]:
-        return [copy.deepcopy(lv) for lv in self.label_versions if lv["product_id"] == product_id]
+        return [copy.deepcopy(lv) for lv in self.label_versions if lv.get("product_id") == product_id]
+
+    async def get_inspections_for_product(self, product_id: str) -> List[Dict[str, Any]]:
+        return [copy.deepcopy(ins) for ins in self.inspections.values() if ins.get("product_id") == product_id]
 
     # --- IInspectionRepository ---
     async def create(self, inspection_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -850,13 +853,21 @@ class DemoInMemoryRepository(
         self.inspections[ins_id] = copy.deepcopy(inspection_data)
         return copy.deepcopy(self.inspections[ins_id])
 
-    async def get_by_id(self, inspection_id: str) -> Optional[Dict[str, Any]]:
-        ins = self.inspections.get(inspection_id)
-        if not ins:
-            for item in self.inspections.values():
-                if item.get("inspection_code") == inspection_id:
-                    return copy.deepcopy(item)
-        return copy.deepcopy(ins) if ins else None
+    async def get_by_id(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        # 1. Product check
+        if entity_id in self.products:
+            return copy.deepcopy(self.products[entity_id])
+        # 2. Inspection check
+        if entity_id in self.inspections:
+            return copy.deepcopy(self.inspections[entity_id])
+        for ins in self.inspections.values():
+            if ins.get("inspection_code") == entity_id:
+                return copy.deepcopy(ins)
+        # 3. User check
+        if entity_id in self.users:
+            return copy.deepcopy(self.users[entity_id])
+        return None
+
 
     async def update(self, inspection_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         if inspection_id not in self.inspections:

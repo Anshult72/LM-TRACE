@@ -21,9 +21,11 @@ from app.engines.compliance_engine.compliance_engine import compliance_engine
 from app.services.evidence.evidence_service import evidence_service
 from app.core.config import settings
 from app.core.logging import logger
-from app.services.inspection.surface_validator import validate_inspection_surfaces
+from app.services.inspection.surface_validator import validate_inspection_surfaces, REQUIRED_SURFACE_CODES
+from app.services.product.product_intelligence_service import product_intelligence_service
 
 router = APIRouter(prefix="/api/inspections", tags=["Inspections"])
+
 
 def get_utc_now_iso():
     return datetime.now(timezone.utc).isoformat()
@@ -131,10 +133,20 @@ async def upload_image(
                 detail="Cannot add images to a finalized inspection. Please select an in-progress case or create a new case."
             )
 
+    normalized_surface = (surface_type or "").strip().upper()
+    if normalized_surface not in REQUIRED_SURFACE_CODES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid package surface. Use one of: {', '.join(REQUIRED_SURFACE_CODES)}.",
+        )
+
     file_bytes = await file.read()
-    orig_path, thumb_path, width, height, sha256 = await storage_manager.save_inspection_image(
-        inspection_id, file_bytes, file.filename or "surface.jpg"
-    )
+    try:
+        orig_path, thumb_path, width, height, sha256 = await storage_manager.save_inspection_image(
+            inspection_id, file_bytes, file.filename or "surface.jpg"
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     # Perform CV Image Quality Assessment
     quality_info = cv_service.assess_image_quality(orig_path)
@@ -147,7 +159,7 @@ async def upload_image(
     image_record = {
         "id": f"img-{uuid.uuid4().hex[:8]}",
         "inspection_id": inspection_id,
-        "surface_type": surface_type.upper(),
+        "surface_type": normalized_surface,
         "original_path": orig_path,
         "thumbnail_path": thumb_path,
         "width": width,
@@ -161,7 +173,7 @@ async def upload_image(
 
     # Supersede older image(s) for the same surface to ensure fresh replacement state
     existing_images = ins.get("images") or []
-    norm_surface = surface_type.upper()
+    norm_surface = normalized_surface
     for prev_img in existing_images:
         if (prev_img.get("surface_type") or "").upper() == norm_surface:
             prev_id = prev_img.get("id")
@@ -179,7 +191,7 @@ async def upload_image(
         "action": "IMAGE_UPLOADED",
         "resource_type": "INSPECTION_IMAGE",
         "resource_id": saved_img["id"],
-        "metadata": {"surface": surface_type, "sha256": sha256}
+        "metadata": {"surface": normalized_surface, "sha256": sha256}
     })
 
     return saved_img
@@ -351,16 +363,33 @@ async def analyze_product(
                 detail="No readable text detected on the package images. Please capture a clear, well-lit photo of the label declarations."
             )
 
+        ocr_summary = [
+            {
+                "image_id": result.image_id,
+                "surface_type": next(
+                    (img.get("surface_type") for img in images if img.get("id") == result.image_id),
+                    "UNKNOWN",
+                ),
+                "block_count": len(result.blocks),
+                "confidence": result.confidence,
+                "raw_text": result.raw_text,
+                "blocks": [block.model_dump() for block in result.blocks],
+            }
+            for result in ocr_results
+        ]
+
         correctness_data = declaration_correctness_service.evaluate_correctness(
             extracted_payload, all_ocr_blocks, is_imported=False
         )
 
         # Step 4: Map declarations to database records
         declarations_records = []
+        blocks_by_id = {block.block_id: block for block in all_ocr_blocks}
         matrix = correctness_data.get("matrix", [])
         for idx, item in enumerate(matrix):
             field_name = item["field_name"]
             val = item.get("value")
+            source_block = blocks_by_id.get(item.get("source_block_id"))
             declarations_records.append({
                 "id": f"dec-{inspection_id}-{idx + 1}",
                 "inspection_id": inspection_id,
@@ -369,10 +398,10 @@ async def analyze_product(
                 "verified_value": val,
                 "unit": item.get("canonical_unit"),
                 "confidence": item.get("confidence", 0.95),
-                "source_image_id": item.get("source_image_id"),
+                "source_image_id": item.get("source_image_id") or (source_block.image_id if source_block else None),
                 "source_block_id": item.get("source_block_id"),
-                "source_text": item.get("source_text"),
-                "bbox": item.get("bbox"),
+                "source_text": item.get("source_text") or (source_block.text if source_block else None),
+                "bbox": item.get("bbox") or (source_block.bbox.model_dump() if source_block else None),
                 "presence_status": "DETECTED" if item.get("presence") else "MISSING",
                 "correctness_status": item.get("correctness", "VALID"),
                 "verification_status": "PENDING",
@@ -475,6 +504,17 @@ async def analyze_product(
             "applied_rule_version": "2024.1"
         })
 
+        # Step 7: Automatic Product Identification, Fingerprinting & Version Linking
+        product_detail = None
+        try:
+            product_detail = await product_intelligence_service.identify_and_link_product(
+                inspection=ins,
+                declarations=declarations_records,
+                images=images
+            )
+        except Exception as prod_err:
+            logger.warning("Product identification warning for inspection %s: %s", inspection_id, prod_err)
+
         return {
             "success": True,
             "status": final_status,
@@ -482,7 +522,9 @@ async def analyze_product(
             "assessment": compliance_assessment.model_dump(),
             "declarations": declarations_records,
             "correctness_matrix": matrix,
+            "ocr_summary": ocr_summary,
             "evidence": evidence_records,
+            "product": product_detail.get("product") if product_detail else None,
         }
     except HTTPException:
         await repo.update(inspection_id, {"status": "DRAFT"})
@@ -595,6 +637,17 @@ async def finalize_inspection(
 
     finalized = await repo.finalize_inspection(inspection_id, snapshot_data, additional_updates=additional_updates)
 
+    # Ensure finalized inspection is linked to Product Intelligence
+    try:
+        if ins.get("declarations"):
+            await product_intelligence_service.identify_and_link_product(
+                inspection=finalized,
+                declarations=ins.get("declarations", []),
+                images=ins.get("images", [])
+            )
+    except Exception as fin_prod_err:
+        logger.warning("Post-finalization product sync warning for %s: %s", inspection_id, fin_prod_err)
+
     await repo.append_log({
         "user_id": user_payload["sub"],
         "role": user_payload["role"],
@@ -610,4 +663,3 @@ async def finalize_inspection(
     })
 
     return {"success": True, "inspection": finalized}
-

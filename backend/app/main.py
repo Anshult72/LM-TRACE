@@ -98,6 +98,7 @@ async def readiness_check():
     checks = {
         "database": False,
         "config": True,
+        "ocr": False,
     }
 
     # Check database connectivity
@@ -119,12 +120,17 @@ async def readiness_check():
     if not settings.is_demo_mode and not settings.DATABASE_URL:
         checks["config"] = False
 
+    from app.services.ocr import get_ocr_runtime_status
+    ocr_status = get_ocr_runtime_status()
+    checks["ocr"] = ocr_status["ready"]
+
     all_ready = all(checks.values())
     return JSONResponse(
         status_code=200 if all_ready else 503,
         content={
             "status": "ready" if all_ready else "not_ready",
             "checks": checks,
+            "ocr": ocr_status,
         }
     )
 

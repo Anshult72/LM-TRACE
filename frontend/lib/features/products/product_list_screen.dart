@@ -12,47 +12,13 @@ final productsListProvider = FutureProvider<List<dynamic>>((ref) async {
   final client = ref.watch(apiClientProvider);
   try {
     final response = await client.get(ApiConstants.products);
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 && response.data is List) {
       return response.data as List<dynamic>;
     }
   } catch (e) {
-    // Fallback demo products if offline
+    debugPrint('Error fetching product registry: $e');
   }
-  return [
-    {
-      'id': 'prod-001',
-      'brand': 'Heritage Foods',
-      'name': 'Heritage Pure Cow Ghee 1L',
-      'gtin': '8901234567890',
-      'category': 'Edible Oils & Fats',
-      'declared_net_quantity': '1 L',
-      'declared_mrp': '₹650',
-      'active_version': 'v2',
-      'fingerprint_hash': 'sha256:7b92f...a10',
-    },
-    {
-      'id': 'prod-002',
-      'brand': 'Greenfield Organics',
-      'name': 'Greenfield Premium Whole Wheat Atta 5kg',
-      'gtin': '8909876543210',
-      'category': 'Packaged Food',
-      'declared_net_quantity': '5 kg',
-      'declared_mrp': '₹340',
-      'active_version': 'v3',
-      'fingerprint_hash': 'sha256:9c41a...d94',
-    },
-    {
-      'id': 'prod-003',
-      'brand': 'Kisan Shakti',
-      'name': 'Kisan Shakti Refined Mustard Oil 500ml',
-      'gtin': '8905544332211',
-      'category': 'Edible Oils & Fats',
-      'declared_net_quantity': '500 ml',
-      'declared_mrp': '₹110',
-      'active_version': 'v1',
-      'fingerprint_hash': 'sha256:3e218...f82',
-    }
-  ];
+  return [];
 });
 
 class ProductListScreen extends ConsumerWidget {
@@ -69,10 +35,11 @@ class ProductListScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.neutral50,
       appBar: AppBar(
-        title: const Text('Product Intelligence & Fingerprints'),
+        title: const Text('Product Intelligence Registry'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Registry',
             onPressed: () => ref.refresh(productsListProvider),
           ),
         ],
@@ -96,7 +63,7 @@ class ProductListScreen extends ConsumerWidget {
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.neutral900),
                       ),
                       Text(
-                        'Tracks SKU label versions across time. Detects silent shrinkflation, price increments, and undeclared font size alterations.',
+                        'Tracks SKU label versions across time. Detects silent shrinkflation, price increments, and undeclared font alterations.',
                         style: TextStyle(fontSize: 11, color: AppColors.neutral700),
                       ),
                     ],
@@ -110,8 +77,47 @@ class ProductListScreen extends ConsumerWidget {
             child: productsAsync.when(
               data: (products) {
                 if (products.isEmpty) {
-                  return const Center(
-                    child: Text('No registered commodities found in registry.'),
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.neutral200.withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.inventory_2_outlined, size: 48, color: AppColors.neutral500),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'No products have been registered yet.',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.neutral800),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Products will appear here as they are identified and recorded through inspections.',
+                            style: TextStyle(fontSize: 13, color: AppColors.neutral600),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            icon: const Icon(Icons.qr_code_scanner, size: 18),
+                            label: const Text('Start New Inspection', style: TextStyle(fontWeight: FontWeight.bold)),
+                            onPressed: () => context.push('/new-inspection'),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 }
 
@@ -121,13 +127,17 @@ class ProductListScreen extends ConsumerWidget {
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final p = products[index] as Map<String, dynamic>;
+                    final id = p['id'] ?? 'prod-$index';
                     final brand = p['brand'] ?? 'Commodity';
                     final name = p['name'] ?? 'Product SKU';
-                    final gtin = p['gtin'] ?? 'N/A';
-                    final qty = p['declared_net_quantity'] ?? '';
-                    final mrp = p['declared_mrp'] ?? '';
-                    final ver = p['active_version'] ?? 'v1';
-                    final id = p['id'] ?? 'prod-001';
+                    final category = p['category'] ?? 'Packaged Commodity';
+                    final gtin = p['gtin'] ?? p['barcode'] ?? 'Not available';
+                    final qty = p['declared_net_quantity'] ?? p['net_quantity'] ?? 'Not captured';
+                    final mrp = p['declared_mrp'] ?? p['mrp'] ?? 'Not captured';
+                    final ver = p['active_version'] ?? 'v1.0';
+                    final fpStatus = p['fingerprint_status'] ?? 'Verified';
+                    final compliance = p['compliance_status'] ?? 'NOT_EVALUATED';
+                    final lastDate = p['last_inspection_date'];
 
                     return AppCard(
                       onTap: () => context.push('/products/$id'),
@@ -154,21 +164,27 @@ class ProductListScreen extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: AppColors.accentBlue.withValues(alpha: 0.1),
-                                  borderRadius: AppRadii.full,
-                                  border: Border.all(color: AppColors.accentBlue.withValues(alpha: 0.2), width: 0.8),
-                                ),
-                                child: Text(
-                                  'Active: $ver',
-                                  style: const TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.accentBlue,
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accentBlue.withValues(alpha: 0.1),
+                                      borderRadius: AppRadii.full,
+                                      border: Border.all(color: AppColors.accentBlue.withValues(alpha: 0.2), width: 0.8),
+                                    ),
+                                    child: Text(
+                                      'Active: $ver',
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.accentBlue,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(width: 6),
+                                  _buildComplianceBadge(compliance),
+                                ],
                               ),
                             ],
                           ),
@@ -181,7 +197,12 @@ class ProductListScreen extends ConsumerWidget {
                               color: AppColors.textDark,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
+                          Text(
+                            category,
+                            style: const TextStyle(fontSize: 11.5, color: AppColors.neutral600),
+                          ),
+                          const SizedBox(height: 8),
                           Row(
                             children: [
                               const Icon(Icons.qr_code, size: 14, color: AppColors.neutral400),
@@ -211,19 +232,21 @@ class ProductListScreen extends ConsumerWidget {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.security, size: 14, color: AppColors.passGreen),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    'Fingerprint: ${p['fingerprint_hash'] ?? 'Verified'}',
-                                    style: const TextStyle(fontSize: 10.5, color: AppColors.textMuted),
-                                  ),
+                                  _buildFingerprintBadge(fpStatus),
+                                  if (lastDate != null) ...[
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Last: ${lastDate.toString().split("T").first}',
+                                      style: const TextStyle(fontSize: 10.5, color: AppColors.neutral500),
+                                    ),
+                                  ],
                                 ],
                               ),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: const [
                                   Text(
-                                    'Version History & Diff',
+                                    'Product Detail',
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w700,
@@ -247,6 +270,98 @@ class ProductListScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFingerprintBadge(String status) {
+    Color bg;
+    Color fg;
+    IconData icon;
+
+    switch (status.toUpperCase()) {
+      case 'VERIFIED':
+        bg = AppColors.passGreen.withValues(alpha: 0.1);
+        fg = AppColors.passGreen;
+        icon = Icons.check_circle_outline;
+        break;
+      case 'CHANGED':
+        bg = AppColors.reviewAmber.withValues(alpha: 0.15);
+        fg = const Color(0xFFB45309);
+        icon = Icons.warning_amber_rounded;
+        break;
+      case 'NEW':
+        bg = AppColors.accentBlue.withValues(alpha: 0.1);
+        fg = AppColors.accentBlue;
+        icon = Icons.fiber_new_outlined;
+        break;
+      default:
+        bg = AppColors.neutral200;
+        fg = AppColors.neutral700;
+        icon = Icons.help_outline;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: fg),
+          const SizedBox(width: 3),
+          Text(
+            status,
+            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: fg),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComplianceBadge(String status) {
+    Color bg;
+    Color fg;
+    String label = status;
+
+    switch (status.toUpperCase()) {
+      case 'COMPLIANT':
+        bg = AppColors.compliantBg;
+        fg = AppColors.compliant;
+        label = 'Compliant';
+        break;
+      case 'VIOLATION':
+        bg = AppColors.violationBg;
+        fg = AppColors.violation;
+        label = 'Violation';
+        break;
+      case 'NEEDS_REVIEW':
+        bg = AppColors.reviewAmber.withValues(alpha: 0.15);
+        fg = const Color(0xFFB45309);
+        label = 'Needs Review';
+        break;
+      case 'IN_PROGRESS':
+        bg = AppColors.neutral100;
+        fg = AppColors.neutral700;
+        label = 'In Progress';
+        break;
+      default:
+        bg = AppColors.neutral100;
+        fg = AppColors.neutral600;
+        label = 'Unverified';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: fg),
       ),
     );
   }

@@ -12,12 +12,12 @@ class OpenCvVisionService:
         """
         if not os.path.exists(image_path):
             return {
-                "quality_score": 0.85,
-                "assessment": "GOOD",
-                "blur_score": 250.0,
-                "contrast_score": 0.80,
-                "sharpness_score": 0.85,
-                "reasons": []
+                "quality_score": 0.0,
+                "assessment": "UNVERIFIED",
+                "blur_score": None,
+                "contrast_score": None,
+                "sharpness_score": None,
+                "reasons": ["Image file is unavailable for quality analysis."]
             }
 
         try:
@@ -59,12 +59,12 @@ class OpenCvVisionService:
         except Exception as e:
             logger.warning(f"Error in assess_image_quality: {e}")
             return {
-                "quality_score": 0.85,
-                "assessment": "GOOD",
-                "blur_score": 300.0,
-                "contrast_score": 0.85,
-                "sharpness_score": 0.85,
-                "reasons": []
+                "quality_score": 0.0,
+                "assessment": "UNVERIFIED",
+                "blur_score": None,
+                "contrast_score": None,
+                "sharpness_score": None,
+                "reasons": ["Image quality analysis failed."]
             }
 
     @staticmethod

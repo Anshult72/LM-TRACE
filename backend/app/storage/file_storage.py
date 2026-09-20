@@ -2,8 +2,9 @@ import os
 import hashlib
 import uuid
 import aiofiles
+import io
 from abc import ABC, abstractmethod
-from PIL import Image
+from PIL import Image, ImageOps, UnidentifiedImageError
 from typing import Tuple, Optional
 from app.core.config import settings
 from app.core.logging import logger
@@ -81,8 +82,35 @@ class StorageManager(IFileStorage):
         Saves original inspection image and creates a thumbnail.
         Returns: (original_rel_path, thumb_rel_path, width, height, sha256_hash)
         """
+        if not file_bytes:
+            raise ValueError("Uploaded image is empty.")
+        max_bytes = settings.MAX_UPLOAD_IMAGE_SIZE_MB * 1024 * 1024
+        if len(file_bytes) > max_bytes:
+            raise ValueError(f"Image exceeds the {settings.MAX_UPLOAD_IMAGE_SIZE_MB} MB upload limit.")
+
+        try:
+            with Image.open(io.BytesIO(file_bytes)) as probe:
+                probe.verify()
+            with Image.open(io.BytesIO(file_bytes)) as decoded:
+                image_format = (decoded.format or "JPEG").upper()
+                decoded = ImageOps.exif_transpose(decoded)
+                width, height = decoded.size
+                thumbnail_source = decoded.convert("RGB")
+        except (UnidentifiedImageError, OSError, ValueError) as exc:
+            raise ValueError("Uploaded file is not a valid decodable image.") from exc
+
+        if width < settings.MIN_UPLOAD_IMAGE_WIDTH or height < settings.MIN_UPLOAD_IMAGE_HEIGHT:
+            raise ValueError(
+                f"Image resolution is too small ({width}x{height}); minimum is "
+                f"{settings.MIN_UPLOAD_IMAGE_WIDTH}x{settings.MIN_UPLOAD_IMAGE_HEIGHT}."
+            )
+
+        format_extensions = {"JPEG": ".jpg", "PNG": ".png", "WEBP": ".webp"}
+        if image_format not in format_extensions:
+            raise ValueError("Unsupported image format. Upload JPEG, PNG, or WebP.")
+
         sha256 = hashlib.sha256(file_bytes).hexdigest()
-        ext = os.path.splitext(filename)[1].lower() or ".jpg"
+        ext = format_extensions[image_format]
         unique_name = f"{uuid.uuid4()}{ext}"
         
         inspection_folder = os.path.join(self.inspections_dir, inspection_id)
@@ -92,21 +120,10 @@ class StorageManager(IFileStorage):
         async with aiofiles.open(orig_path, "wb") as f:
             await f.write(file_bytes)
             
-        # Get dimensions & generate thumbnail
-        try:
-            with Image.open(orig_path) as img:
-                width, height = img.size
-                
-                thumb_name = f"thumb_{unique_name}"
-                thumb_path = os.path.join(inspection_folder, thumb_name)
-                
-                img_copy = img.copy()
-                img_copy.thumbnail((300, 300))
-                img_copy.save(thumb_path)
-        except Exception as e:
-            logger.warning(f"Error creating thumbnail for {orig_path}: {e}")
-            width, height = 800, 600
-            thumb_path = orig_path
+        thumb_name = f"thumb_{os.path.splitext(unique_name)[0]}.jpg"
+        thumb_path = os.path.join(inspection_folder, thumb_name)
+        thumbnail_source.thumbnail((300, 300))
+        thumbnail_source.save(thumb_path, format="JPEG", quality=85)
 
         return orig_path, thumb_path, width, height, sha256
 

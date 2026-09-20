@@ -3,7 +3,8 @@ import asyncio
 import base64
 import json
 import os
-from typing import List
+from typing import Any, List
+from PIL import Image
 
 from app.core.config import settings
 from app.schemas.domain import BoundingBox, OcrBlock, OcrResult
@@ -18,6 +19,30 @@ class GroqVisionOcrService(IOcrService):
             raise RuntimeError("GROQ_API_KEY is not configured.")
         self._client = Groq(api_key=settings.GROQ_API_KEY)
 
+    @staticmethod
+    def _pixel_bbox(raw_bbox: Any, image_width: int, image_height: int) -> BoundingBox:
+        """Convert a normalized 0..1000 model box into a clamped pixel box."""
+        if isinstance(raw_bbox, dict):
+            values = [raw_bbox.get(k) for k in ("x", "y", "width", "height")]
+        elif isinstance(raw_bbox, (list, tuple)) and len(raw_bbox) == 4:
+            values = list(raw_bbox)
+        else:
+            values = []
+        try:
+            x, y, width, height = [float(value) for value in values]
+        except (TypeError, ValueError):
+            return BoundingBox(x=0, y=0, width=0, height=0)
+        x = max(0.0, min(1000.0, x))
+        y = max(0.0, min(1000.0, y))
+        width = max(0.0, min(1000.0 - x, width))
+        height = max(0.0, min(1000.0 - y, height))
+        return BoundingBox(
+            x=round(x / 1000.0 * image_width, 2),
+            y=round(y / 1000.0 * image_height, 2),
+            width=round(width / 1000.0 * image_width, 2),
+            height=round(height / 1000.0 * image_height, 2),
+        )
+
     async def extract_text(
         self, image_path: str, image_id: str, surface_type: str = "FRONT"
     ) -> OcrResult:
@@ -28,12 +53,15 @@ class GroqVisionOcrService(IOcrService):
 
         with open(image_path, "rb") as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode("ascii")
+        with Image.open(image_path) as image:
+            image_width, image_height = image.size
         mime_type = "image/png" if image_path.lower().endswith(".png") else "image/jpeg"
         prompt = (
             "Perform OCR: read every visible line of text in this image exactly as printed. "
             "This can be any package surface, so include all visible text; do not decide whether a line is relevant. "
             "Do not infer or add text that is not visible. "
-            "Return exactly valid JSON: {\"lines\":[{\"text\":\"visible text\",\"confidence\":0.9}]} "
+            "For each line include its tight bounding box as [x,y,width,height] in a normalized 0..1000 coordinate space. "
+            "Return exactly valid JSON: {\"lines\":[{\"text\":\"visible text\",\"confidence\":0.9,\"bbox\":[100,200,500,60]}]} "
             "and use an empty lines array only when the image truly has no readable text."
         )
 
@@ -41,7 +69,8 @@ class GroqVisionOcrService(IOcrService):
         last_error = None
         for attempt in range(3):
             try:
-                response = self._client.chat.completions.create(
+                response = await asyncio.to_thread(
+                    self._client.chat.completions.create,
                     model=settings.GROQ_VISION_MODEL,
                     messages=[{
                         "role": "user",
@@ -54,7 +83,7 @@ class GroqVisionOcrService(IOcrService):
                     }],
                     response_format={"type": "json_object"},
                     temperature=0,
-                    max_completion_tokens=1000,
+                    max_completion_tokens=4000,
                 )
                 break
             except Exception as error:
@@ -88,7 +117,10 @@ class GroqVisionOcrService(IOcrService):
             conf = 0.85
             if isinstance(line, dict):
                 text = str(line.get("text", "")).strip()
-                conf = float(line.get("confidence", 0.85))
+                try:
+                    conf = max(0.0, min(1.0, float(line.get("confidence", 0.85))))
+                except (TypeError, ValueError):
+                    conf = 0.85
             elif isinstance(line, str):
                 text = line.strip()
             elif isinstance(line, (list, tuple)):
@@ -100,7 +132,11 @@ class GroqVisionOcrService(IOcrService):
                         block_id=f"blk-{image_id}-{index + 1}",
                         text=text,
                         confidence=conf,
-                        bbox=BoundingBox(x=0, y=0, width=1, height=1),
+                        bbox=self._pixel_bbox(
+                            line.get("bbox") if isinstance(line, dict) else None,
+                            image_width,
+                            image_height,
+                        ),
                         image_id=image_id,
                         surface_type=surface_type,
                     )

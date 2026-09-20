@@ -28,7 +28,14 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = Field(default=None, validation_alias="GROQ_API_KEY")
     GROQ_VISION_MODEL: str = Field(default="qwen/qwen3.8-27b", validation_alias="GROQ_VISION_MODEL")
     GROQ_TEXT_MODEL: str = Field(default="openai/gpt-oss-20b", validation_alias="GROQ_TEXT_MODEL")
-    MOCK_AI_MODE: bool = Field(default=True, validation_alias="MOCK_AI_MODE")
+    # Mock AI must be an explicit demo/test choice. Production and fresh local
+    # installations must never claim to have scanned an image while returning
+    # canned declarations.
+    MOCK_AI_MODE: bool = Field(default=False, validation_alias="MOCK_AI_MODE")
+    OCR_PROVIDER: str = Field(default="auto", validation_alias="OCR_PROVIDER")  # auto, groq, paddle, mock
+    MAX_UPLOAD_IMAGE_SIZE_MB: int = Field(default=20, validation_alias="MAX_UPLOAD_IMAGE_SIZE_MB")
+    MIN_UPLOAD_IMAGE_WIDTH: int = Field(default=100, validation_alias="MIN_UPLOAD_IMAGE_WIDTH")
+    MIN_UPLOAD_IMAGE_HEIGHT: int = Field(default=100, validation_alias="MIN_UPLOAD_IMAGE_HEIGHT")
 
     # Gemini AI (optional — used by the declaration extraction fallback)
     GEMINI_API_KEY: Optional[str] = Field(default=None, validation_alias="GEMINI_API_KEY")
