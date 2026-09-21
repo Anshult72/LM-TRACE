@@ -80,6 +80,50 @@ def test_reading_declarations_through_liquid_is_flagged():
     assert results[0]["field_name"] == "package_declarations"
 
 
+def test_placement_rejects_bbox_outside_captured_image():
+    results = declaration_placement_service.evaluate(
+        {"mrp": {"required": True}},
+        [{
+            "field_name": "mrp", "ai_value": "MRP Rs 100", "source_image_id": "img-1",
+            "source_block_id": "b1", "bbox": {"x": 190, "y": 10, "width": 80, "height": 30},
+        }],
+        {},
+        [{"id": "img-1", "surface_type": "MRP_AREA", "width": 200, "height": 100, "quality_assessment": "GOOD"}],
+    )
+    assert results[0]["status"] == "UNVERIFIED"
+    assert results[0]["geometry"]["visible_fraction"] < 0.98
+
+
+def test_measured_pdp_boundary_enforces_declaration_containment():
+    requirements = {"net_quantity": {"required": True, "must_be_on_pdp": True}}
+    images = [{"id": "front", "surface_type": "FRONT", "width": 400, "height": 300, "quality_assessment": "GOOD"}]
+    context = {"pdpImageId": "front", "pdpBbox": {"x": 20, "y": 20, "width": 250, "height": 200}}
+    outside = [{
+        "field_name": "net_quantity", "ai_value": "1 kg", "source_image_id": "front",
+        "source_block_id": "b1", "bbox": {"x": 260, "y": 40, "width": 100, "height": 30},
+    }]
+    result = declaration_placement_service.evaluate(requirements, outside, context, images)[0]
+    assert result["status"] == "POTENTIAL_VIOLATION"
+    assert result["geometry"]["pdp_containment"] < 0.95
+
+
+def test_multi_piece_scope_checks_detected_occurrences():
+    declarations = [{
+        "field_name": "mrp", "ai_value": "MRP Rs 100", "source_image_id": "outer",
+        "source_block_id": "b1", "bbox": {"x": 10, "y": 10, "width": 80, "height": 20},
+        "occurrences": [{"source_image_id": "inner"}],
+    }]
+    images = [
+        {"id": "outer", "surface_type": "OUTER_WRAPPER", "width": 200, "height": 100, "quality_assessment": "GOOD"},
+        {"id": "inner", "surface_type": "INNER_PACKAGE", "width": 200, "height": 100, "quality_assessment": "GOOD"},
+    ]
+    result = declaration_placement_service.evaluate(
+        {"mrp": {"required": True, "package_scope": "OUTER_AND_EACH_INNER_RETAIL_PACKAGE"}},
+        declarations, {"hasOuterWrapper": True}, images,
+    )[0]
+    assert result["status"] == "PASS"
+
+
 def test_equivalent_quantities_on_different_surfaces_do_not_conflict():
     blocks = [
         OcrBlock(block_id="q1", text="Net Qty: 500 g", confidence=0.99, bbox=BoundingBox(x=0, y=0, width=10, height=10), image_id="i1", surface_type="FRONT"),

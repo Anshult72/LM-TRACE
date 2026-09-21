@@ -92,6 +92,7 @@ class Inspection(Base):
     checks = relationship("ComplianceCheck", back_populates="inspection", cascade="all, delete-orphan")
     violations = relationship("Violation", back_populates="inspection", cascade="all, delete-orphan")
     evidence_items = relationship("Evidence", back_populates="inspection", cascade="all, delete-orphan")
+    calibrations = relationship("ImageCalibration", back_populates="inspection", cascade="all, delete-orphan")
 
 class InspectionImage(Base):
     __tablename__ = "inspection_images"
@@ -380,3 +381,37 @@ class RuleCoverage(Base):
     source_reference = Column(String(255), nullable=False)
     last_verified_at = Column(DateTime(timezone=True), default=get_utc_now)
     is_demo_rule = Column(Boolean, default=False)
+
+
+class ImageCalibration(Base):
+    __tablename__ = "image_calibrations"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    inspection_id = Column(String(36), ForeignKey("inspections.id"), nullable=False, index=True)
+    image_id = Column(String(36), ForeignKey("inspection_images.id"), nullable=True, index=True)
+    user_id = Column(String(36), nullable=False)
+
+    reference_type = Column(String(50), nullable=False, default="RULER")  # RULER, PACKAGE_DIMENSION, REFERENCE_MARKER, OTHER
+    reference_description = Column(String(255), nullable=True)
+
+    point_a_x = Column(Float, nullable=False)
+    point_a_y = Column(Float, nullable=False)
+    point_b_x = Column(Float, nullable=False)
+    point_b_y = Column(Float, nullable=False)
+
+    pixel_distance = Column(Float, nullable=False)
+    known_distance = Column(Float, nullable=False)
+    unit = Column(String(20), nullable=False, default="mm")
+    pixels_per_unit = Column(Float, nullable=False)  # pixels_per_mm
+
+    image_width = Column(Integer, nullable=True)
+    image_height = Column(Integer, nullable=True)
+    image_hash = Column(String(64), nullable=True)
+
+    calibration_status = Column(String(50), nullable=False, default="VALID")  # VALID, INVALID, SUPERSEDED
+    perspective_warning = Column(Boolean, default=False)
+
+    created_at = Column(DateTime(timezone=True), default=get_utc_now)
+    updated_at = Column(DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now)
+
+    inspection = relationship("Inspection", back_populates="calibrations")

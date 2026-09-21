@@ -8,7 +8,7 @@ from app.repositories.interfaces import (
 from app.models.entities import (
     User, Product, Inspection, InspectionImage, Declaration, Rule, RuleVersion,
     ComplianceCheck, Violation, Evidence, Report, AuditLog, LabelVersion, RuleCoverage,
-    LegalDocument, RuleAmendment, RuleAuditLog
+    LegalDocument, RuleAmendment, RuleAuditLog, ImageCalibration
 )
 from app.core.database import AsyncSessionLocal
 import uuid
@@ -603,6 +603,137 @@ class NeonPostgresRepository(
             await session.execute(stmt)
             await session.commit()
             return await self.get_evidence_by_id(evidence_id)
+
+    # --- Calibration Methods ---
+    async def save_calibration(self, inspection_id: str, calibration_data: Dict[str, Any]) -> Dict[str, Any]:
+        async with await self._get_session() as session:
+            ins = await session.get(Inspection, inspection_id)
+            if not ins:
+                stmt = select(Inspection).where(Inspection.inspection_code == inspection_id)
+                ins = (await session.execute(stmt)).scalar_one_or_none()
+                if not ins:
+                    raise ValueError(f"Inspection {inspection_id} not found.")
+
+            cal_id = calibration_data.get("id") or f"cal-{uuid.uuid4().hex[:8]}"
+            target_img_id = calibration_data.get("image_id")
+
+            # Supersede previous active calibrations
+            sup_stmt = update(ImageCalibration).where(
+                ImageCalibration.inspection_id == ins.id,
+                ImageCalibration.calibration_status == "VALID"
+            )
+            if target_img_id:
+                sup_stmt = sup_stmt.where(or_(ImageCalibration.image_id == target_img_id, ImageCalibration.image_id.is_(None)))
+            await session.execute(sup_stmt.values(calibration_status="SUPERSEDED", updated_at=get_now_utc()))
+
+            cal_entity = ImageCalibration(
+                id=cal_id,
+                inspection_id=ins.id,
+                image_id=target_img_id,
+                user_id=calibration_data.get("user_id") or "system",
+                reference_type=calibration_data.get("reference_type") or "RULER",
+                reference_description=calibration_data.get("reference_description"),
+                point_a_x=float(calibration_data.get("point_a_x", 0)),
+                point_a_y=float(calibration_data.get("point_a_y", 0)),
+                point_b_x=float(calibration_data.get("point_b_x", 0)),
+                point_b_y=float(calibration_data.get("point_b_y", 0)),
+                pixel_distance=float(calibration_data.get("pixel_distance", 0)),
+                known_distance=float(calibration_data.get("known_distance", 0)),
+                unit=calibration_data.get("unit") or "mm",
+                pixels_per_unit=float(calibration_data.get("pixels_per_unit", 0)),
+                image_width=calibration_data.get("image_width"),
+                image_height=calibration_data.get("image_height"),
+                image_hash=calibration_data.get("image_hash"),
+                calibration_status=calibration_data.get("calibration_status") or "VALID",
+                perspective_warning=bool(calibration_data.get("perspective_warning", False)),
+            )
+            session.add(cal_entity)
+
+            # Update inspection
+            ins.calibration_status = "CALIBRATED"
+            ins.calibration_data = {
+                "method": cal_entity.reference_type,
+                "reference_type": cal_entity.reference_type,
+                "reference_description": cal_entity.reference_description,
+                "point1": {"x": cal_entity.point_a_x, "y": cal_entity.point_a_y},
+                "point2": {"x": cal_entity.point_b_x, "y": cal_entity.point_b_y},
+                "knownDistance": cal_entity.known_distance,
+                "pixelsPerMm": cal_entity.pixels_per_unit,
+                "pixelDistance": cal_entity.pixel_distance,
+                "calibration_id": cal_id,
+                "image_id": cal_entity.image_id,
+            }
+            ins.updated_at = get_now_utc()
+            await session.commit()
+
+            return {
+                "id": cal_entity.id,
+                "inspection_id": cal_entity.inspection_id,
+                "image_id": cal_entity.image_id,
+                "user_id": cal_entity.user_id,
+                "reference_type": cal_entity.reference_type,
+                "reference_description": cal_entity.reference_description,
+                "point_a_x": cal_entity.point_a_x,
+                "point_a_y": cal_entity.point_a_y,
+                "point_b_x": cal_entity.point_b_x,
+                "point_b_y": cal_entity.point_b_y,
+                "pixel_distance": cal_entity.pixel_distance,
+                "known_distance": cal_entity.known_distance,
+                "unit": cal_entity.unit,
+                "pixels_per_unit": cal_entity.pixels_per_unit,
+                "image_width": cal_entity.image_width,
+                "image_height": cal_entity.image_height,
+                "image_hash": cal_entity.image_hash,
+                "calibration_status": cal_entity.calibration_status,
+                "perspective_warning": cal_entity.perspective_warning,
+                "created_at": cal_entity.created_at.isoformat() if cal_entity.created_at else None,
+                "updated_at": cal_entity.updated_at.isoformat() if cal_entity.updated_at else None,
+            }
+
+    async def get_calibrations(self, inspection_id: str, image_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        async with await self._get_session() as session:
+            ins = await session.get(Inspection, inspection_id)
+            actual_id = ins.id if ins else inspection_id
+            stmt = select(ImageCalibration).where(ImageCalibration.inspection_id == actual_id)
+            if image_id:
+                stmt = stmt.where(ImageCalibration.image_id == image_id)
+            stmt = stmt.order_by(ImageCalibration.created_at.desc())
+            res = await session.execute(stmt)
+            calibs = res.scalars().all()
+            return [{
+                "id": c.id, "inspection_id": c.inspection_id, "image_id": c.image_id,
+                "user_id": c.user_id, "reference_type": c.reference_type,
+                "reference_description": c.reference_description,
+                "point_a_x": c.point_a_x, "point_a_y": c.point_a_y,
+                "point_b_x": c.point_b_x, "point_b_y": c.point_b_y,
+                "pixel_distance": c.pixel_distance, "known_distance": c.known_distance,
+                "unit": c.unit, "pixels_per_unit": c.pixels_per_unit,
+                "image_width": c.image_width, "image_height": c.image_height,
+                "image_hash": c.image_hash, "calibration_status": c.calibration_status,
+                "perspective_warning": c.perspective_warning,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+                "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+            } for c in calibs]
+
+    async def get_calibration_by_id(self, calibration_id: str) -> Optional[Dict[str, Any]]:
+        async with await self._get_session() as session:
+            c = await session.get(ImageCalibration, calibration_id)
+            if not c:
+                return None
+            return {
+                "id": c.id, "inspection_id": c.inspection_id, "image_id": c.image_id,
+                "user_id": c.user_id, "reference_type": c.reference_type,
+                "reference_description": c.reference_description,
+                "point_a_x": c.point_a_x, "point_a_y": c.point_a_y,
+                "point_b_x": c.point_b_x, "point_b_y": c.point_b_y,
+                "pixel_distance": c.pixel_distance, "known_distance": c.known_distance,
+                "unit": c.unit, "pixels_per_unit": c.pixels_per_unit,
+                "image_width": c.image_width, "image_height": c.image_height,
+                "image_hash": c.image_hash, "calibration_status": c.calibration_status,
+                "perspective_warning": c.perspective_warning,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+                "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+            }
 
     # --- IRuleRepository ---
     async def list_rules(self, category: Optional[str] = None, active_only: bool = True) -> List[Dict[str, Any]]:

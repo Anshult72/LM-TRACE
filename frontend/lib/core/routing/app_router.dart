@@ -167,8 +167,9 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
           GoRoute(
             path: '/calibration',
             builder: (context, state) {
-              final id = state.uri.queryParameters['inspectionId'] ?? 'ins-001';
-              return CalibrationScreen(inspectionId: id);
+              final id = state.uri.queryParameters['inspectionId'];
+              final imageId = state.uri.queryParameters['imageId'];
+              return CalibrationScreen(inspectionId: id, initialImageId: imageId);
             },
           ),
           GoRoute(

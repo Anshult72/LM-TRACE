@@ -616,22 +616,46 @@ class ScannerWebWorkspace extends StatelessWidget {
                     child: const Icon(Icons.straighten, size: 16, color: AppColors.secondaryBlue),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Scale Calibration Reference', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
-                        Text('Active Ratio: 2.0 px/mm • Known 150mm scale', style: TextStyle(fontSize: 11, color: AppColors.neutral600)),
-                      ],
+                  Expanded(
+                    child: Builder(
+                      builder: (context) {
+                        final isCalibrated = currentInspection?.calibrationStatus?.toUpperCase() == 'CALIBRATED';
+                        final calData = currentInspection?.calibrationData;
+                        final pxPerMm = (calData?['pixelsPerMm'] ?? calData?['pixels_per_mm'] as num?)?.toDouble();
+                        final knownMm = (calData?['knownDistance'] ?? calData?['known_distance_mm'] as num?)?.toDouble();
+
+                        final scaleText = isCalibrated && pxPerMm != null
+                            ? 'Active Ratio: ${pxPerMm.toStringAsFixed(2)} px/mm${knownMm != null ? " • Known ${knownMm.toStringAsFixed(0)}mm scale" : ""}'
+                            : 'Uncalibrated • Physical measurements require 2-point reference';
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Scale Calibration Reference', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+                            Text(scaleText, style: const TextStyle(fontSize: 11, color: AppColors.neutral600)),
+                          ],
+                        );
+                      }
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.passGreen.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text('CALIBRATED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.passGreen)),
+                  Builder(
+                    builder: (context) {
+                      final isCalibrated = currentInspection?.calibrationStatus?.toUpperCase() == 'CALIBRATED';
+                      final statusLabel = isCalibrated ? 'CALIBRATED' : (currentInspection?.calibrationStatus ?? 'NOT_CALIBRATED');
+                      final color = isCalibrated ? AppColors.passGreen : AppColors.reviewAmber;
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          statusLabel,
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color),
+                        ),
+                      );
+                    }
                   ),
                 ],
               ),

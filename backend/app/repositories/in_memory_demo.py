@@ -781,6 +781,7 @@ class DemoInMemoryRepository(
         self.legal_documents: Dict[str, Dict[str, Any]] = {}
         self.rule_amendments: Dict[str, Dict[str, Any]] = {}
         self.rule_audit_logs: List[Dict[str, Any]] = []
+        self.calibrations: Dict[str, Dict[str, Any]] = {}
 
     # --- IUserRepository ---
     async def get_by_email(self, email: str) -> Optional[Dict[str, Any]]:
@@ -1010,6 +1011,65 @@ class DemoInMemoryRepository(
                     ev.update(updates)
                     return copy.deepcopy(ev)
         return None
+
+    # --- Calibration Methods ---
+    async def save_calibration(self, inspection_id: str, calibration_data: Dict[str, Any]) -> Dict[str, Any]:
+        ins = self.inspections.get(inspection_id)
+        if not ins:
+            ins = next((i for i in self.inspections.values() if i.get("inspection_code") == inspection_id), None)
+            if not ins:
+                raise ValueError(f"Inspection {inspection_id} not found.")
+
+        cal_id = calibration_data.get("id") or f"cal-{uuid.uuid4().hex[:8]}"
+        cal_record = dict(calibration_data)
+        cal_record["id"] = cal_id
+        cal_record["inspection_id"] = ins["id"]
+        if "created_at" not in cal_record:
+            cal_record["created_at"] = get_now_iso()
+        cal_record["updated_at"] = get_now_iso()
+
+        # Mark previous active calibrations for this inspection and surface image as SUPERSEDED
+        target_img_id = cal_record.get("image_id")
+        for c in self.calibrations.values():
+            if c.get("inspection_id") == ins["id"] and c.get("calibration_status") == "VALID":
+                if not target_img_id or c.get("image_id") == target_img_id:
+                    c["calibration_status"] = "SUPERSEDED"
+                    c["updated_at"] = get_now_iso()
+
+        self.calibrations[cal_id] = copy.deepcopy(cal_record)
+
+        # Update inspection object for backwards compatibility
+        ins["calibration_status"] = "CALIBRATED"
+        ins["calibration_data"] = {
+            "method": cal_record.get("reference_type", "KNOWN_DISTANCE"),
+            "reference_type": cal_record.get("reference_type", "RULER"),
+            "reference_description": cal_record.get("reference_description"),
+            "point1": {"x": cal_record.get("point_a_x"), "y": cal_record.get("point_a_y")},
+            "point2": {"x": cal_record.get("point_b_x"), "y": cal_record.get("point_b_y")},
+            "knownDistance": cal_record.get("known_distance"),
+            "pixelsPerMm": cal_record.get("pixels_per_unit"),
+            "pixelDistance": cal_record.get("pixel_distance"),
+            "calibration_id": cal_id,
+            "image_id": cal_record.get("image_id"),
+        }
+        ins["updated_at"] = get_now_iso()
+
+        return copy.deepcopy(cal_record)
+
+    async def get_calibrations(self, inspection_id: str, image_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        ins = self.inspections.get(inspection_id)
+        actual_id = ins["id"] if ins else inspection_id
+        results = [
+            copy.deepcopy(c) for c in self.calibrations.values()
+            if c.get("inspection_id") == actual_id
+            and (not image_id or c.get("image_id") == image_id)
+        ]
+        results.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return results
+
+    async def get_calibration_by_id(self, calibration_id: str) -> Optional[Dict[str, Any]]:
+        c = self.calibrations.get(calibration_id)
+        return copy.deepcopy(c) if c else None
 
     # --- IRuleRepository ---
     async def list_rules(self, category: Optional[str] = None, active_only: bool = True) -> List[Dict[str, Any]]:

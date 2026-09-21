@@ -64,6 +64,51 @@ class PdpMeasurementResult(BaseModel):
     confidence: float
     notes: str
 
+class CalibrationPoint(BaseModel):
+    x: float
+    y: float
+
+class CalibrationCreateRequest(BaseModel):
+    image_id: Optional[str] = None
+    reference_type: str = "RULER"  # RULER, PACKAGE_DIMENSION, REFERENCE_MARKER, OTHER
+    reference_description: Optional[str] = None
+    point_a: CalibrationPoint
+    point_b: CalibrationPoint
+    known_distance_mm: float
+    package_construction_type: Optional[str] = "NORMAL"
+    custom_pdp_area_cm2: Optional[float] = None
+
+class CalibrationResponse(BaseModel):
+    id: str
+    inspection_id: str
+    image_id: Optional[str] = None
+    user_id: str
+    reference_type: str
+    reference_description: Optional[str] = None
+    point_a: Dict[str, float]
+    point_b: Dict[str, float]
+    pixel_distance: float
+    known_distance: float
+    unit: str = "mm"
+    pixels_per_unit: float
+    image_width: Optional[int] = None
+    image_height: Optional[int] = None
+    image_hash: Optional[str] = None
+    calibration_status: str  # VALID, INVALID, SUPERSEDED
+    perspective_warning: bool = False
+    created_at: str
+    updated_at: Optional[str] = None
+
+class CalibrationMeasurementPreview(BaseModel):
+    pixel_distance: float
+    known_distance_mm: float
+    pixels_per_mm: float
+    status: str
+    pdp_area_cm2: Optional[float] = None
+    pdp_threshold_label: Optional[str] = None
+    required_min_height_mm: Optional[float] = None
+    declaration_measurements: List[Dict[str, Any]] = []
+
 # --- OCR SCHEMAS ---
 class BoundingBox(BaseModel):
     x: float

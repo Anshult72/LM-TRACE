@@ -22,6 +22,26 @@ def test_character_geometry_is_measured_from_ocr_crop(tmp_path):
     assert result["sample_count"] >= 3
     assert result["char_height_px"] > 0
     assert result["char_width_px"] > 0
+    assert result["measurement_confidence"] >= 0.65
+    assert result["median_char_height_px"] >= result["char_height_px"]
+
+
+def test_readability_uses_exposure_contrast_and_edges(tmp_path):
+    clear = np.full((120, 360, 3), 255, dtype=np.uint8)
+    cv2.putText(clear, "NET QTY 1 KG", (15, 75), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 3, cv2.LINE_AA)
+    clear_path = tmp_path / "clear.png"
+    cv2.imwrite(str(clear_path), clear)
+    clear_result = OpenCvVisionService.evaluate_readability(str(clear_path))
+    assert clear_result["status"] == "PASS"
+    assert clear_result["edge_density"] > 0
+
+    washed_out = np.full((120, 360, 3), 250, dtype=np.uint8)
+    cv2.putText(washed_out, "NET QTY 1 KG", (15, 75), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (245, 245, 245), 2, cv2.LINE_AA)
+    washed_path = tmp_path / "washed.png"
+    cv2.imwrite(str(washed_path), washed_out)
+    washed_result = OpenCvVisionService.evaluate_readability(str(washed_path))
+    assert washed_result["status"] == "POTENTIAL_VIOLATION"
+    assert washed_result["reasons"]
 
 
 @pytest.mark.asyncio
@@ -69,6 +89,27 @@ async def test_uncalibrated_typography_never_fabricates_millimetres():
     assert height_check.result == "UNVERIFIED"
     assert height_check.input_value == "UNVERIFIED"
     assert not any(v["type"] == "INSUFFICIENT_FONT_SIZE" for v in assessment.potential_violations)
+
+
+@pytest.mark.asyncio
+async def test_calibration_is_not_reused_across_different_image_planes():
+    assessment = await compliance_engine.evaluate_compliance(
+        extracted_declarations={"net_quantity": {"value": "1 kg"}},
+        correctness_data={"matrix": [], "conflicts": []},
+        context={
+            "inspectionDate": "2026-09-20T00:00:00Z", "pdpAreaCm2": 150.0,
+            "calibrationStatus": "CALIBRATED", "pixelsPerMm": 10.0,
+            "calibrationImageId": "front-image",
+        },
+        readability_data={"typography_results": [{
+            "field_name": "net_quantity", "source_image_id": "back-image",
+            "status": "MEASURED", "char_height_px": 40.0, "char_width_px": 20.0,
+            "sample_count": 8, "measurement_confidence": 0.9,
+        }]},
+    )
+    height_check = next(c for c in assessment.checks if c.check_type == "CHARACTER_HEIGHT")
+    assert height_check.result == "UNVERIFIED"
+    assert "different image/plane" in height_check.explanation
 
 
 def test_report_model_and_summary_do_not_claim_false_compliance():

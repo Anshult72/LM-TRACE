@@ -487,6 +487,12 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
     required double knownDistanceMm,
     required Map<String, double> pt1,
     required Map<String, double> pt2,
+    required double pdpAreaCm2,
+    required String packageConstructionType,
+    required bool planeVerified,
+    required String pdpImageId,
+    required double pdpImageWidth,
+    required double pdpImageHeight,
   }) async {
     try {
       final calibData = {
@@ -497,7 +503,16 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
           'pixelsPerMm': pxPerMm,
           'point1': pt1,
           'point2': pt2,
-        }
+          'planeVerified': planeVerified,
+        },
+        'pdp_data': {
+          'areaCm2': pdpAreaCm2,
+          'method': 'OFFICER_MEASURED',
+          'confidence': 0.95,
+          'imageId': pdpImageId,
+          'bbox': {'x': 0.0, 'y': 0.0, 'width': pdpImageWidth, 'height': pdpImageHeight},
+        },
+        'package_construction_type': packageConstructionType,
       };
       final response = await _apiClient.patch(
         "${ApiConstants.inspections}/$inspectionId",

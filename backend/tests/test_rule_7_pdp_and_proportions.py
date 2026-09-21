@@ -91,3 +91,19 @@ def test_known_distance_scale_derivation():
     assert px_per_mm == 2.0
     assert status == CalibrationStatus.CALIBRATED
     assert conf >= 0.90
+
+
+def test_rectangular_pdp_area_uses_statutory_forty_percent_factor():
+    area, confidence = pdp_measurement_service.calculate_pdp_area(
+        "RECTANGULAR", dimensions_mm={"height": 200.0, "width": 100.0}
+    )
+    assert area == 80.0
+    assert confidence >= 0.95
+
+
+def test_other_shape_pdp_area_uses_total_surface_area():
+    area, confidence = pdp_measurement_service.calculate_pdp_area(
+        "OTHER", dimensions_mm={"surface_area_mm2": 50000.0}
+    )
+    assert area == 200.0
+    assert confidence >= 0.9

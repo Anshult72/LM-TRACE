@@ -110,6 +110,16 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                       side: const BorderSide(color: AppColors.neutral300),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     ),
+                    icon: const Icon(Icons.straighten_outlined, size: 15),
+                    label: const Text('Calibrate Scale', style: TextStyle(fontSize: 12)),
+                    onPressed: () => context.push('/calibration?inspectionId=${inspection.id}'),
+                  ),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                      side: const BorderSide(color: AppColors.neutral300),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
                     icon: const Icon(Icons.qr_code_scanner, size: 15),
                     label: const Text('Open Scanner', style: TextStyle(fontSize: 12)),
                     onPressed: () => context.go('/scanner?inspectionId=${inspection.id}'),
@@ -207,6 +217,30 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                   Text(
                     '${images.length} Surfaces Captured • Click any photo to zoom',
                     style: const TextStyle(fontSize: 12, color: AppColors.neutral600, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(width: 12),
+                  InkWell(
+                    onTap: () => context.push('/calibration?inspectionId=${inspection.id}'),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: AppColors.secondaryBlue.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.straighten, size: 13, color: AppColors.secondaryBlue),
+                          SizedBox(width: 4),
+                          Text(
+                            'Calibrate Scale',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryBlue),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

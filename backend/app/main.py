@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.core.logging import setup_logging, logger, RequestLoggingMiddleware
 from app.api.routes import (
     auth, inspections, declarations, findings, reports, products, rules,
-    dashboard, audit_logs, online_listings, reference_library
+    dashboard, audit_logs, online_listings, reference_library, calibrations
 )
 
 setup_logging()
@@ -78,6 +78,8 @@ app.include_router(dashboard.router)
 app.include_router(audit_logs.router)
 app.include_router(online_listings.router)
 app.include_router(reference_library.router)
+app.include_router(calibrations.router)
+app.include_router(calibrations.standalone_router)
 
 # Consistent API error response handler (Rule 81)
 @app.exception_handler(Exception)

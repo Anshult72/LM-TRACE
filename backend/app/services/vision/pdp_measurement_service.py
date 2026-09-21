@@ -83,13 +83,18 @@ class PdpMeasurementService(IPdpMeasurementService):
             d_mm = dimensions_mm.get("diameter", 0)
             
             if pkg_upper == "RECTANGULAR" and h_mm > 0 and w_mm > 0:
-                area_mm2 = h_mm * w_mm
+                # Rule 7: 40% of height x width for rectangular packages.
+                area_mm2 = 0.40 * h_mm * w_mm
                 return round(area_mm2 / 100.0, 2), 0.98  # mm2 to cm2
             elif pkg_upper == "CYLINDRICAL" and h_mm > 0 and d_mm > 0:
                 # Rule 7: 40% of height x circumference
                 circumference = math.pi * d_mm
                 area_mm2 = 0.40 * h_mm * circumference
                 return round(area_mm2 / 100.0, 2), 0.95
+            elif pkg_upper not in {"RECTANGULAR", "CYLINDRICAL"}:
+                total_surface_mm2 = dimensions_mm.get("surface_area_mm2") or dimensions_mm.get("total_surface_area_mm2")
+                if total_surface_mm2 and total_surface_mm2 > 0:
+                    return round((0.40 * total_surface_mm2) / 100.0, 2), 0.92
         
         # 2. Calculation from calibrated bbox
         if pdp_bbox and pixels_per_mm and pixels_per_mm > 0:

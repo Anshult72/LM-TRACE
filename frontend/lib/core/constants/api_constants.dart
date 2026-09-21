@@ -27,4 +27,9 @@ class ApiConstants {
     }
     return "/api/reference-library/$id";
   }
+
+  static String inspectionCalibrations(String inspectionId) => "/api/inspections/$inspectionId/calibrations";
+  static String inspectionActiveCalibration(String inspectionId) => "/api/inspections/$inspectionId/calibrations/active";
+  static String inspectionCalibrationPreview(String inspectionId) => "/api/inspections/$inspectionId/calibrations/preview";
+  static String inspectionImage(String inspectionId, String imageId) => "$baseUrl/api/inspections/$inspectionId/images/$imageId";
 }

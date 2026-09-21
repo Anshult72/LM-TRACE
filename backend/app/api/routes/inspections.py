@@ -14,6 +14,7 @@ from app.repositories import get_repository
 from app.core.security import get_current_user_payload
 from app.storage.file_storage import storage_manager
 from app.services.vision.cv_service import cv_service
+from app.services.vision.pdp_measurement_service import pdp_measurement_service
 from app.services.ocr import get_ocr_service
 from app.services.llm import get_llm_service
 from app.services.declaration.correctness_service import declaration_correctness_service
@@ -117,6 +118,46 @@ async def update_inspection(
             raise HTTPException(status_code=400, detail="Cannot modify a finalized inspection. Please select an in-progress case or create a new case.")
 
     updates = dict(req)
+    if "calibration_data" in updates:
+        calibration = updates.get("calibration_data")
+        if not isinstance(calibration, dict):
+            raise HTTPException(status_code=400, detail="Calibration data must be an object.")
+        point1 = calibration.get("point1")
+        point2 = calibration.get("point2")
+        known_distance = calibration.get("knownDistance") or calibration.get("known_distance_mm")
+        if calibration.get("planeVerified") is not True:
+            raise HTTPException(status_code=400, detail="Calibration reference must be confirmed on the same plane as the declaration.")
+        try:
+            known_distance = float(known_distance)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Known calibration distance must be a positive number.")
+        pixels_per_mm, calibration_status, calibration_confidence = pdp_measurement_service.derive_scale_from_known_distance(
+            point1, point2, known_distance
+        )
+        if calibration_status != "CALIBRATED":
+            raise HTTPException(status_code=400, detail="Calibration points are too close or invalid for a reliable scale.")
+        calibration["knownDistance"] = known_distance
+        calibration["pixelsPerMm"] = pixels_per_mm
+        calibration["confidence"] = calibration_confidence
+        calibration["planeVerified"] = True
+        updates["calibration_data"] = calibration
+        updates["calibration_status"] = calibration_status
+
+    if "pdp_data" in updates:
+        pdp_data = updates.get("pdp_data")
+        if not isinstance(pdp_data, dict):
+            raise HTTPException(status_code=400, detail="PDP measurement data must be an object.")
+        raw_area = pdp_data.get("areaCm2") or pdp_data.get("area_cm2")
+        try:
+            area_cm2 = float(raw_area)
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="PDP area must be a positive number in square centimetres.")
+        if not 0 < area_cm2 <= 1_000_000:
+            raise HTTPException(status_code=400, detail="PDP area is outside the supported physical range.")
+        pdp_data["areaCm2"] = round(area_cm2, 4)
+        pdp_data.setdefault("method", "OFFICER_MEASURED")
+        pdp_data.setdefault("confidence", 0.95)
+        updates["pdp_data"] = pdp_data
     if "applicability_context" in updates or "product_category" in updates:
         snapshot = dict(ins.get("rule_snapshot") or {})
         if "applicability_context" in updates:
@@ -475,9 +516,24 @@ async def analyze_product(
         pdp_info = ins.get("pdp_data")
         calibration_info = ins.get("calibration_data") or {}
         rule_context["inspectionDate"] = ins.get("inspection_date") or get_utc_now_iso()
-        rule_context["pdpAreaCm2"] = pdp_info.get("areaCm2") if isinstance(pdp_info, dict) else None
+        rule_context["pdpAreaCm2"] = (
+            pdp_info.get("areaCm2") or pdp_info.get("area_cm2")
+            if isinstance(pdp_info, dict) else None
+        )
+        rule_context["pdpBbox"] = (
+            pdp_info.get("bbox") or pdp_info.get("selected_pdp_bbox")
+            if isinstance(pdp_info, dict) else None
+        )
+        rule_context["pdpImageId"] = (
+            pdp_info.get("imageId") or pdp_info.get("image_id")
+            if isinstance(pdp_info, dict) else None
+        )
         rule_context["pixelsPerMm"] = (
             calibration_info.get("pixelsPerMm") or calibration_info.get("pixels_per_mm")
+            if isinstance(calibration_info, dict) else None
+        )
+        rule_context["calibrationImageId"] = (
+            calibration_info.get("image_id") or calibration_info.get("imageId")
             if isinstance(calibration_info, dict) else None
         )
 
@@ -508,8 +564,17 @@ async def analyze_product(
             readability = cv_service.evaluate_readability(source_path, declaration.get("bbox"))
             readability_results.append({"field_name": field, "matched_field": declaration.get("field_name"), **readability})
             if field in typography_fields:
-                geometry = cv_service.measure_character_geometry(source_path, declaration.get("bbox"))
-                typography_results.append({"field_name": field, "matched_field": declaration.get("field_name"), **geometry})
+                geometry = cv_service.measure_character_geometry(
+                    source_path,
+                    declaration.get("bbox"),
+                    declaration.get("source_text") or declaration.get("ai_value"),
+                )
+                typography_results.append({
+                    "field_name": field,
+                    "matched_field": declaration.get("field_name"),
+                    "source_image_id": declaration.get("source_image_id"),
+                    **geometry,
+                })
         visual_analysis = {
             "readability_results": readability_results,
             "typography_results": typography_results,

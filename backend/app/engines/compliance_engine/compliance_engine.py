@@ -304,7 +304,7 @@ class ComplianceEngine:
                 input_value=placement.get("surface"),
                 expected_condition="Declaration must be on the package/secure label and on an opaque outer wrapper when present",
                 result=result,
-                confidence=0.98 if result in {"PASS", "POTENTIAL_VIOLATION"} else 0.5,
+                confidence=float(placement.get("confidence", 0.98 if result in {"PASS", "POTENTIAL_VIOLATION"} else 0.5)),
                 explanation=placement.get("explanation", "Placement could not be verified."),
                 source_reference=placement.get("statutory_reference", "Rule 9"),
                 evidence_id=placement.get("source_block_id") or placement.get("source_image_id"),
@@ -334,30 +334,46 @@ class ComplianceEngine:
         pkg_const = context.get("packageConstructionType") or "NORMAL"
         calib_status = context.get("calibrationStatus") or CalibrationStatus.NOT_CALIBRATED
         pixels_per_mm = context.get("pixelsPerMm")
+        calibration_image_id = context.get("calibrationImageId")
 
         min_height_mm, table_range = pdp_measurement_service.resolve_rule_7_threshold(pdp_area, pkg_const)
         typography_results = (readability_data or {}).get("typography_results", [])
         for geometry in typography_results:
             field = geometry.get("field_name", "net_quantity")
             measured = geometry.get("status") == "MEASURED"
-            can_measure_mm = measured and min_height_mm is not None and calib_status == CalibrationStatus.CALIBRATED and pixels_per_mm
+            measurement_confidence = float(geometry.get("measurement_confidence", 0.75 if geometry.get("sample_count", 0) >= 3 else 0.4))
+            stable_measurement = geometry.get("sample_count", 0) >= 3 and measurement_confidence >= 0.65
+            same_calibrated_plane = not calibration_image_id or geometry.get("source_image_id") == calibration_image_id
+            can_measure_mm = measured and stable_measurement and same_calibrated_plane and min_height_mm is not None and calib_status == CalibrationStatus.CALIBRATED and pixels_per_mm
             if can_measure_mm:
+                proportion_ratio = geometry.get("proportion_ratio")
+                eval_width_px = (
+                    float(proportion_ratio) * float(geometry["char_height_px"])
+                    if proportion_ratio is not None else float(geometry["char_width_px"])
+                )
                 char_eval = pdp_measurement_service.evaluate_character_dimensions(
                     char_pixel_height=float(geometry["char_height_px"]),
-                    char_pixel_width=float(geometry["char_width_px"]),
+                    char_pixel_width=eval_width_px,
                     pixels_per_mm=float(pixels_per_mm),
                     calibration_status=calib_status,
                     required_min_height_mm=float(min_height_mm),
                     character_str="A",
                 )
+                if not geometry.get("proportion_verified", False):
+                    char_eval["proportion_status"] = "UNVERIFIED"
+                    char_eval["explanation"] += " Character-level OCR alignment was insufficient to verify width proportion without including exempt narrow glyphs."
             else:
                 ratio = round(float(geometry.get("char_width_px") or 0) / max(1.0, float(geometry.get("char_height_px") or 0)), 3)
                 char_eval = {
                     "height_status": "UNVERIFIED", "proportion_status": "UNVERIFIED",
                     "measured_height_mm": None, "width_to_height_ratio": ratio,
-                    "explanation": "Physical character size requires both measured glyph geometry, PDP area and a calibrated pixel-to-millimetre scale.",
+                    "explanation": (
+                        "The declaration is on a different image/plane from the active calibration."
+                        if measured and stable_measurement and not same_calibrated_plane
+                        else "Physical character size requires measured glyph geometry, PDP area and a calibrated pixel-to-millimetre scale."
+                    ),
                 }
-            confidence = 0.92 if can_measure_mm and geometry.get("sample_count", 0) >= 3 else 0.5
+            confidence = min(0.97, measurement_confidence) if can_measure_mm else min(0.5, measurement_confidence)
             checks.append(ComplianceCheckResult(
                 check_type="CHARACTER_HEIGHT", field_name=field, rule_code=pdp_code, rule_version=pdp_ver,
                 input_value=f"{char_eval['measured_height_mm']} mm" if char_eval.get("measured_height_mm") is not None else "UNVERIFIED",
@@ -377,6 +393,12 @@ class ComplianceEngine:
                                    "explanation": f"Measured character height is below statutory minimum {min_height_mm} mm."})
             elif char_eval["height_status"] == "UNVERIFIED":
                 review_items.append({"type": "UNVERIFIED_FONT_SIZE", "field": field, "severity": "MEDIUM", "confidence": confidence,
+                                     "explanation": char_eval["explanation"]})
+            if char_eval["proportion_status"] == "POTENTIAL_VIOLATION":
+                violations.append({"type": "NON_COMPLIANT_CHARACTER_PROPORTION", "field": field, "severity": "HIGH", "confidence": confidence,
+                                   "explanation": "Measured non-exempt character width is below one-third of its height."})
+            elif char_eval["proportion_status"] == "UNVERIFIED":
+                review_items.append({"type": "UNVERIFIED_CHARACTER_PROPORTION", "field": field, "severity": "MEDIUM", "confidence": confidence,
                                      "explanation": char_eval["explanation"]})
 
         if not typography_results and extracted_value("net_quantity"):
@@ -401,7 +423,7 @@ class ComplianceEngine:
             checks.append(ComplianceCheckResult(
                 check_type="READABILITY", field_name=field, rule_code=leg_code, rule_version=leg_ver,
                 input_value=input_value, expected_condition="Conspicuous, prominent and legible declaration",
-                result=read_stat, confidence=0.95 if read_stat in {"PASS", "POTENTIAL_VIOLATION"} else 0.5,
+                result=read_stat, confidence=float(visual.get("confidence", 0.95 if read_stat in {"PASS", "POTENTIAL_VIOLATION"} else 0.5)),
                 explanation=visual.get("explanation", "Visual legibility was not measured."), source_reference=leg_ref,
                 evidence_id=get_field_evidence(visual.get("matched_field") or field),
             ))
