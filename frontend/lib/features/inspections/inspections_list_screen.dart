@@ -64,7 +64,14 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.neutral50,
       appBar: AppBar(
-        title: const Text('Inspections Registry'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text('Inspections Registry'),
+            SizedBox(width: 8),
+            ContextHelpButton(pageId: 'inspections', color: Colors.white, size: 15),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

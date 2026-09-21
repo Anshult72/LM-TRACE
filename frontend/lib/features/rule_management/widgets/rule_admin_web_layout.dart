@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
+import '../../../core/widgets/widgets.dart';
 import '../rule_admin_screen.dart';
 
 /// Desktop enterprise layout for Statutory Rule Engine Registry.
@@ -113,13 +114,20 @@ class _RuleAdminWebLayoutState extends ConsumerState<RuleAdminWebLayout> {
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Statutory Rule Engine Registry',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text(
+                        'Statutory Rule Engine Registry',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                      ),
+                      SizedBox(width: 8),
+                      ContextHelpButton(pageId: 'rules', size: 16),
+                    ],
                   ),
-                  SizedBox(height: 4),
-                  Text(
+                  const SizedBox(height: 4),
+                  const Text(
                     'Versioned rules and automated legal algorithms under Legal Metrology (Packaged Commodities) Rules, 2011',
                     style: TextStyle(fontSize: 13, color: AppColors.neutral600),
                   ),

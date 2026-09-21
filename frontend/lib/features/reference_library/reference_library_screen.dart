@@ -6,6 +6,7 @@ import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/responsive/web_page_container.dart';
 import '../../core/responsive/responsive_layout.dart';
+import '../../core/widgets/widgets.dart';
 import 'models/reference_product_models.dart';
 
 // Provider family for searching reference library
@@ -121,7 +122,14 @@ class _ReferenceLibraryScreenState extends ConsumerState<ReferenceLibraryScreen>
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: ResponsiveLayout.isMobile(context)
           ? AppBar(
-              title: const Text('Reference Library'),
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Text('Reference Library'),
+                  SizedBox(width: 8),
+                  ContextHelpButton(pageId: 'reference_library', color: Colors.white, size: 15),
+                ],
+              ),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.refresh),
@@ -267,13 +275,20 @@ class _ReferenceLibraryScreenState extends ConsumerState<ReferenceLibraryScreen>
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Compliance Reference Library',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text(
+                        'Compliance Reference Library',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                      ),
+                      SizedBox(width: 8),
+                      ContextHelpButton(pageId: 'reference_library', size: 16),
+                    ],
                   ),
-                  SizedBox(height: 4),
-                  Text(
+                  const SizedBox(height: 4),
+                  const Text(
                     'Explore previously inspected products, recorded label declarations, and statutory Legal Metrology evaluations as design reference examples.',
                     style: TextStyle(fontSize: 13, color: AppColors.neutral600),
                   ),

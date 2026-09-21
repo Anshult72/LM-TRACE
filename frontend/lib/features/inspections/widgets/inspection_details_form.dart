@@ -126,7 +126,8 @@ class _InspectionDetailsFormState extends State<InspectionDetailsForm> {
     _notesController = TextEditingController(text: initialNotes);
 
     _inspectionType = init?.inspectionType ?? 'PHYSICAL';
-    _category = init?.productCategory ?? 'Packaged Food';
+    final rawCat = init?.productCategory;
+    _category = (rawCat != null && _categories.contains(rawCat)) ? rawCat : 'Packaged Food';
     _constructionType = init?.packageConstructionType ?? 'NORMAL';
     _packageType = init?.packageType ?? 'RECTANGULAR';
     final applicability = init?.applicabilityContext ?? const <String, dynamic>{};

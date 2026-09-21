@@ -35,7 +35,14 @@ class ProductListScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.neutral50,
       appBar: AppBar(
-        title: const Text('Product Intelligence Registry'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text('Product Intelligence'),
+            SizedBox(width: 8),
+            ContextHelpButton(pageId: 'products', color: Colors.white, size: 15),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

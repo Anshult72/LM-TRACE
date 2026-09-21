@@ -157,6 +157,8 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    const ContextHelpButton(pageId: 'dashboard', size: 14),
                   ],
                 ),
                 const SizedBox(height: 3),

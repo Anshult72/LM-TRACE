@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_brand.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/widgets.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -19,7 +20,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: AppColors.neutral50,
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text('System Settings'),
+            SizedBox(width: 8),
+            ContextHelpButton(pageId: 'settings', color: Colors.white, size: 15),
+          ],
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

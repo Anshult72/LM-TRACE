@@ -206,7 +206,14 @@ class _RuleAdminScreenState extends ConsumerState<RuleAdminScreen> {
     return Scaffold(
       backgroundColor: AppColors.neutral50,
       appBar: AppBar(
-        title: const Text('Statutory Rule Engine Admin'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text('Statutory Rule Engine'),
+            SizedBox(width: 8),
+            ContextHelpButton(pageId: 'rules', color: Colors.white, size: 15),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

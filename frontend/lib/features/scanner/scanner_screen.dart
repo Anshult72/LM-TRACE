@@ -13,6 +13,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/responsive/responsive_layout.dart';
+import '../../core/widgets/widgets.dart';
 import '../inspections/inspections_controller.dart';
 import 'widgets/scanner_web_workspace.dart';
 import 'models/scanner_surface_state.dart';
@@ -548,7 +549,14 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     return Scaffold(
       backgroundColor: AppColors.neutral50,
       appBar: AppBar(
-        title: const Text('Package Scanner & Ingestion'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text('Package Scanner & Ingestion'),
+            SizedBox(width: 8),
+            ContextHelpButton(pageId: 'scanner', color: Colors.white, size: 15),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.straighten_outlined),

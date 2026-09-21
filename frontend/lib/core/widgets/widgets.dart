@@ -6,3 +6,5 @@ export 'app_status_badge.dart';
 export 'app_text_field.dart';
 export 'section_header.dart';
 export 'stat_metric_card.dart';
+export 'context_help_drawer.dart';
+

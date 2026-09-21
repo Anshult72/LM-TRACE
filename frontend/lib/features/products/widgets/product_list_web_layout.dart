@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
+import '../../../core/widgets/widgets.dart';
 import '../product_list_screen.dart';
 
 /// Desktop enterprise layout for Product Intelligence & Fingerprint Registry.
@@ -82,13 +83,20 @@ class _ProductListWebLayoutState extends ConsumerState<ProductListWebLayout> {
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Product Intelligence & Fingerprint Registry',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text(
+                        'Product Intelligence & Fingerprint Registry',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                      ),
+                      SizedBox(width: 8),
+                      ContextHelpButton(pageId: 'products', size: 16),
+                    ],
                   ),
-                  SizedBox(height: 4),
-                  Text(
+                  const SizedBox(height: 4),
+                  const Text(
                     'Persistent pre-packaged SKU identities, label version evolution, and statutory compliance history',
                     style: TextStyle(fontSize: 13, color: AppColors.neutral600),
                   ),

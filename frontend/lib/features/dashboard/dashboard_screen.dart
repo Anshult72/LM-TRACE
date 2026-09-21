@@ -83,6 +83,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ],
         ),
+        actions: const [
+          ContextHelpButton(pageId: 'dashboard', color: Colors.white, size: 16),
+          SizedBox(width: 8),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _refreshData,

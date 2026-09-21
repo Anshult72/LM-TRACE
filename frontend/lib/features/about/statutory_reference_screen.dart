@@ -5,7 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_brand.dart';
-import '../../core/widgets/app_logo.dart';
+import '../../core/widgets/widgets.dart';
 import '../../core/responsive/web_page_container.dart';
 import 'models/statutory_models.dart';
 import 'statutory_offline_registry.dart';
@@ -290,18 +290,25 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Statutory Reference',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                      letterSpacing: -0.5,
-                    ),
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text(
+                        'Statutory Reference',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      ContextHelpButton(pageId: 'statutory_reference', size: 18),
+                    ],
                   ),
-                  SizedBox(height: 3),
-                  Text(
+                  const SizedBox(height: 3),
+                  const Text(
                     'Official statutory sources, gazette notifications, and legal provisions governing LM-TRACE automated compliance rules.',
                     style: TextStyle(
                       fontSize: 13,

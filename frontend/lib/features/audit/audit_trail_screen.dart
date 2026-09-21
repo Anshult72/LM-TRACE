@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/responsive/web_page_container.dart';
+import '../../core/widgets/widgets.dart';
 import 'models/audit_models.dart';
 
 // --- Helper to Compute Resilient KPI Metrics from Loaded Events ---
@@ -338,18 +339,25 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'Audit Trail',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryNavy,
-                  letterSpacing: -0.3,
-                ),
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Text(
+                    'Audit Trail',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryNavy,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  ContextHelpButton(pageId: 'audit_trail', size: 16),
+                ],
               ),
-              SizedBox(height: 4),
-              Text(
+              const SizedBox(height: 4),
+              const Text(
                 'Immutable chronological system-of-record capturing inspection events, computer vision metrics, statutory reviews, and officer custody under the Legal Metrology Act, 2009.',
                 style: TextStyle(fontSize: 12, color: AppColors.neutral600),
               ),

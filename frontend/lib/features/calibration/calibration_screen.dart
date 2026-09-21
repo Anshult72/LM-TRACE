@@ -6,6 +6,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/network/api_client.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/responsive/web_page_container.dart';
+import '../../core/widgets/widgets.dart';
 import '../inspections/inspections_controller.dart';
 import 'models/calibration_models.dart';
 import 'widgets/calibration_canvas.dart';
@@ -555,14 +556,21 @@ class _CalibrationScreenState extends ConsumerState<CalibrationScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Scale & Metric Calibration",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryNavy,
-                    letterSpacing: -0.3,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      "Scale & Metric Calibration",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryNavy,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    ContextHelpButton(pageId: 'calibration', size: 15),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(

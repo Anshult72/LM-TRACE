@@ -118,13 +118,20 @@ class WebTopBar extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 2),
-              Text(
-                _getPageTitle(effectiveLocation),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryNavy,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _getPageTitle(effectiveLocation),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryNavy,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ContextHelpButton(pageId: effectiveLocation, size: 15),
+                ],
               ),
             ],
           ),

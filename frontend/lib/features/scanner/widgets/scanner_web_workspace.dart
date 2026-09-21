@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
+import '../../../core/widgets/widgets.dart';
 import '../../inspections/inspections_controller.dart';
 import '../models/scanner_surface_state.dart';
 
@@ -129,6 +130,8 @@ class ScannerWebWorkspace extends StatelessWidget {
                 'Active Inspection Case File:',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
               ),
+              const SizedBox(width: 6),
+              const ContextHelpButton(pageId: 'scanner', size: 13),
               const SizedBox(width: 14),
               Expanded(
                 child: DropdownButtonHideUnderline(

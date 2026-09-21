@@ -6,9 +6,7 @@ import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/responsive/web_page_container.dart';
-import '../../core/widgets/stat_metric_card.dart';
-import '../../core/widgets/app_card.dart';
-import '../../core/widgets/section_header.dart';
+import '../../core/widgets/widgets.dart';
 
 final supervisorDashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final client = ref.watch(apiClientProvider);
@@ -166,7 +164,14 @@ class SupervisorScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.neutral50,
       appBar: AppBar(
-        title: const Text('Supervisor & Enforcement Oversight'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text('Supervisor Review'),
+            SizedBox(width: 8),
+            ContextHelpButton(pageId: 'supervisor', color: Colors.white, size: 15),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -203,13 +208,20 @@ class SupervisorScreen extends ConsumerWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Legal Metrology Enforcement Command',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      'Legal Metrology Enforcement Command',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    SizedBox(width: 8),
+                    ContextHelpButton(pageId: 'supervisor', color: Colors.white, size: 14),
+                  ],
                 ),
-                SizedBox(height: 3),
-                Text(
+                const SizedBox(height: 3),
+                const Text(
                   'Jurisdiction: Northern Regional Zone (NCT of Delhi & Haryana) • Supervisory Console',
                   style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),

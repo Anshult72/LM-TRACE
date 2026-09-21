@@ -10,6 +10,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/constants/app_brand.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/widgets/widgets.dart';
 import '../inspections/inspections_controller.dart';
 
 class ReportPreviewScreen extends ConsumerStatefulWidget {
@@ -897,7 +898,14 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
     return Scaffold(
       backgroundColor: AppColors.neutral50,
       appBar: AppBar(
-        title: Text('Report: ${ins.inspectionCode}'),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Report: ${ins.inspectionCode}'),
+            const SizedBox(width: 8),
+            const ContextHelpButton(pageId: 'reports', color: Colors.white, size: 15),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.description_outlined),
