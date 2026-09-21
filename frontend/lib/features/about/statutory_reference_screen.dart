@@ -8,6 +8,7 @@ import '../../core/constants/app_brand.dart';
 import '../../core/widgets/app_logo.dart';
 import '../../core/responsive/web_page_container.dart';
 import 'models/statutory_models.dart';
+import 'statutory_offline_registry.dart';
 
 // State Providers for Statutory Reference
 final statutorySummaryProvider = FutureProvider<StatutorySummaryModel?>((ref) async {
@@ -20,7 +21,7 @@ final statutorySummaryProvider = FutureProvider<StatutorySummaryModel?>((ref) as
   } catch (e) {
     debugPrint('Error loading statutory summary: $e');
   }
-  return null;
+  return kStatutorySummaryBaseline;
 });
 
 final statutoryFilterProvider = StateProvider<Map<String, String>>((ref) {
@@ -46,13 +47,32 @@ final statutoryDocumentsProvider = FutureProvider<List<StatutoryDocumentModel>>(
       ApiConstants.statutoryDocuments,
       queryParameters: queryParams,
     );
-    if (response.statusCode == 200 && response.data is List) {
+    if (response.statusCode == 200 && response.data is List && (response.data as List).isNotEmpty) {
       return (response.data as List).map((e) => StatutoryDocumentModel.fromJson(e as Map<String, dynamic>)).toList();
     }
   } catch (e) {
     debugPrint('Error loading statutory documents: $e');
   }
-  return [];
+
+  // Verified baseline registry fallback
+  var list = List<StatutoryDocumentModel>.from(kStatutoryDocumentsBaseline);
+  final q = filters['q']!.toLowerCase().trim();
+  if (q.isNotEmpty) {
+    list = list.where((d) =>
+      d.title.toLowerCase().contains(q) ||
+      d.shortTitle.toLowerCase().contains(q) ||
+      (d.notificationNumber ?? '').toLowerCase().contains(q) ||
+      (d.gazetteReference ?? '').toLowerCase().contains(q) ||
+      d.summary.toLowerCase().contains(q)
+    ).toList();
+  }
+  if (filters['doc_type'] != 'ALL') {
+    list = list.where((d) => d.documentType.toUpperCase() == filters['doc_type']!.toUpperCase()).toList();
+  }
+  if (filters['status'] != 'ALL') {
+    list = list.where((d) => d.status.toUpperCase() == filters['status']!.toUpperCase()).toList();
+  }
+  return list;
 });
 
 final statutoryRulesProvider = FutureProvider<List<StatutoryRuleModel>>((ref) async {
@@ -69,13 +89,31 @@ final statutoryRulesProvider = FutureProvider<List<StatutoryRuleModel>>((ref) as
       ApiConstants.statutoryRules,
       queryParameters: queryParams,
     );
-    if (response.statusCode == 200 && response.data is List) {
+    if (response.statusCode == 200 && response.data is List && (response.data as List).isNotEmpty) {
       return (response.data as List).map((e) => StatutoryRuleModel.fromJson(e as Map<String, dynamic>)).toList();
     }
   } catch (e) {
     debugPrint('Error loading statutory rules: $e');
   }
-  return [];
+
+  // Verified baseline registry fallback
+  var list = List<StatutoryRuleModel>.from(kStatutoryRulesBaseline);
+  final q = filters['q']!.toLowerCase().trim();
+  if (q.isNotEmpty) {
+    list = list.where((r) =>
+      r.title.toLowerCase().contains(q) ||
+      r.ruleNumber.toLowerCase().contains(q) ||
+      r.ruleCode.toLowerCase().contains(q) ||
+      (r.mappedRuleEngineCode ?? '').toLowerCase().contains(q) ||
+      r.requirementSummary.toLowerCase().contains(q) ||
+      r.subject.toLowerCase().contains(q) ||
+      r.sourceReference.toLowerCase().contains(q)
+    ).toList();
+  }
+  if (filters['status'] != 'ALL') {
+    list = list.where((r) => r.status.toUpperCase() == filters['status']!.toUpperCase()).toList();
+  }
+  return list;
 });
 
 final statutoryFamiliesProvider = FutureProvider<List<StatutoryFamilyModel>>((ref) async {
