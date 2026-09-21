@@ -295,6 +295,10 @@ class InspectionCreate(BaseModel):
     package_construction_type: str = "NORMAL"
     applicability_context: PackageApplicabilityInput = Field(default_factory=PackageApplicabilityInput)
     notes: Optional[str] = None
+    listing_url: Optional[str] = None
+    canonical_url: Optional[str] = None
+    marketplace: Optional[str] = None
+    listing_metadata: Optional[Dict[str, Any]] = None
 
 class InspectionUpdate(BaseModel):
     location: Optional[str] = None
@@ -305,6 +309,10 @@ class InspectionUpdate(BaseModel):
     package_construction_type: Optional[str] = None
     product_category: Optional[str] = None
     applicability_context: Optional[PackageApplicabilityInput] = None
+    listing_url: Optional[str] = None
+    canonical_url: Optional[str] = None
+    marketplace: Optional[str] = None
+    listing_metadata: Optional[Dict[str, Any]] = None
 
 class FinalizeInspectionRequest(BaseModel):
     business_name: Optional[str] = None
@@ -316,7 +324,53 @@ class FinalizeInspectionRequest(BaseModel):
     package_construction_type: Optional[str] = None
     applicability_context: Optional[PackageApplicabilityInput] = None
     notes: Optional[str] = None
+    listing_url: Optional[str] = None
+    canonical_url: Optional[str] = None
+    marketplace: Optional[str] = None
+    listing_metadata: Optional[Dict[str, Any]] = None
 
+
+# --- E-COMMERCE LISTING SCHEMAS ---
+class EcommerceListingFetchRequest(BaseModel):
+    url: str
+    inspection_id: Optional[str] = None
+
+class EcommerceListingFetchResponse(BaseModel):
+    fetch_status: str  # RETRIEVED, PARTIAL, FAILED, BLOCKED, LOGIN_REQUIRED, TIMEOUT, UNSUPPORTED
+    original_url: str
+    final_url: Optional[str] = None
+    retrieved_at: str
+    marketplace: str
+    page_title: Optional[str] = None
+    product_title: Optional[str] = None
+    brand: Optional[str] = None
+    seller: Optional[str] = None
+    category: Optional[str] = None
+    sku: Optional[str] = None
+    gtin: Optional[str] = None
+    mrp: Optional[str] = None
+    selling_price: Optional[str] = None
+    unit_sale_price: Optional[str] = None
+    net_quantity: Optional[str] = None
+    country_of_origin: Optional[str] = None
+    manufacturer: Optional[str] = None
+    packer: Optional[str] = None
+    importer: Optional[str] = None
+    consumer_care: Optional[str] = None
+    best_before: Optional[str] = None
+    declarations: Dict[str, Any] = {}
+    declarations_matrix: List[Dict[str, Any]] = []
+    image_urls: List[str] = []
+    snapshot_id: Optional[str] = None
+    content_hash: Optional[str] = None
+    raw_text_preview: Optional[str] = None
+    warnings: List[str] = []
+    error_message: Optional[str] = None
+
+class EcommerceListingAnalyzeRequest(BaseModel):
+    inspection_id: Optional[str] = None
+    url: Optional[str] = None
+    extracted_data: Optional[Dict[str, Any]] = None
 
 class EvidenceResponse(BaseModel):
     id: str
@@ -361,6 +415,10 @@ class InspectionResponse(BaseModel):
     pdp_data: Optional[Dict[str, Any]] = None
     applied_rule_version: Optional[str] = None
     notes: Optional[str] = None
+    listing_url: Optional[str] = None
+    canonical_url: Optional[str] = None
+    marketplace: Optional[str] = None
+    listing_metadata: Optional[Dict[str, Any]] = None
     created_at: datetime
     finalized_at: Optional[datetime] = None
     images: List[ImageResponse] = []

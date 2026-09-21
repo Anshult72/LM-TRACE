@@ -82,6 +82,12 @@ class Inspection(Base):
     rule_snapshot = Column(JSON, nullable=True)
     notes = Column(Text, nullable=True)
     
+    # E-Commerce Listing Fields
+    listing_url = Column(String(1000), nullable=True)
+    canonical_url = Column(String(1000), nullable=True)
+    marketplace = Column(String(100), nullable=True)
+    listing_metadata = Column(JSON, nullable=True)  # {retrieved_at, status, title, brand, declarations, images, hash, history}
+    
     created_at = Column(DateTime(timezone=True), default=get_utc_now)
     updated_at = Column(DateTime(timezone=True), default=get_utc_now, onupdate=get_utc_now)
     finalized_at = Column(DateTime(timezone=True), nullable=True)

@@ -97,6 +97,10 @@ class InspectionModel {
   final List<dynamic> checks;
   final List<dynamic> violations;
   final List<EvidenceModel> evidenceItems;
+  final String? listingUrl;
+  final String? canonicalUrl;
+  final String? marketplace;
+  final Map<String, dynamic>? listingMetadata;
 
   InspectionModel({
     required this.id,
@@ -124,6 +128,10 @@ class InspectionModel {
     this.checks = const [],
     this.violations = const [],
     this.evidenceItems = const [],
+    this.listingUrl,
+    this.canonicalUrl,
+    this.marketplace,
+    this.listingMetadata,
   });
 
   factory InspectionModel.fromJson(Map<String, dynamic> json) {
@@ -164,8 +172,35 @@ class InspectionModel {
       checks: json['checks'] ?? [],
       violations: json['violations'] ?? [],
       evidenceItems: evItems,
+      listingUrl: json['listing_url']?.toString(),
+      canonicalUrl: json['canonical_url']?.toString(),
+      marketplace: json['marketplace']?.toString(),
+      listingMetadata: json['listing_metadata'] is Map ? Map<String, dynamic>.from(json['listing_metadata']) : null,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'inspection_code': inspectionCode,
+    if (inspectorId != null) 'inspector_id': inspectorId,
+    if (productId != null) 'product_id': productId,
+    'inspection_type': inspectionType,
+    'inspection_date': inspectionDate,
+    'location': location,
+    if (sellerName != null) 'seller_name': sellerName,
+    if (businessName != null) 'business_name': businessName,
+    'status': status,
+    if (score != null) 'score': score,
+    if (packageType != null) 'package_type': packageType,
+    if (packageConstructionType != null) 'package_construction_type': packageConstructionType,
+    if (notes != null) 'notes': notes,
+    'product_category': productCategory,
+    'applicability_context': applicabilityContext,
+    if (listingUrl != null) 'listing_url': listingUrl,
+    if (canonicalUrl != null) 'canonical_url': canonicalUrl,
+    if (marketplace != null) 'marketplace': marketplace,
+    if (listingMetadata != null) 'listing_metadata': listingMetadata,
+  };
 }
 
 class InspectionState {
@@ -343,8 +378,6 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
   }
 
   Future<InspectionModel?> createInspection({
-
-
     required String location,
     String? sellerName,
     String? businessName,
@@ -354,6 +387,10 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
     String packageConstructionType = "NORMAL",
     Map<String, dynamic> applicabilityContext = const {},
     String? notes,
+    String? listingUrl,
+    String? canonicalUrl,
+    String? marketplace,
+    Map<String, dynamic>? listingMetadata,
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
@@ -369,6 +406,10 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
           'package_construction_type': packageConstructionType,
           'applicability_context': applicabilityContext,
           'notes': notes,
+          if (listingUrl != null) 'listing_url': listingUrl,
+          if (canonicalUrl != null) 'canonical_url': canonicalUrl,
+          if (marketplace != null) 'marketplace': marketplace,
+          if (listingMetadata != null) 'listing_metadata': listingMetadata,
         },
       );
       if (response.statusCode == 200) {
@@ -382,6 +423,64 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
       }
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> fetchEcommerceListing(String url, {String? inspectionId}) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final response = await _apiClient.post(
+        "${ApiConstants.onlineListings}/fetch",
+        data: {
+          'url': url,
+          'inspection_id': inspectionId,
+        },
+      );
+      state = state.copyWith(isLoading: false);
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      }
+    } catch (e) {
+      String msg = 'Failed to fetch listing: $e';
+      if (e is DioException && e.response?.data is Map) {
+        final d = e.response!.data as Map;
+        msg = d['detail']?.toString() ?? msg;
+      }
+      state = state.copyWith(isLoading: false, errorMessage: msg);
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> analyzeEcommerceListing({
+    String? url,
+    String? inspectionId,
+    Map<String, dynamic>? extractedData,
+  }) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final response = await _apiClient.post(
+        "${ApiConstants.onlineListings}/analyze",
+        data: {
+          if (url != null) 'url': url,
+          if (inspectionId != null) 'inspection_id': inspectionId,
+          if (extractedData != null) 'extracted_data': extractedData,
+        },
+      );
+      state = state.copyWith(isLoading: false);
+      if (response.statusCode == 200) {
+        if (inspectionId != null) {
+          await fetchInspectionDetail(inspectionId);
+        }
+        return response.data as Map<String, dynamic>;
+      }
+    } catch (e) {
+      String msg = 'Failed to analyze listing: $e';
+      if (e is DioException && e.response?.data is Map) {
+        final d = e.response!.data as Map;
+        msg = d['detail']?.toString() ?? msg;
+      }
+      state = state.copyWith(isLoading: false, errorMessage: msg);
     }
     return null;
   }

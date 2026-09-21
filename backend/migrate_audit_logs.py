@@ -9,6 +9,10 @@ cols = [
     "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS result VARCHAR(50) DEFAULT 'SUCCESS';",
     "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS description TEXT;",
     "ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS correlation_id VARCHAR(100);",
+    "ALTER TABLE inspections ADD COLUMN IF NOT EXISTS listing_url VARCHAR(1000);",
+    "ALTER TABLE inspections ADD COLUMN IF NOT EXISTS canonical_url VARCHAR(1000);",
+    "ALTER TABLE inspections ADD COLUMN IF NOT EXISTS marketplace VARCHAR(100);",
+    "ALTER TABLE inspections ADD COLUMN IF NOT EXISTS listing_metadata JSON;",
 ]
 
 async def migrate():

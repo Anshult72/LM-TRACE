@@ -1,5 +1,5 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
@@ -7,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../inspections/inspections_controller.dart';
 
 class OnlineListingScreen extends ConsumerStatefulWidget {
   final String? inspectionId;
@@ -18,18 +19,28 @@ class OnlineListingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnlineListingScreenState extends ConsumerState<OnlineListingScreen> {
-  final _urlController = TextEditingController(text: 'https://ecommerce.example.in/products/heritage-cow-ghee-1l');
+  final _urlController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
   Uint8List? _screenshotBytes;
   String? _screenshotName;
   bool _isLoading = false;
+  String? _errorMessage;
   Map<String, dynamic>? _analysisResult;
 
   @override
   void dispose() {
     _urlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pasteFromClipboard() async {
+    final data = await Clipboard.getData('text/plain');
+    if (data?.text != null && data!.text!.isNotEmpty) {
+      setState(() {
+        _urlController.text = data.text!.trim();
+      });
+    }
   }
 
   Future<void> _pickScreenshot() async {
@@ -39,21 +50,31 @@ class _OnlineListingScreenState extends ConsumerState<OnlineListingScreen> {
       setState(() {
         _screenshotBytes = bytes;
         _screenshotName = picked.name;
+        _errorMessage = null;
       });
     }
   }
 
   Future<void> _analyzeListing() async {
+    final rawUrl = _urlController.text.trim();
+    if (rawUrl.isEmpty && _screenshotBytes == null) {
+      setState(() {
+        _errorMessage = 'Please enter a valid product listing URL or upload a screenshot.';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
       _analysisResult = null;
     });
 
-    final client = ref.read(apiClientProvider);
-
     try {
-      final formData = FormData();
       if (_screenshotBytes != null) {
+        // Multi-part screenshot analysis
+        final client = ref.read(apiClientProvider);
+        final formData = FormData();
         formData.files.add(MapEntry(
           'file',
           MultipartFile.fromBytes(
@@ -62,43 +83,39 @@ class _OnlineListingScreenState extends ConsumerState<OnlineListingScreen> {
             contentType: MediaType('image', 'png'),
           ),
         ));
+        if (rawUrl.isNotEmpty) {
+          formData.fields.add(MapEntry('url', rawUrl));
+        }
+
+        final response = await client.post(
+          "${ApiConstants.onlineListings}/analyze",
+          data: formData,
+        );
+
+        if (response.statusCode == 200 && response.data != null) {
+          setState(() {
+            _analysisResult = response.data as Map<String, dynamic>;
+            _isLoading = false;
+          });
+        } else {
+          throw Exception('Backend returned status code ${response.statusCode}');
+        }
       } else {
-        formData.fields.add(MapEntry('url', _urlController.text.trim()));
-      }
+        // Direct URL fetch and analysis via inspections controller
+        final result = await ref.read(inspectionsProvider.notifier).analyzeEcommerceListing(
+          url: rawUrl,
+          inspectionId: widget.inspectionId,
+        );
 
-      final response = await client.post(
-        "${ApiConstants.onlineListings}/analyze",
-        data: formData,
-      );
-
-      if (response.statusCode == 200) {
         setState(() {
-          _analysisResult = response.data as Map<String, dynamic>;
+          _analysisResult = result;
           _isLoading = false;
         });
       }
     } catch (e) {
-      // Provide robust fallback demo audit if offline/network error
       setState(() {
         _isLoading = false;
-        _analysisResult = {
-          'listing_id': 'list-demo-01',
-          'marketplace': 'QuickBlink India Marketplace',
-          'scanned_url': _urlController.text,
-          'compliance_status': 'POTENTIAL_VIOLATION',
-          'declarations_detected': [
-            {'field': 'Common Name', 'value': 'Pure Cow Ghee', 'status': 'FOUND'},
-            {'field': 'Net Quantity', 'value': '1 L', 'status': 'FOUND'},
-            {'field': 'MRP (Inclusive of Taxes)', 'value': '₹650', 'status': 'FOUND'},
-            {'field': 'Country of Origin', 'value': 'India', 'status': 'FOUND'},
-            {'field': 'Consumer Care Email', 'value': 'support@heritagefoods.in', 'status': 'FOUND'},
-          ],
-          'declarations_missing': [
-            {'field': 'Best Before / Expiry Date', 'statutory_rule': 'Rule 6(1)(e) LM Rules 2011', 'severity': 'HIGH'},
-            {'field': 'Full Address of Manufacturer', 'statutory_rule': 'Rule 6(1)(a) LM Rules 2011', 'severity': 'MEDIUM'},
-          ],
-          'advisory_notes': 'E-commerce marketplace failed to display Expiry Date and Complete Physical Factory Address on the first digital viewport prior to consumer checkout.'
-        };
+        _errorMessage = 'Listing analysis failed: ${e.toString().replaceAll('Exception: ', '')}';
       });
     }
   }
@@ -154,18 +171,30 @@ class _OnlineListingScreenState extends ConsumerState<OnlineListingScreen> {
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primary),
                   ),
                   const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _urlController,
-                    decoration: const InputDecoration(
-                      labelText: 'Marketplace Product URL',
-                      hintText: 'https://www.e-commerce.in/dp/...',
-                      prefixIcon: Icon(Icons.link),
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _urlController,
+                          decoration: const InputDecoration(
+                            labelText: 'Marketplace Product URL',
+                            hintText: 'https://www.amazon.in/dp/... or https://www.flipkart.com/...',
+                            prefixIcon: Icon(Icons.link),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filledTonal(
+                        icon: const Icon(Icons.paste),
+                        tooltip: 'Paste from Clipboard',
+                        onPressed: _pasteFromClipboard,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 14),
                   const Center(
                     child: Text(
-                      '— OR UPLOAD SCREENSHOT (PRIMARY DEMO PATH) —',
+                      '— OR UPLOAD SCREENSHOT —',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.neutral400),
                     ),
                   ),
@@ -211,7 +240,34 @@ class _OnlineListingScreenState extends ConsumerState<OnlineListingScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+
+            // Error Display
+            if (_errorMessage != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.violationBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.violation.withValues(alpha: 0.5)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.error_outline, color: AppColors.violation, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(fontSize: 12, color: AppColors.violation, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // Analysis Result View
             if (_analysisResult != null) _buildAnalysisView(_analysisResult!),
@@ -351,9 +407,40 @@ class _OnlineListingScreenState extends ConsumerState<OnlineListingScreen> {
           ),
           if (res['advisory_notes'] != null) ...[
             const SizedBox(height: 12),
-            Text(
-              'Statutory Finding: ${res['advisory_notes']}',
-              style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.neutral600),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.neutral100,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'Statutory Finding: ${res['advisory_notes']}',
+                style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.neutral700),
+              ),
+            ),
+          ],
+          if (res['snapshot_hash'] != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.neutral50,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppColors.neutral200),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.fingerprint, size: 16, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Snapshot SHA-256: ${res['snapshot_hash']}',
+                      style: const TextStyle(fontSize: 10, fontFamily: 'monospace', color: AppColors.neutral700),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ],

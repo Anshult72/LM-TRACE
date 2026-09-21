@@ -44,6 +44,10 @@ async def create_inspection(
     code_suffix = uuid.uuid4().hex[:5].upper()
     inspection_code = f"INS-2026-{code_suffix}"
     
+    loc = req.location
+    if req.inspection_type == "ONLINE_LISTING" and ("Field Scan" in loc or not loc):
+        loc = f"Online Listing ({req.marketplace or 'E-Commerce Marketplace'})"
+
     ins_data = {
         "id": f"ins-{uuid.uuid4().hex[:12]}",
         "inspection_code": inspection_code,
@@ -51,7 +55,7 @@ async def create_inspection(
         "product_id": None,
         "inspection_type": req.inspection_type,
         "inspection_date": get_utc_now_iso(),
-        "location": req.location,
+        "location": loc,
         "seller_name": req.seller_name,
         "business_name": req.business_name,
         "status": "DRAFT",
@@ -59,6 +63,10 @@ async def create_inspection(
         "package_type": req.package_type,
         "package_construction_type": req.package_construction_type,
         "calibration_status": "NOT_CALIBRATED",
+        "listing_url": req.listing_url,
+        "canonical_url": req.canonical_url,
+        "marketplace": req.marketplace,
+        "listing_metadata": req.listing_metadata,
         "rule_snapshot": {
             "product_category": req.product_category,
             "applicability_context": req.applicability_context.model_dump(),
@@ -68,8 +76,9 @@ async def create_inspection(
 
     created = await repo.create(ins_data)
 
+    act_name = "ECOMMERCE_LISTING_CREATED" if req.inspection_type == "ONLINE_LISTING" else "INSPECTION_CREATED"
     await audit_service.record_event(
-        action="INSPECTION_CREATED",
+        action=act_name,
         actor_id=user_payload["sub"],
         actor_name=user_payload.get("full_name") or user_payload.get("sub"),
         role=user_payload.get("role", "INSPECTOR"),
