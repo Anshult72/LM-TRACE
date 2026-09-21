@@ -11,7 +11,9 @@ class ApiConstants {
   );
 
   static const String login = "/api/auth/login";
+  static const String logout = "/api/auth/logout";
   static const String me = "/api/auth/me";
+  static const String settings = "/api/settings";
   
   static const String inspections = "/api/inspections";
   static const String rules = "/api/rules";

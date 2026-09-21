@@ -81,6 +81,19 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
         ? 'Zone: ${user.zone}'
         : 'Central Enforcement Directorate';
 
+    final isSupervisor = user?.isSupervisor ?? false;
+    final isAdmin = user?.isAdmin ?? false;
+
+    final roleLabel = isAdmin
+        ? 'Directorate Administration & System Audit'
+        : (isSupervisor
+            ? 'Supervisory Review & Case Oversight'
+            : 'Field Enforcement & Inspection Workspace');
+
+    final roleIcon = isAdmin
+        ? Icons.admin_panel_settings_outlined
+        : (isSupervisor ? Icons.verified_user_outlined : Icons.policy_outlined);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
@@ -98,9 +111,9 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
       child: Row(
         children: [
           CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.primaryNavy,
-            child: const Icon(Icons.shield_outlined, color: Colors.white, size: 22),
+            radius: 22,
+            backgroundColor: isSupervisor ? const Color(0xFF0284C7) : AppColors.primaryNavy,
+            child: Icon(roleIcon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -110,7 +123,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                 Row(
                   children: [
                     Text(
-                      'Welcome back, ${user?.fullName ?? "Inspector"}',
+                      'Welcome back, ${user?.fullName ?? "Officer"}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -119,61 +132,82 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.secondaryBlue.withValues(alpha: 0.1),
+                        color: isSupervisor
+                            ? const Color(0xFFE0F2FE)
+                            : (isAdmin ? const Color(0xFFFEF3C7) : AppColors.secondaryBlue.withValues(alpha: 0.1)),
                         borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: isSupervisor
+                              ? const Color(0xFFBAE6FD)
+                              : (isAdmin ? const Color(0xFFFDE68A) : AppColors.secondaryBlue.withValues(alpha: 0.2)),
+                          width: 0.8,
+                        ),
                       ),
                       child: Text(
                         user?.role ?? 'INSPECTOR',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.secondaryBlue,
+                          fontWeight: FontWeight.w800,
+                          color: isSupervisor
+                              ? const Color(0xFF0369A1)
+                              : (isAdmin ? const Color(0xFFB45309) : AppColors.secondaryBlue),
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
-                  '${user?.department ?? "Legal Metrology Department"} • $zoneText • Operational Portal',
+                  '${user?.department ?? "Legal Metrology Department"} • $zoneText • $roleLabel',
                   style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
                 ),
               ],
             ),
           ),
-          // Clean operational status pill - adhering to single primary CTA in header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.neutral100,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.neutral200),
+
+          // Role-specific action shortcut button
+          if (isSupervisor)
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0284C7),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.rate_review_outlined, size: 16, color: Colors.white),
+              label: const Text('Supervisor Review', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              onPressed: () => context.go('/supervisor'),
+            )
+          else if (isAdmin)
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryNavy,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.settings_outlined, size: 16, color: Colors.white),
+              label: const Text('System Settings', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              onPressed: () => context.go('/settings'),
+            )
+          else
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondaryBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                elevation: 0,
+              ),
+              icon: const Icon(Icons.add, size: 16, color: Colors.white),
+              label: const Text('New Inspection', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              onPressed: () => context.go('/new-inspection'),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.passGreen,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'Rule Engine v2.4 Active',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryNavy,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

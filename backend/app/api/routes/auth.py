@@ -84,3 +84,28 @@ async def get_me(payload: dict = Depends(get_current_user_payload)):
         role=user["role"],
         active=user["active"]
     )
+
+@router.post("/logout")
+async def logout(payload: dict = Depends(get_current_user_payload)):
+    """
+    Terminates session and records authoritative USER_LOGOUT audit event.
+    """
+    user_id = payload.get("sub", "unknown")
+    full_name = payload.get("full_name") or payload.get("email") or "Officer"
+    role = payload.get("role", "INSPECTOR")
+    officer_id = payload.get("officer_id", "N/A")
+
+    await audit_service.record_event(
+        action="USER_LOGOUT",
+        actor_id=user_id,
+        actor_name=full_name,
+        role=role,
+        resource_type="AUTH",
+        resource_id=user_id,
+        result="SUCCESS",
+        description=f"Officer {full_name} ({officer_id}) terminated authenticated session.",
+        metadata={"officer_id": officer_id, "email": payload.get("email")}
+    )
+
+    return {"message": "Session successfully terminated", "status": "LOGGED_OUT"}
+

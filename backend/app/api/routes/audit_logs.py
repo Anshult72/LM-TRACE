@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from typing import Dict, Any, List, Optional, Union
 from app.repositories import get_repository
-from app.core.security import get_current_user_payload
+from app.core.security import get_current_user_payload, require_role
 from app.schemas.domain import (
     AuditEventResponse,
     AuditSummaryResponse,
@@ -28,7 +28,7 @@ async def list_audit_logs(
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     as_list: bool = Query(False, description="Return raw list of events instead of paginated object"),
-    user_payload: dict = Depends(get_current_user_payload)
+    user_payload: dict = Depends(require_role("INSPECTOR", "SUPERVISOR", "ADMIN"))
 ):
     repo = get_repository()
     res = await repo.list_logs_filtered(
@@ -52,7 +52,7 @@ async def list_audit_logs(
 
 @router.get("/summary", response_model=AuditSummaryResponse)
 async def get_audit_summary(
-    user_payload: dict = Depends(get_current_user_payload)
+    user_payload: dict = Depends(require_role("INSPECTOR", "SUPERVISOR", "ADMIN"))
 ):
     repo = get_repository()
     return await repo.get_audit_summary()
@@ -60,7 +60,7 @@ async def get_audit_summary(
 @router.get("/chain/{inspection_id}", response_model=ChainOfCustodyResponse)
 async def get_chain_of_custody(
     inspection_id: str,
-    user_payload: dict = Depends(get_current_user_payload)
+    user_payload: dict = Depends(require_role("INSPECTOR", "SUPERVISOR", "ADMIN"))
 ):
     repo = get_repository()
     return await repo.get_chain_of_custody(inspection_id)
@@ -68,7 +68,7 @@ async def get_chain_of_custody(
 @router.get("/{id}", response_model=AuditEventResponse)
 async def get_audit_log_by_id(
     id: str,
-    user_payload: dict = Depends(get_current_user_payload)
+    user_payload: dict = Depends(require_role("INSPECTOR", "SUPERVISOR", "ADMIN"))
 ):
     repo = get_repository()
     log = await repo.get_log_by_id(id)

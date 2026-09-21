@@ -32,6 +32,61 @@ class AuthUser {
       zone: json['zone'] ?? '',
     );
   }
+  bool get isInspector => role.toUpperCase() == 'INSPECTOR';
+  bool get isSupervisor => role.toUpperCase() == 'SUPERVISOR';
+  bool get isAdmin => role.toUpperCase() == 'ADMIN';
+
+  /// Determines whether the authenticated officer has permission to access [route].
+  bool canAccessRoute(String route) {
+    final cleanRoute = route.split('?').first;
+
+    // Universal routes accessible to all authenticated officers
+    if (cleanRoute == '/' ||
+        cleanRoute == '/dashboard' ||
+        cleanRoute.startsWith('/inspections') ||
+        cleanRoute.startsWith('/products') ||
+        cleanRoute.startsWith('/reference-library') ||
+        cleanRoute.startsWith('/calibration') ||
+        cleanRoute.startsWith('/statutory-reference') ||
+        cleanRoute.startsWith('/about') ||
+        cleanRoute.startsWith('/profile') ||
+        cleanRoute.startsWith('/evidence') ||
+        cleanRoute.startsWith('/reports') ||
+        cleanRoute.startsWith('/online-listing') ||
+        cleanRoute.startsWith('/access-denied')) {
+      return true;
+    }
+
+    // Field capture & scanning: Inspector & Admin
+    if (cleanRoute.startsWith('/scanner') ||
+        cleanRoute.startsWith('/scan') ||
+        cleanRoute.startsWith('/new-inspection') ||
+        cleanRoute.startsWith('/analysis-progress')) {
+      return isInspector || isAdmin;
+    }
+
+    // Supervisory enforcement review: Supervisor & Admin
+    if (cleanRoute.startsWith('/supervisor')) {
+      return isSupervisor || isAdmin;
+    }
+
+    // Statutory Rule Engine view/manage: Supervisor & Admin
+    if (cleanRoute.startsWith('/rules')) {
+      return isSupervisor || isAdmin;
+    }
+
+    // Audit trail oversight: Supervisor & Admin
+    if (cleanRoute.startsWith('/audit-trail')) {
+      return isSupervisor || isAdmin;
+    }
+
+    // System Settings & configuration: Admin only
+    if (cleanRoute.startsWith('/settings')) {
+      return isAdmin;
+    }
+
+    return false;
+  }
 }
 
 typedef UserModel = AuthUser;
@@ -120,9 +175,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  void logout() {
-    _apiClient.setAuthToken(null);
-    state = AuthState();
+  Future<void> logout() async {
+    try {
+      await _apiClient.post(ApiConstants.logout);
+    } catch (_) {
+      // Swallowed so frontend logout always cleanly completes even if offline
+    } finally {
+      _apiClient.setAuthToken(null);
+      state = AuthState();
+    }
   }
 }
 

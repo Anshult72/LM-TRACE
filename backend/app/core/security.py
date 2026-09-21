@@ -61,3 +61,38 @@ def require_role(*allowed_roles: str):
             )
         return payload
     return role_checker
+
+ROLE_PERMISSIONS: Dict[str, set] = {
+    "INSPECTOR": {
+        "INSPECTION_CREATE", "INSPECTION_VIEW", "INSPECTION_UPDATE", "INSPECTION_SUBMIT",
+        "EVIDENCE_CREATE", "EVIDENCE_VIEW", "CALIBRATION_CREATE", "CALIBRATION_VIEW",
+        "PRODUCT_VIEW", "REFERENCE_VIEW", "STATUTORY_VIEW", "REPORT_VIEW"
+    },
+    "SUPERVISOR": {
+        "INSPECTION_VIEW", "INSPECTION_REVIEW", "EVIDENCE_VIEW", "CALIBRATION_VIEW",
+        "PRODUCT_VIEW", "REFERENCE_VIEW", "RULE_VIEW", "STATUTORY_VIEW",
+        "REVIEW_VIEW", "REVIEW_DECIDE", "AUDIT_VIEW", "REPORT_VIEW", "REPORT_FINALIZE"
+    },
+    "ADMIN": {
+        "INSPECTION_CREATE", "INSPECTION_VIEW", "INSPECTION_UPDATE", "INSPECTION_SUBMIT", "INSPECTION_REVIEW",
+        "EVIDENCE_CREATE", "EVIDENCE_VIEW", "CALIBRATION_CREATE", "CALIBRATION_VIEW",
+        "PRODUCT_VIEW", "PRODUCT_UPDATE", "REFERENCE_VIEW",
+        "RULE_VIEW", "RULE_MANAGE", "STATUTORY_VIEW", "STATUTORY_MANAGE",
+        "REVIEW_VIEW", "REVIEW_DECIDE", "AUDIT_VIEW", "REPORT_VIEW", "REPORT_FINALIZE",
+        "SYSTEM_SETTINGS_VIEW", "SYSTEM_SETTINGS_UPDATE", "USER_MANAGE"
+    }
+}
+
+def require_permission(*required_permissions: str):
+    def permission_checker(payload: Dict[str, Any] = Depends(get_current_user_payload)):
+        user_role = payload.get("role", "INSPECTOR")
+        user_perms = ROLE_PERMISSIONS.get(user_role, set())
+        for perm in required_permissions:
+            if perm not in user_perms:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={"code": "FORBIDDEN", "message": f"Action requires permission '{perm}' (Role {user_role} not authorized)", "details": None}
+                )
+        return payload
+    return permission_checker
+

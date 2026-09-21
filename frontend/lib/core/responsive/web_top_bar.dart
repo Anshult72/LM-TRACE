@@ -28,6 +28,38 @@ class WebTopBar extends ConsumerWidget {
     return 'Legal Metrology Compliance';
   }
 
+  void _confirmLogout(BuildContext context, WidgetRef ref, AuthUser? user) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sign Out of LM-TRACE?'),
+        content: Text(
+          'Are you sure you want to end your authenticated session as ${user?.fullName ?? "Officer"} (${user?.role ?? "INSPECTOR"})? You will be returned to the secure login screen.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.violationRed,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final effectiveLocation = location ?? GoRouterState.of(context).matchedLocation;
@@ -99,36 +131,104 @@ class WebTopBar extends ConsumerWidget {
 
           const Spacer(),
 
-          // Primary "New Inspection" Action Button (hidden on focused workflows)
+          // Role-aware Action Button (hidden on focused workflows)
           if (!isFocusedWorkflow) ...[
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondaryBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                elevation: 0,
+            if (user?.isSupervisor == true)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0284C7),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.rate_review_outlined, size: 16, color: Colors.white),
+                label: const Text(
+                  'Review Cases',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => context.go('/supervisor'),
+              )
+            else if (user?.canAccessRoute('/new-inspection') ?? true)
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondaryBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  elevation: 0,
+                ),
+                icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                label: const Text(
+                  'New Inspection',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => context.go('/new-inspection'),
               ),
-              icon: const Icon(Icons.add, size: 16, color: Colors.white),
-              label: const Text(
-                'New Inspection',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-              onPressed: () => context.go('/new-inspection'),
-            ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
           ],
 
           const SizedBox(
             height: 28,
             child: VerticalDivider(color: AppColors.neutral300, thickness: 1),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
 
-          // 3. Officer Profile Badge
-          InkWell(
-            onTap: () => context.go('/profile'),
-            borderRadius: BorderRadius.circular(8),
+          // 3. Officer Profile Badge with Popup Menu
+          PopupMenuButton<String>(
+            tooltip: 'Officer Profile & Options',
+            offset: const Offset(0, 48),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: const BorderSide(color: AppColors.neutral200),
+            ),
+            onSelected: (value) {
+              if (value == 'profile') {
+                context.go('/profile');
+              } else if (value == 'logout') {
+                _confirmLogout(context, ref, user);
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem<String>(
+                enabled: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user?.fullName ?? 'Officer',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primaryNavy),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${user?.role ?? "INSPECTOR"} • ${user?.officerId ?? "LM-001"}',
+                      style: const TextStyle(fontSize: 11, color: AppColors.neutral600),
+                    ),
+                    const Divider(height: 12, color: AppColors.neutral200),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'profile',
+                child: Row(
+                  children: [
+                    Icon(Icons.person_outline, size: 18, color: AppColors.primaryNavy),
+                    SizedBox(width: 10),
+                    Text('View Profile', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_rounded, size: 18, color: AppColors.violationRed),
+                    SizedBox(width: 10),
+                    Text('Sign Out', style: TextStyle(fontSize: 13, color: AppColors.violationRed, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ],
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               child: Row(
@@ -181,10 +281,22 @@ class WebTopBar extends ConsumerWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_drop_down, size: 18, color: AppColors.neutral500),
                   ],
                 ],
               ),
             ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Dedicated Quick Sign Out Icon Button
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, size: 19, color: AppColors.neutral600),
+            tooltip: 'Sign Out of LM-TRACE',
+            hoverColor: Colors.red.withValues(alpha: 0.1),
+            onPressed: () => _confirmLogout(context, ref, user),
           ),
         ],
       ),

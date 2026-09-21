@@ -27,6 +27,7 @@ import '../../features/profile/officer_profile_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/audit/audit_trail_screen.dart';
 import '../../features/about/statutory_reference_screen.dart';
+import '../../features/auth/access_denied_screen.dart';
 import '../../features/landing/landing_page_screen.dart';
 
 import '../responsive/web_app_shell.dart';
@@ -49,10 +50,13 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
     initialLocation: kIsWeb ? '/' : '/login',
     refreshListenable: authNotifier,
     redirect: (context, state) {
-      final isAuth = ref.read(authProvider).isAuthenticated;
+      final authState = ref.read(authProvider);
+      final isAuth = authState.isAuthenticated;
+      final user = authState.user;
       final loc = state.matchedLocation;
       final isLogin = loc == '/login';
       final isLanding = loc == '/';
+      final isAccessDenied = loc == '/access-denied';
 
       if (!kIsWeb) {
         // Native mobile application flow: Login -> Authenticated Application
@@ -61,6 +65,9 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
         }
         if (isAuth && (isLogin || isLanding)) {
           return '/dashboard';
+        }
+        if (isAuth && !isAccessDenied && user != null && !user.canAccessRoute(loc)) {
+          return '/access-denied?attempted=$loc';
         }
         return null;
       }
@@ -79,6 +86,9 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
         if (isLanding || isLogin) {
           return '/dashboard';
         }
+        if (!isAccessDenied && user != null && !user.canAccessRoute(loc)) {
+          return '/access-denied?attempted=$loc';
+        }
         return null;
       }
     },
@@ -90,6 +100,13 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/access-denied',
+        builder: (context, state) {
+          final attempted = state.uri.queryParameters['attempted'];
+          return AccessDeniedScreen(attemptedRoute: attempted);
+        },
       ),
 
       // Operational Navigation Shell (Sidebar & Topbar on Web Desktop, Bottom Nav on Mobile)

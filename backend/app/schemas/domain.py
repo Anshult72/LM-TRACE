@@ -535,19 +535,19 @@ class StatutoryTraceabilityResponse(BaseModel):
 
 class AuditEventResponse(BaseModel):
     id: str
-    event_id: str
-    event_type: str
+    event_id: Optional[str] = None
+    event_type: Optional[str] = "SYSTEM"
     action: str
-    actor_id: str
-    actor_name: str
-    role: str
-    resource_type: str
-    resource_id: str
-    target_type: str
-    target_id: str
+    actor_id: Optional[str] = None
+    actor_name: Optional[str] = None
+    role: Optional[str] = "INSPECTOR"
+    resource_type: Optional[str] = "SYSTEM"
+    resource_id: Optional[str] = None
+    target_type: Optional[str] = None
+    target_id: Optional[str] = None
     inspection_id: Optional[str] = None
     result: str = "SUCCESS"
-    description: str
+    description: Optional[str] = ""
     timestamp: str
     old_value: Optional[Dict[str, Any]] = None
     new_value: Optional[Dict[str, Any]] = None

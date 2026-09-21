@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_brand.dart';
 import '../../core/theme/app_theme.dart';
 import '../auth/auth_controller.dart';
@@ -170,8 +171,67 @@ class OfficerProfileScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 20),
+
+            // Sign Out Button Card
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.violationRed,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 0,
+                  side: const BorderSide(color: AppColors.violationRedBorder, width: 1.2),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: const Icon(Icons.logout_rounded, size: 18, color: AppColors.violationRed),
+                label: const Text(
+                  'Sign Out of LM-TRACE',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.violationRed,
+                  ),
+                ),
+                onPressed: () => _confirmLogout(context, ref, user),
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context, WidgetRef ref, AuthUser? user) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sign Out of LM-TRACE?'),
+        content: Text(
+          'Are you sure you want to end your authenticated session as ${user?.fullName ?? "Officer"} (${user?.role ?? "INSPECTOR"})? You will be returned to the secure login screen.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.violationRed,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+            child: const Text('Sign Out'),
+          ),
+        ],
       ),
     );
   }

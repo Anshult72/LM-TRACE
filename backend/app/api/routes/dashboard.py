@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Query
 
-from app.core.security import get_current_user_payload
+from app.core.security import get_current_user_payload, require_role
 from app.repositories import get_repository
 from app.services.analytics.compliance_analytics import classify_inspection, summarize_inspections
 
@@ -141,7 +141,7 @@ async def get_inspector_dashboard(user_payload: dict = Depends(get_current_user_
 
 
 @router.get("/supervisor")
-async def get_supervisor_dashboard(user_payload: dict = Depends(get_current_user_payload)):
+async def get_supervisor_dashboard(user_payload: dict = Depends(require_role("SUPERVISOR", "ADMIN"))):
     repo = get_repository()
     inspections = _filter_cases(await repo.list_inspections(), None, None, None, None)
     metrics = summarize_inspections(inspections)["outcomes"]
@@ -152,7 +152,7 @@ async def get_supervisor_dashboard(user_payload: dict = Depends(get_current_user
 
 
 @router.get("/admin")
-async def get_admin_dashboard(user_payload: dict = Depends(get_current_user_payload)):
+async def get_admin_dashboard(user_payload: dict = Depends(require_role("ADMIN"))):
     repo = get_repository()
     users, rules, logs = await repo.list_users(), await repo.list_rules(), await repo.list_logs(limit=10)
     return {"system_status": {"database": "Repository configured", "ocr_engine": "Configured", "llm_service": "Configured", "pdp_vision_engine": "Operational", "report_generator": "PDF and DOCX ready"}, "counts": {"users": len(users), "rules": len(rules), "audit_events": len(logs)}, "recent_audit_logs": logs}

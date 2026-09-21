@@ -24,7 +24,6 @@ class MaanakNavigationDrawer extends ConsumerWidget {
     final department = user?.department ?? 'Legal Metrology Department';
     final zone = user?.zone ?? 'Central Enforcement Zone';
     final officerId = user?.officerId ?? 'LM-001';
-    final isSupervisorOrAdmin = role == 'SUPERVISOR' || role == 'ADMIN';
 
     return Drawer(
       backgroundColor: Colors.white,
@@ -121,37 +120,57 @@ class MaanakNavigationDrawer extends ConsumerWidget {
               children: [
                 // Core Operations
                 _buildDrawerSectionTitle('PRIMARY NAVIGATION'),
-                _buildDrawerTile(
-                  context,
-                  icon: Icons.dashboard_outlined,
-                  activeIcon: Icons.dashboard,
-                  title: 'Dashboard',
-                  route: '/dashboard',
-                ),
-                _buildDrawerTile(
-                  context,
-                  icon: Icons.assignment_outlined,
-                  activeIcon: Icons.assignment,
-                  title: 'My Inspections',
-                  route: '/inspections',
-                ),
-                _buildDrawerTile(
-                  context,
-                  icon: Icons.fingerprint_outlined,
-                  activeIcon: Icons.fingerprint,
-                  title: 'Products',
-                  route: '/products',
-                ),
-                _buildDrawerTile(
-                  context,
-                  icon: Icons.gavel_outlined,
-                  activeIcon: Icons.gavel,
-                  title: 'Statutory Rules',
-                  route: '/rules',
-                ),
+                if (user?.canAccessRoute('/dashboard') ?? true)
+                  _buildDrawerTile(
+                    context,
+                    icon: Icons.dashboard_outlined,
+                    activeIcon: Icons.dashboard,
+                    title: 'Dashboard',
+                    route: '/dashboard',
+                  ),
+                if (user?.canAccessRoute('/inspections') ?? true)
+                  _buildDrawerTile(
+                    context,
+                    icon: Icons.assignment_outlined,
+                    activeIcon: Icons.assignment,
+                    title: 'Inspections Registry',
+                    route: '/inspections',
+                  ),
+                if (user?.canAccessRoute('/scanner') ?? false)
+                  _buildDrawerTile(
+                    context,
+                    icon: Icons.qr_code_scanner_outlined,
+                    activeIcon: Icons.qr_code_scanner,
+                    title: 'Scan & Ingestion',
+                    route: '/scanner',
+                  ),
+                if (user?.canAccessRoute('/products') ?? true)
+                  _buildDrawerTile(
+                    context,
+                    icon: Icons.fingerprint_outlined,
+                    activeIcon: Icons.fingerprint,
+                    title: 'Products',
+                    route: '/products',
+                  ),
+                if (user?.canAccessRoute('/reference-library') ?? true)
+                  _buildDrawerTile(
+                    context,
+                    icon: Icons.auto_stories_outlined,
+                    activeIcon: Icons.auto_stories,
+                    title: 'Reference Library',
+                    route: '/reference-library',
+                  ),
+                if (user?.canAccessRoute('/rules') ?? false)
+                  _buildDrawerTile(
+                    context,
+                    icon: Icons.gavel_outlined,
+                    activeIcon: Icons.gavel,
+                    title: 'Statutory Rules',
+                    route: '/rules',
+                  ),
 
                 // Role-based supervisor extension
-                if (isSupervisorOrAdmin) ...[
+                if (user?.canAccessRoute('/supervisor') ?? false)
                   _buildDrawerTile(
                     context,
                     icon: Icons.admin_panel_settings_outlined,
@@ -160,7 +179,6 @@ class MaanakNavigationDrawer extends ConsumerWidget {
                     route: '/supervisor',
                     badgeText: 'COMMAND',
                   ),
-                ],
 
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -176,26 +194,36 @@ class MaanakNavigationDrawer extends ConsumerWidget {
                   route: '/profile',
                   semanticLabel: 'Officer Profile',
                 ),
-                _buildDrawerTile(
-                  context,
-                  icon: Icons.receipt_long_outlined,
-                  title: 'Activity / Audit History',
-                  route: '/audit-trail',
-                  semanticLabel: 'Activity and Audit History',
-                ),
-                _buildDrawerTile(
-                  context,
-                  icon: Icons.settings_outlined,
-                  title: 'Settings',
-                  route: '/settings',
-                  semanticLabel: 'Settings',
-                ),
+                if (user?.canAccessRoute('/calibration') ?? true)
+                  _buildDrawerTile(
+                    context,
+                    icon: Icons.straighten_outlined,
+                    title: 'Scale Calibration',
+                    route: '/calibration',
+                    semanticLabel: 'Scale Calibration',
+                  ),
+                if (user?.canAccessRoute('/audit-trail') ?? false)
+                  _buildDrawerTile(
+                    context,
+                    icon: Icons.receipt_long_outlined,
+                    title: 'Audit Trail',
+                    route: '/audit-trail',
+                    semanticLabel: 'Audit Trail',
+                  ),
+                if (user?.canAccessRoute('/settings') ?? false)
+                  _buildDrawerTile(
+                    context,
+                    icon: Icons.settings_outlined,
+                    title: 'Settings',
+                    route: '/settings',
+                    semanticLabel: 'Settings',
+                  ),
                 _buildDrawerTile(
                   context,
                   icon: Icons.help_outline_rounded,
-                  title: 'Help & About LM-TRACE',
-                  route: '/about',
-                  semanticLabel: 'Help and About',
+                  title: 'Statutory Reference',
+                  route: '/statutory-reference',
+                  semanticLabel: 'Statutory Reference',
                 ),
               ],
             ),
@@ -313,7 +341,7 @@ class MaanakNavigationDrawer extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Confirm Logout'),
+        title: const Text('Sign Out of LM-TRACE?'),
         content: const Text(
           'Are you sure you want to end your current session? You will be returned to the secure login screen.',
         ),
@@ -327,12 +355,15 @@ class MaanakNavigationDrawer extends ConsumerWidget {
               backgroundColor: AppColors.violationRed,
               foregroundColor: Colors.white,
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(dialogContext).pop(); // Close dialog
               Navigator.of(context).pop(); // Close drawer
-              ref.read(authProvider.notifier).logout();
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) {
+                context.go('/login');
+              }
             },
-            child: const Text('Logout'),
+            child: const Text('Sign Out'),
           ),
         ],
       ),

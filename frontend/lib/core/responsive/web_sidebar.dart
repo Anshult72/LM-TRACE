@@ -1,19 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../features/auth/auth_controller.dart';
 import '../theme/app_theme.dart';
 import '../constants/app_brand.dart';
 import '../widgets/app_logo.dart';
 import 'responsive_layout.dart';
 
 /// Persistent enterprise left sidebar for LM-TRACE desktop and tablet web.
-class WebSidebar extends StatelessWidget {
+class WebSidebar extends ConsumerWidget {
   final bool isCollapsed;
 
   const WebSidebar({super.key, this.isCollapsed = false});
 
+  void _confirmLogout(BuildContext context, WidgetRef ref, AuthUser? user) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sign Out of LM-TRACE?'),
+        content: Text(
+          'Are you sure you want to terminate your authenticated session as ${user?.fullName ?? "Officer"} (${user?.role ?? "INSPECTOR"})? You will be returned to the secure login screen.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.violationRed,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await ref.read(authProvider.notifier).logout();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+            child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).matchedLocation;
+    final authState = ref.watch(authProvider);
+    final user = authState.user;
 
     return Container(
       width: isCollapsed ? Breakpoints.collapsedSidebarWidth : Breakpoints.sidebarWidth,
@@ -29,7 +65,7 @@ class WebSidebar extends StatelessWidget {
           _buildBrandHeader(context),
           const Divider(color: Color(0xFF1E3A5F), height: 1),
 
-          // 2. Primary Navigation
+          // 2. Primary Navigation (Filtered by authenticated user role)
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -49,54 +85,60 @@ class WebSidebar extends StatelessWidget {
                         ),
                       ),
                     ),
-                  _buildNavItem(
-                    context,
-                    label: 'Dashboard',
-                    icon: Icons.dashboard_outlined,
-                    activeIcon: Icons.dashboard,
-                    route: '/dashboard',
-                    isActive: location == '/dashboard' || location == '/',
-                  ),
-                  _buildNavItem(
-                    context,
-                    label: 'Inspections Registry',
-                    icon: Icons.assignment_outlined,
-                    activeIcon: Icons.assignment,
-                    route: '/inspections',
-                    isActive: location.startsWith('/inspections'),
-                  ),
-                  _buildNavItem(
-                    context,
-                    label: 'Scan & Ingestion',
-                    icon: Icons.qr_code_scanner_outlined,
-                    activeIcon: Icons.qr_code_scanner,
-                    route: '/scanner',
-                    isActive: location.startsWith('/scanner'),
-                  ),
-                  _buildNavItem(
-                    context,
-                    label: 'Product Intelligence',
-                    icon: Icons.fingerprint_outlined,
-                    activeIcon: Icons.fingerprint,
-                    route: '/products',
-                    isActive: location.startsWith('/products'),
-                  ),
-                  _buildNavItem(
-                    context,
-                    label: 'Reference Library',
-                    icon: Icons.auto_stories_outlined,
-                    activeIcon: Icons.auto_stories,
-                    route: '/reference-library',
-                    isActive: location.startsWith('/reference-library'),
-                  ),
-                  _buildNavItem(
-                    context,
-                    label: 'Statutory Rule Engine',
-                    icon: Icons.gavel_outlined,
-                    activeIcon: Icons.gavel,
-                    route: '/rules',
-                    isActive: location.startsWith('/rules'),
-                  ),
+                  if (user?.canAccessRoute('/dashboard') ?? true)
+                    _buildNavItem(
+                      context,
+                      label: 'Dashboard',
+                      icon: Icons.dashboard_outlined,
+                      activeIcon: Icons.dashboard,
+                      route: '/dashboard',
+                      isActive: location == '/dashboard' || location == '/',
+                    ),
+                  if (user?.canAccessRoute('/inspections') ?? true)
+                    _buildNavItem(
+                      context,
+                      label: 'Inspections Registry',
+                      icon: Icons.assignment_outlined,
+                      activeIcon: Icons.assignment,
+                      route: '/inspections',
+                      isActive: location.startsWith('/inspections'),
+                    ),
+                  if (user?.canAccessRoute('/scanner') ?? false)
+                    _buildNavItem(
+                      context,
+                      label: 'Scan & Ingestion',
+                      icon: Icons.qr_code_scanner_outlined,
+                      activeIcon: Icons.qr_code_scanner,
+                      route: '/scanner',
+                      isActive: location.startsWith('/scanner'),
+                    ),
+                  if (user?.canAccessRoute('/products') ?? true)
+                    _buildNavItem(
+                      context,
+                      label: 'Product Intelligence',
+                      icon: Icons.fingerprint_outlined,
+                      activeIcon: Icons.fingerprint,
+                      route: '/products',
+                      isActive: location.startsWith('/products'),
+                    ),
+                  if (user?.canAccessRoute('/reference-library') ?? true)
+                    _buildNavItem(
+                      context,
+                      label: 'Reference Library',
+                      icon: Icons.auto_stories_outlined,
+                      activeIcon: Icons.auto_stories,
+                      route: '/reference-library',
+                      isActive: location.startsWith('/reference-library'),
+                    ),
+                  if (user?.canAccessRoute('/rules') ?? false)
+                    _buildNavItem(
+                      context,
+                      label: 'Statutory Rule Engine',
+                      icon: Icons.gavel_outlined,
+                      activeIcon: Icons.gavel,
+                      route: '/rules',
+                      isActive: location.startsWith('/rules'),
+                    ),
 
                   const SizedBox(height: 14),
                   if (!isCollapsed) ...[
@@ -115,53 +157,58 @@ class WebSidebar extends StatelessWidget {
                       ),
                     ),
                   ],
-                  _buildNavItem(
-                    context,
-                    label: 'Scale Calibration',
-                    icon: Icons.straighten_outlined,
-                    activeIcon: Icons.straighten,
-                    route: '/calibration',
-                    isActive: location.startsWith('/calibration'),
-                  ),
-                  _buildNavItem(
-                    context,
-                    label: 'Supervisor Review',
-                    icon: Icons.supervisor_account_outlined,
-                    activeIcon: Icons.supervisor_account,
-                    route: '/supervisor',
-                    isActive: location.startsWith('/supervisor'),
-                  ),
-                  _buildNavItem(
-                    context,
-                    label: 'Audit Trail',
-                    icon: Icons.history_edu_outlined,
-                    activeIcon: Icons.history_edu,
-                    route: '/audit-trail',
-                    isActive: location.startsWith('/audit-trail'),
-                  ),
-                  _buildNavItem(
-                    context,
-                    label: 'Statutory Reference',
-                    icon: Icons.menu_book_outlined,
-                    activeIcon: Icons.menu_book,
-                    route: '/statutory-reference',
-                    isActive: location.startsWith('/statutory-reference') || location.startsWith('/about'),
-                  ),
-                  _buildNavItem(
-                    context,
-                    label: 'System Settings',
-                    icon: Icons.settings_outlined,
-                    activeIcon: Icons.settings,
-                    route: '/settings',
-                    isActive: location.startsWith('/settings'),
-                  ),
+                  if (user?.canAccessRoute('/calibration') ?? true)
+                    _buildNavItem(
+                      context,
+                      label: 'Scale Calibration',
+                      icon: Icons.straighten_outlined,
+                      activeIcon: Icons.straighten,
+                      route: '/calibration',
+                      isActive: location.startsWith('/calibration'),
+                    ),
+                  if (user?.canAccessRoute('/supervisor') ?? false)
+                    _buildNavItem(
+                      context,
+                      label: 'Supervisor Review',
+                      icon: Icons.supervisor_account_outlined,
+                      activeIcon: Icons.supervisor_account,
+                      route: '/supervisor',
+                      isActive: location.startsWith('/supervisor'),
+                    ),
+                  if (user?.canAccessRoute('/audit-trail') ?? false)
+                    _buildNavItem(
+                      context,
+                      label: 'Audit Trail',
+                      icon: Icons.history_edu_outlined,
+                      activeIcon: Icons.history_edu,
+                      route: '/audit-trail',
+                      isActive: location.startsWith('/audit-trail'),
+                    ),
+                  if (user?.canAccessRoute('/statutory-reference') ?? true)
+                    _buildNavItem(
+                      context,
+                      label: 'Statutory Reference',
+                      icon: Icons.menu_book_outlined,
+                      activeIcon: Icons.menu_book,
+                      route: '/statutory-reference',
+                      isActive: location.startsWith('/statutory-reference') || location.startsWith('/about'),
+                    ),
+                  if (user?.canAccessRoute('/settings') ?? false)
+                    _buildNavItem(
+                      context,
+                      label: 'System Settings',
+                      icon: Icons.settings_outlined,
+                      activeIcon: Icons.settings,
+                      route: '/settings',
+                      isActive: location.startsWith('/settings'),
+                    ),
                 ],
               ),
             ),
           ),
 
-          // 3. Footer with Judge Demo CTA & Status
-          _buildSidebarFooter(context),
+          // 3. Footer with Status & Sign Out
+          _buildSidebarFooter(context, ref, user),
         ],
       ),
     );
@@ -298,42 +345,76 @@ class WebSidebar extends StatelessWidget {
     );
   }
 
-  Widget _buildSidebarFooter(BuildContext context) {
+  Widget _buildSidebarFooter(BuildContext context, WidgetRef ref, AuthUser? user) {
     if (isCollapsed) {
       return Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         alignment: Alignment.center,
-        child: Container(
-          width: 8,
-          height: 8,
-          decoration: const BoxDecoration(
-            color: Color(0xFF22C55E),
-            shape: BoxShape.circle,
-          ),
+        child: IconButton(
+          icon: const Icon(Icons.logout_rounded, color: Color(0xFFF87171), size: 18),
+          tooltip: 'Sign Out (${user?.fullName ?? "Officer"})',
+          onPressed: () => _confirmLogout(context, ref, user),
         ),
       );
     }
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: const BoxDecoration(
         color: Color(0xFF0B1B29),
         border: Border(top: BorderSide(color: Color(0xFF1E3A5F), width: 1)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 7,
-            height: 7,
-            decoration: const BoxDecoration(
-              color: Color(0xFF22C55E),
-              shape: BoxShape.circle,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF22C55E),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Engine Online • Rule v2024.1',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          const Text(
-            'Engine Online • Rule v2024.1',
-            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w500),
+          const SizedBox(height: 10),
+          InkWell(
+            onTap: () => _confirmLogout(context, ref, user),
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.25), width: 0.8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.logout_rounded, color: Color(0xFFF87171), size: 14),
+                  SizedBox(width: 6),
+                  Text(
+                    'Sign Out of LM-TRACE',
+                    style: TextStyle(
+                      color: Color(0xFFF87171),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
