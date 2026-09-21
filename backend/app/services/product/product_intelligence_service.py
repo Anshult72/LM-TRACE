@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from app.repositories import get_repository
 from app.services.fingerprint.fingerprint_service import fingerprint_service
 from app.core.logging import logger
+from app.services.analytics.compliance_analytics import classify_inspection
 
 def get_utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -250,6 +251,7 @@ class ProductIntelligenceService:
             mrp=mrp or "",
             ocr_summary=ocr_summary
         )
+        current_visual_hash = f"sha256:{version_fingerprint[:16]}"
 
         if not already_linked_version:
             if not label_versions:
@@ -260,7 +262,7 @@ class ProductIntelligenceService:
                     "inspection_id": inspection_id,
                     "image_id": primary_image_id,
                     "label_version": "v1.0",
-                    "visual_hash": f"sha256:{version_fingerprint[:16]}",
+                    "visual_hash": current_visual_hash,
                     "ocr_summary": ocr_summary,
                     "mrp": mrp or "Not captured",
                     "net_quantity": f"{qty} {unit or ''}".strip() if qty else "Not captured",
@@ -276,8 +278,9 @@ class ProductIntelligenceService:
 
                 mrp_changed = bool(mrp and prev_mrp and mrp.strip() != prev_mrp and prev_mrp != "Not captured")
                 qty_changed = bool(curr_qty_str and prev_qty and curr_qty_str.lower() != prev_qty.lower() and prev_qty != "Not captured")
+                visual_changed = bool(latest_lv.get("visual_hash") and latest_lv.get("visual_hash") != current_visual_hash)
 
-                if mrp_changed or qty_changed:
+                if mrp_changed or qty_changed or visual_changed:
                     # Increment version number
                     next_ver = f"v{len(label_versions) + 1}.0"
                     new_lv = {
@@ -286,7 +289,7 @@ class ProductIntelligenceService:
                         "inspection_id": inspection_id,
                         "image_id": primary_image_id,
                         "label_version": next_ver,
-                        "visual_hash": f"sha256:{version_fingerprint[:16]}",
+                        "visual_hash": current_visual_hash,
                         "ocr_summary": ocr_summary,
                         "mrp": mrp or prev_mrp,
                         "net_quantity": curr_qty_str or prev_qty,
@@ -367,23 +370,7 @@ class ProductIntelligenceService:
                 last_inspection_date = last_ins.get("inspection_date") or last_ins.get("created_at")
                 last_inspection_code = last_ins.get("inspection_code")
                 last_inspection_id = last_ins.get("id")
-                ins_status = (last_ins.get("status") or "").upper()
-                score = last_ins.get("score")
-                violations = last_ins.get("violations") or []
-
-                if ins_status == "FINALIZED":
-                    if violations or (score is not None and score < 80):
-                        compliance_status = "VIOLATION"
-                    elif score is not None and score >= 80:
-                        compliance_status = "COMPLIANT"
-                    else:
-                        compliance_status = "COMPLIANT"
-                elif ins_status == "NEEDS_REVIEW":
-                    compliance_status = "NEEDS_REVIEW"
-                elif ins_status in ["DRAFT", "ANALYSING"]:
-                    compliance_status = "IN_PROGRESS"
-                else:
-                    compliance_status = ins_status or "READY"
+                compliance_status = classify_inspection(last_ins)["outcome"]
 
             # Determine pack size & MRP
             declared_qty = p.get("net_quantity") or (lvs[-1].get("net_quantity") if lvs else None) or "Not captured"
@@ -535,9 +522,8 @@ class ProductIntelligenceService:
             violations = ins.get("violations") or []
             checks = ins.get("checks") or []
 
-            status_label = ins_status
-            if ins_status == "FINALIZED":
-                status_label = "VIOLATION" if (violations or (score and score < 80)) else "COMPLIANT"
+            assessment = classify_inspection(ins)
+            status_label = assessment["outcome"]
 
             inspection_history.append({
                 "inspection_id": ins.get("id"),
@@ -550,7 +536,10 @@ class ProductIntelligenceService:
                 "raw_status": ins_status,
                 "score": score,
                 "violations_count": len(violations),
-                "checks_count": len(checks)
+                "checks_count": len(checks),
+                "failed_checks_count": assessment["failed_check_count"],
+                "unresolved_checks_count": assessment["unresolved_check_count"],
+                "enforcement_ready": assessment["enforcement_ready"],
             })
 
         # 6. Compliance History
@@ -563,19 +552,22 @@ class ProductIntelligenceService:
 
             # Add each violation
             for v in violations:
+                disposition = str(v.get("status") or "AI_DETECTED").upper()
                 compliance_history.append({
                     "date": date_str,
                     "inspection_id": ins.get("id"),
                     "inspection_code": ins_code,
-                    "outcome": "VIOLATION",
+                    "outcome": "REJECTED_FINDING" if disposition == "REJECTED" else "VIOLATION",
                     "severity": v.get("severity", "HIGH"),
                     "rule": v.get("type", "STATUTORY_REQUIREMENT"),
                     "description": v.get("ai_explanation") or v.get("inspector_comment") or "Rule non-compliance identified.",
-                    "provenance": v.get("provenance", "AI_DETECTED")
+                    "provenance": v.get("provenance", "AI_DETECTED"),
+                    "disposition": disposition,
                 })
 
             # Add general case outcome if no specific violations recorded
-            if not violations and ins.get("status") == "FINALIZED":
+            assessment = classify_inspection(ins)
+            if not violations and assessment["outcome"] == "COMPLIANT":
                 compliance_history.append({
                     "date": date_str,
                     "inspection_id": ins.get("id"),
@@ -583,18 +575,18 @@ class ProductIntelligenceService:
                     "outcome": "COMPLIANT",
                     "severity": "NONE",
                     "rule": "Rule 6 & Rule 7 (Table-I)",
-                    "description": f"All statutory declarations and font standards verified (Score: {ins.get('score', 95.0)}%).",
+                    "description": "All recorded statutory checks passed with no unresolved or active violation findings.",
                     "provenance": "INSPECTOR_VERIFIED"
                 })
-            elif not violations and ins.get("status") == "NEEDS_REVIEW":
+            elif not violations and assessment["outcome"] in {"NEEDS_REVIEW", "UNVERIFIED"}:
                 compliance_history.append({
                     "date": date_str,
                     "inspection_id": ins.get("id"),
                     "inspection_code": ins_code,
-                    "outcome": "NEEDS_REVIEW",
+                    "outcome": assessment["outcome"],
                     "severity": "MEDIUM",
                     "rule": "Packaging Inspection Review",
-                    "description": "Packaging case flagged for officer review.",
+                    "description": "Packaging case has unresolved or unavailable statutory verification evidence.",
                     "provenance": "AI_DETECTED"
                 })
 

@@ -68,7 +68,7 @@ class OpenCvVisionService:
             }
 
     @staticmethod
-    def evaluate_readability(crop_path: Optional[str]) -> Dict[str, Any]:
+    def evaluate_readability(crop_path: Optional[str], bbox: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Evaluates contrast, sharpness, blur, and text-background separation.
         """
@@ -83,21 +83,78 @@ class OpenCvVisionService:
             img = cv2.imread(crop_path)
             if img is None:
                 return {"contrast": None, "sharpness": None, "blur": None, "status": "UNVERIFIED", "explanation": "Image could not be decoded for visual analysis."}
+            if bbox:
+                height, width = img.shape[:2]
+                x = max(0, min(width, int(float(bbox.get("x", 0)))))
+                y = max(0, min(height, int(float(bbox.get("y", 0)))))
+                w = max(0, int(float(bbox.get("width", 0))))
+                h = max(0, int(float(bbox.get("height", 0))))
+                cropped = img[y:min(height, y + h), x:min(width, x + w)]
+                if cropped.size:
+                    img = cropped
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             lap_var = cv2.Laplacian(gray, cv2.CV_64F).var()
             contrast = np.std(gray) / 128.0
 
             is_pass = lap_var >= 60.0 and contrast >= 0.30
+            is_visual_failure = lap_var >= 80.0 and contrast < 0.18
             return {
                 "contrast": round(min(1.0, contrast), 2),
                 "sharpness": round(min(1.0, lap_var / 250.0), 2),
                 "blur": round(lap_var, 1),
-                "status": "PASS" if is_pass else "REVIEW",
-                "explanation": "Prominent and legible declaration." if is_pass else "Low text-to-background contrast or soft character edges."
+                "status": "PASS" if is_pass else ("POTENTIAL_VIOLATION" if is_visual_failure else "REVIEW"),
+                "explanation": "Prominent and legible declaration." if is_pass else (
+                    "Text edges are measurable but contrast against the label background is critically low."
+                    if is_visual_failure else "Low text-to-background contrast or soft character edges; confirm with a clearer capture."
+                )
             }
         except Exception as e:
             logger.warning(f"Error in evaluate_readability: {e}")
             return {"contrast": None, "sharpness": None, "blur": None, "status": "UNVERIFIED", "explanation": "Visual analysis failed; retake the image if needed."}
+
+    @staticmethod
+    def measure_character_geometry(image_path: Optional[str], bbox: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Measures median connected-character geometry within an OCR-grounded crop."""
+        if not image_path or not bbox or not os.path.exists(image_path):
+            return {"status": "UNVERIFIED", "char_height_px": None, "char_width_px": None, "sample_count": 0,
+                    "explanation": "OCR crop or source image unavailable for character measurement."}
+        try:
+            image = cv2.imread(image_path)
+            if image is None:
+                raise ValueError("Image could not be decoded")
+            image_h, image_w = image.shape[:2]
+            x = max(0, min(image_w, int(float(bbox.get("x", 0)))))
+            y = max(0, min(image_h, int(float(bbox.get("y", 0)))))
+            w = max(0, int(float(bbox.get("width", 0))))
+            h = max(0, int(float(bbox.get("height", 0))))
+            crop = image[y:min(image_h, y + h), x:min(image_w, x + w)]
+            if crop.size == 0:
+                raise ValueError("OCR bounding box is outside image bounds")
+            gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+            binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+            count, _, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
+            components = []
+            crop_area = max(1, crop.shape[0] * crop.shape[1])
+            for idx in range(1, count):
+                comp_w, comp_h, area = int(stats[idx, cv2.CC_STAT_WIDTH]), int(stats[idx, cv2.CC_STAT_HEIGHT]), int(stats[idx, cv2.CC_STAT_AREA])
+                if 2 <= comp_w <= crop.shape[1] * 0.5 and 3 <= comp_h <= crop.shape[0] * 0.95 and 3 <= area <= crop_area * 0.25:
+                    components.append((comp_w, comp_h))
+            if not components:
+                return {"status": "UNVERIFIED", "char_height_px": None, "char_width_px": None, "sample_count": 0,
+                        "explanation": "No stable character components could be isolated in the declaration crop."}
+            widths = [item[0] for item in components]
+            heights = [item[1] for item in components]
+            return {
+                "status": "MEASURED",
+                "char_height_px": round(float(np.median(heights)), 2),
+                "char_width_px": round(float(np.median(widths)), 2),
+                "sample_count": len(components),
+                "explanation": f"Median character geometry measured from {len(components)} connected components.",
+            }
+        except Exception as exc:
+            logger.warning("Error measuring character geometry: %s", exc)
+            return {"status": "UNVERIFIED", "char_height_px": None, "char_width_px": None, "sample_count": 0,
+                    "explanation": "Character geometry measurement failed."}
 
     @staticmethod
     def check_placement(bbox: dict, surface_type: str, rule_requirement: str = "PRINCIPAL_DISPLAY_PANEL") -> Dict[str, Any]:

@@ -4,8 +4,38 @@ from app.repositories import get_repository
 from app.core.security import get_current_user_payload
 from app.services.label_change.label_change_service import label_change_service
 from app.services.product.product_intelligence_service import product_intelligence_service
+from app.services.analytics.compliance_analytics import classify_inspection
 
 router = APIRouter(prefix="/api/products", tags=["Product Intelligence & Registry"])
+
+
+@router.get("/registry/summary", response_model=Dict[str, Any])
+async def get_registry_summary(user_payload: dict = Depends(get_current_user_payload)):
+    """Operational coverage of the persisted scanned-product repository."""
+    repo = get_repository()
+    products = await repo.list_products()
+    inspections = await repo.list_inspections()
+    linked = [item for item in inspections if item.get("product_id")]
+    products_with_history = 0
+    label_version_count = 0
+    for product in products:
+        versions = await repo.get_label_versions(product.get("id"))
+        label_version_count += len(versions)
+        if len(await repo.get_inspections_for_product(product.get("id"))) > 1:
+            products_with_history += 1
+    outcomes: Dict[str, int] = {}
+    for item in linked:
+        value = classify_inspection(item)["outcome"]
+        outcomes[value] = outcomes.get(value, 0) + 1
+    return {
+        "product_count": len(products),
+        "inspection_count": len(inspections),
+        "linked_inspection_count": len(linked),
+        "unlinked_inspection_count": len(inspections) - len(linked),
+        "products_with_repeat_history": products_with_history,
+        "label_version_count": label_version_count,
+        "compliance_outcomes": outcomes,
+    }
 
 @router.get("", response_model=List[Dict[str, Any]])
 async def list_products(
@@ -65,6 +95,31 @@ async def get_product_history(
     if not detail:
         raise HTTPException(status_code=404, detail=f"Product '{product_id}' not found in registry.")
     return detail
+
+
+@router.get("/{product_id}/timeline", response_model=Dict[str, Any])
+async def get_product_timeline(product_id: str, user_payload: dict = Depends(get_current_user_payload)):
+    """Chronological, evidence-linked history for enforcement and audit review."""
+    detail = await product_intelligence_service.get_product_detail(product_id)
+    if not detail:
+        raise HTTPException(status_code=404, detail=f"Product '{product_id}' not found in registry.")
+    events = []
+    for item in detail.get("inspection_history", []):
+        events.append({"event_type": "INSPECTION", "date": item.get("inspection_date"), **item})
+    for item in detail.get("label_versions", []):
+        events.append({"event_type": "LABEL_VERSION", "date": item.get("effective_from"), **item})
+    for item in detail.get("compliance_history", []):
+        events.append({"event_type": "COMPLIANCE_OUTCOME", **item})
+    events.sort(key=lambda item: str(item.get("date") or ""), reverse=True)
+    evidence = detail.get("evidence", [])
+    return {
+        "product_id": product_id,
+        "event_count": len(events),
+        "events": events,
+        "evidence_count": len(evidence),
+        "evidence_with_sha256": sum(1 for item in evidence if item.get("sha256")),
+        "evidence": evidence,
+    }
 
 @router.get("/{product_id}/diff")
 async def get_version_diff(

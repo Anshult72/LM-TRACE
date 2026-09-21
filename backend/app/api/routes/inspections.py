@@ -473,24 +473,52 @@ async def analyze_product(
 
         # Step 5: Rule & Compliance Engine
         pdp_info = ins.get("pdp_data")
+        calibration_info = ins.get("calibration_data") or {}
         rule_context["inspectionDate"] = ins.get("inspection_date") or get_utc_now_iso()
         rule_context["pdpAreaCm2"] = pdp_info.get("areaCm2") if isinstance(pdp_info, dict) else None
+        rule_context["pixelsPerMm"] = (
+            calibration_info.get("pixelsPerMm") or calibration_info.get("pixels_per_mm")
+            if isinstance(calibration_info, dict) else None
+        )
 
         # This is measured from the captured photo; no default quality values are
         # used when the image cannot be analysed.
-        first_img_path = images[0].get("original_path") if isinstance(images[0], dict) else None
-        readability_data = cv_service.evaluate_readability(first_img_path)
-
         applicable_rules = await rule_engine.get_applicable_rules(rule_context)
         required_declarations = rule_engine.determine_required_declarations(applicable_rules, rule_context)
         placement_results = declaration_placement_service.evaluate(
             required_declarations, declarations_records, rule_context, images
         )
+        image_by_id = {item.get("id"): item for item in images if isinstance(item, dict)}
+        declarations_by_field = {item.get("field_name"): item for item in declarations_records}
+        readability_results = []
+        typography_results = []
+        typography_fields = {"net_quantity", "mrp", "best_before", "consumer_care"}
+        for field, requirement in required_declarations.items():
+            if not requirement.get("required"):
+                continue
+            candidates = [field] + list(requirement.get("alternatives") or [])
+            declaration = next(
+                (declarations_by_field.get(candidate) for candidate in candidates if declarations_by_field.get(candidate, {}).get("ai_value")),
+                None,
+            )
+            if not declaration:
+                continue
+            source_image = image_by_id.get(declaration.get("source_image_id")) or {}
+            source_path = source_image.get("original_path")
+            readability = cv_service.evaluate_readability(source_path, declaration.get("bbox"))
+            readability_results.append({"field_name": field, "matched_field": declaration.get("field_name"), **readability})
+            if field in typography_fields:
+                geometry = cv_service.measure_character_geometry(source_path, declaration.get("bbox"))
+                typography_results.append({"field_name": field, "matched_field": declaration.get("field_name"), **geometry})
+        visual_analysis = {
+            "readability_results": readability_results,
+            "typography_results": typography_results,
+        }
         compliance_assessment = await compliance_engine.evaluate_compliance(
             extracted_declarations=extracted_payload.model_dump(),
             correctness_data=correctness_data,
             context=rule_context,
-            readability_data=readability_data,
+            readability_data=visual_analysis,
             placement_data=placement_results,
         )
 
@@ -568,6 +596,7 @@ async def analyze_product(
             "applicability_inferences": applicability_inferences,
             "required_declarations": required_declarations,
             "placement_results": placement_results,
+            "visual_analysis": visual_analysis,
             "resolved_at": get_utc_now_iso(),
         })
         await repo.update(inspection_id, {
@@ -602,6 +631,7 @@ async def analyze_product(
             },
             "required_declarations": required_declarations,
             "placement_results": placement_results,
+            "visual_analysis": visual_analysis,
             "evidence": evidence_records,
             "product": product_detail.get("product") if product_detail else None,
         }

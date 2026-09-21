@@ -98,7 +98,7 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
       case 'consumer_care':
       case 'customer_care':
       case 'consumer_complaint':
-        return 'Consumer Care (Rule 6(1)(n))';
+        return 'Consumer Care (Rule 6(2))';
       case 'country_of_origin':
       case 'origin_country':
         return 'Country of Origin (COO)';
@@ -286,6 +286,12 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
 
   Future<Uint8List> _generatePdf(PdfPageFormat format, InspectionModel ins) async {
     final doc = pw.Document();
+    final unresolvedChecks = ins.checks.where((item) {
+      if (item is! Map) return false;
+      final result = (item['result'] ?? '').toString().toUpperCase();
+      return result == 'REVIEW' || result == 'UNVERIFIED';
+    }).length;
+    final canCertifyConformity = ins.checks.isNotEmpty && ins.violations.isEmpty && unresolvedChecks == 0;
 
     pw.MemoryImage? logoImage;
     try {
@@ -494,7 +500,9 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
                   decoration: const pw.BoxDecoration(color: _cCardBg),
                   children: [
                     _buildTableCell('PDP Area (A)'),
-                    _buildTableCell(ins.pdpData != null ? '${ins.pdpData!['area_cm2']} sq. cm' : '140.0 sq. cm'),
+                    _buildTableCell(ins.pdpData != null
+                        ? '${ins.pdpData!['areaCm2'] ?? ins.pdpData!['area_cm2'] ?? 'UNVERIFIED'} sq. cm'
+                        : 'UNVERIFIED'),
                     _buildTableCell('Governed by Rule 7 Table-I Thresholds'),
                   ],
                 ),
@@ -510,7 +518,7 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
                   decoration: const pw.BoxDecoration(color: _cCardBg),
                   children: [
                     _buildTableCell('Scale Calibration'),
-                    _buildTableCell(ins.calibrationStatus ?? 'CALIBRATED'),
+                    _buildTableCell(ins.calibrationStatus ?? 'NOT_CALIBRATED'),
                     _buildTableCell(ins.calibrationStatus == 'CALIBRATED'
                         ? 'Reference distance verified (px/mm scale calibrated)'
                         : '[UNVERIFIED] Measurements provisional (Manual scale verification required)'),
@@ -545,7 +553,16 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
                   final formattedName = _formatFieldName(rawName.toString());
                   final raw = d['raw_value'] ?? d['ai_value'] ?? 'N/A';
                   final ver = d['verified_value'] ?? raw;
-                  final status = (d['verification_status'] ?? 'DETECTED').toString();
+                  final presence = (d['presence_status'] ?? '').toString().toUpperCase();
+                  final correctness = (d['correctness_status'] ?? '').toString().toUpperCase();
+                  final verification = (d['verification_status'] ?? '').toString().toUpperCase();
+                  final status = presence == 'MISSING'
+                      ? 'MISSING'
+                      : correctness == 'INVALID'
+                          ? 'NON_COMPLIANT'
+                          : correctness == 'REVIEW' || verification != 'VERIFIED'
+                              ? 'NEEDS_REVIEW'
+                              : 'PASS';
                   final isEven = index % 2 == 0;
                   final rowBg = isEven ? _cCardBg : PdfColors.white;
 
@@ -568,7 +585,7 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
 
             // Section 3: Statutory Violations & Legal Findings
             _buildSectionHeader('3', 'STATUTORY FINDINGS & RULE EVALUATION'),
-            if (ins.violations.isEmpty)
+            if (canCertifyConformity)
               pw.Container(
                 padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: pw.BoxDecoration(
@@ -589,11 +606,24 @@ class _ReportPreviewScreenState extends ConsumerState<ReportPreviewScreen> {
                     pw.SizedBox(width: 8),
                     pw.Expanded(
                       child: pw.Text(
-                        'STATUTORY CONFORMITY CERTIFIED: No statutory violations detected under Rule 6, 7, 8 or 9. Packaged commodity adheres to Legal Metrology (Packaged Commodities) Rules, 2011.',
+                        'No potential violations or unresolved checks remain in this analytical assessment. Final regulatory determination remains with the authorized officer.',
                         style: pw.TextStyle(fontSize: 7.5, color: _cGreenText, fontWeight: pw.FontWeight.bold),
                       ),
                     ),
                   ],
+                ),
+              )
+            else if (ins.violations.isEmpty)
+              pw.Container(
+                padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: pw.BoxDecoration(
+                  color: _cYellowBg,
+                  border: pw.Border.all(color: _cYellowBorder, width: 0.7),
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
+                ),
+                child: pw.Text(
+                  '$unresolvedChecks compliance checks remain under review or unverified. The report must not be treated as a conformity certificate.',
+                  style: pw.TextStyle(fontSize: 7.5, color: _cYellowText, fontWeight: pw.FontWeight.bold),
                 ),
               )
             else

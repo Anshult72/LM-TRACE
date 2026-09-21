@@ -926,7 +926,7 @@ class DemoInMemoryRepository(
     async def update_declaration(self, declaration_id: str, updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         for ins in self.inspections.values():
             for dec in ins.get("declarations", []):
-                if dec["id"] == declaration_id:
+                if dec.get("id") == declaration_id:
                     dec.update(updates)
                     return copy.deepcopy(dec)
         return None

@@ -333,90 +333,84 @@ class ComplianceEngine:
         pdp_area = context.get("pdpAreaCm2")
         pkg_const = context.get("packageConstructionType") or "NORMAL"
         calib_status = context.get("calibrationStatus") or CalibrationStatus.NOT_CALIBRATED
-        pixels_per_mm = context.get("pixelsPerMm") or 2.0
+        pixels_per_mm = context.get("pixelsPerMm")
 
         min_height_mm, table_range = pdp_measurement_service.resolve_rule_7_threshold(pdp_area, pkg_const)
-        
-        char_eval = pdp_measurement_service.evaluate_character_dimensions(
-            char_pixel_height=6.4,
-            char_pixel_width=3.7,
-            pixels_per_mm=pixels_per_mm if calib_status == CalibrationStatus.CALIBRATED else None,
-            calibration_status=calib_status,
-            required_min_height_mm=min_height_mm or 0.0,
-            character_str="5"
-        )
+        typography_results = (readability_data or {}).get("typography_results", [])
+        for geometry in typography_results:
+            field = geometry.get("field_name", "net_quantity")
+            measured = geometry.get("status") == "MEASURED"
+            can_measure_mm = measured and min_height_mm is not None and calib_status == CalibrationStatus.CALIBRATED and pixels_per_mm
+            if can_measure_mm:
+                char_eval = pdp_measurement_service.evaluate_character_dimensions(
+                    char_pixel_height=float(geometry["char_height_px"]),
+                    char_pixel_width=float(geometry["char_width_px"]),
+                    pixels_per_mm=float(pixels_per_mm),
+                    calibration_status=calib_status,
+                    required_min_height_mm=float(min_height_mm),
+                    character_str="A",
+                )
+            else:
+                ratio = round(float(geometry.get("char_width_px") or 0) / max(1.0, float(geometry.get("char_height_px") or 0)), 3)
+                char_eval = {
+                    "height_status": "UNVERIFIED", "proportion_status": "UNVERIFIED",
+                    "measured_height_mm": None, "width_to_height_ratio": ratio,
+                    "explanation": "Physical character size requires both measured glyph geometry, PDP area and a calibrated pixel-to-millimetre scale.",
+                }
+            confidence = 0.92 if can_measure_mm and geometry.get("sample_count", 0) >= 3 else 0.5
+            checks.append(ComplianceCheckResult(
+                check_type="CHARACTER_HEIGHT", field_name=field, rule_code=pdp_code, rule_version=pdp_ver,
+                input_value=f"{char_eval['measured_height_mm']} mm" if char_eval.get("measured_height_mm") is not None else "UNVERIFIED",
+                expected_condition=f"Minimum {min_height_mm} mm for PDP Area {pdp_area} cm² ({table_range})" if min_height_mm else "Calibrated PDP area required",
+                result=char_eval["height_status"], confidence=confidence, explanation=char_eval["explanation"],
+                source_reference=pdp_ref, evidence_id=get_field_evidence(geometry.get("matched_field") or field),
+            ))
+            checks.append(ComplianceCheckResult(
+                check_type="CHARACTER_PROPORTION", field_name=field, rule_code=prop_code, rule_version=prop_ver,
+                input_value=f"Width/Height Ratio: {char_eval['width_to_height_ratio']}",
+                expected_condition="Width must be >= 1/3 of height, subject to character exceptions",
+                result=char_eval["proportion_status"], confidence=confidence, explanation=char_eval["explanation"],
+                source_reference=prop_ref, evidence_id=get_field_evidence(geometry.get("matched_field") or field),
+            ))
+            if char_eval["height_status"] == "POTENTIAL_VIOLATION":
+                violations.append({"type": "INSUFFICIENT_FONT_SIZE", "field": field, "severity": "HIGH", "confidence": confidence,
+                                   "explanation": f"Measured character height is below statutory minimum {min_height_mm} mm."})
+            elif char_eval["height_status"] == "UNVERIFIED":
+                review_items.append({"type": "UNVERIFIED_FONT_SIZE", "field": field, "severity": "MEDIUM", "confidence": confidence,
+                                     "explanation": char_eval["explanation"]})
 
-        checks.append(ComplianceCheckResult(
-            check_type="CHARACTER_HEIGHT",
-            field_name="net_quantity",
-            rule_code=pdp_code,
-            rule_version=pdp_ver,
-            input_value=f"Measured: {char_eval['measured_height_mm']} mm" if char_eval['measured_height_mm'] else "Uncalibrated",
-            expected_condition=(
-                f"Minimum {min_height_mm} mm for PDP Area {pdp_area} cm² ({table_range})"
-                if min_height_mm is not None
-                else "PDP area and physical scale must be calibrated before Rule 7 character height can be verified"
-            ),
-            result=char_eval["height_status"],
-            confidence=0.92 if calib_status == CalibrationStatus.CALIBRATED else 0.50,
-            explanation=char_eval["explanation"],
-            source_reference=pdp_ref,
-            evidence_id=get_field_evidence("net_quantity")
-        ))
+        if not typography_results and extracted_value("net_quantity"):
+            checks.append(ComplianceCheckResult(
+                check_type="CHARACTER_HEIGHT", field_name="net_quantity", rule_code=pdp_code, rule_version=pdp_ver,
+                input_value="UNVERIFIED", expected_condition="Calibrated declaration character measurement",
+                result="UNVERIFIED", confidence=0.0, explanation="No OCR-grounded character geometry was available.",
+                source_reference=pdp_ref, evidence_id=get_field_evidence("net_quantity"),
+            ))
+            review_items.append({"type": "UNVERIFIED_FONT_SIZE", "field": "net_quantity", "severity": "MEDIUM", "confidence": 0.0,
+                                 "explanation": "No OCR-grounded character geometry was available."})
 
-        checks.append(ComplianceCheckResult(
-            check_type="CHARACTER_PROPORTION",
-            field_name="net_quantity",
-            rule_code=pdp_code,
-            rule_version=pdp_ver,
-            input_value=f"Width/Height Ratio: {char_eval['width_to_height_ratio']}",
-            expected_condition="Width must be >= 1/3 (0.333) of height (except numeral 1, letter I/i)",
-            result=char_eval["proportion_status"],
-            confidence=0.94 if calib_status == CalibrationStatus.CALIBRATED else 0.50,
-            explanation=f"Character width-to-height ratio {char_eval['width_to_height_ratio']}.",
-            source_reference=pdp_ref,
-            evidence_id=get_field_evidence("net_quantity")
-        ))
-
-        if char_eval["height_status"] == "POTENTIAL_VIOLATION":
-            violations.append({
-                "type": "INSUFFICIENT_FONT_SIZE",
-                "field": "net_quantity",
-                "severity": "HIGH",
-                "confidence": 0.92,
-                "explanation": f"Character height below statutory minimum {min_height_mm} mm."
-            })
-        elif char_eval["height_status"] == "UNVERIFIED":
-            review_items.append({
-                "type": "UNVERIFIED_SCALE",
-                "field": "net_quantity",
-                "severity": "LOW",
-                "confidence": 0.50,
-                "explanation": "Scale calibration absent; manual physical measurement required."
-            })
-
-        # 3. Rule 9: Legibility & Readability Check
-        read_stat = readability_data.get("status", "UNVERIFIED") if readability_data else "UNVERIFIED"
-        contrast = readability_data.get("contrast") if readability_data else None
-        sharpness = readability_data.get("sharpness") if readability_data else None
-        readability_input = (
-            f"Contrast: {contrast * 100:.0f}%, Sharpness: {sharpness * 100:.0f}%"
-            if contrast is not None and sharpness is not None
-            else "Visual legibility could not be reliably measured"
-        )
-        checks.append(ComplianceCheckResult(
-            check_type="READABILITY",
-            field_name="mrp",
-            rule_code=leg_code,
-            rule_version=leg_ver,
-            input_value=readability_input,
-            expected_condition="Conspicuous, prominent, and legible declaration",
-            result=read_stat,
-            confidence=0.95 if read_stat == "PASS" else 0.50,
-            explanation=readability_data.get("explanation", "Visual legibility was not measured.") if readability_data else "Visual legibility was not measured.",
-            source_reference=leg_ref,
-            evidence_id=get_field_evidence("mrp")
-        ))
+        # 4. Rule 9 declaration-level legibility and readability checks.
+        readability_results = (readability_data or {}).get("readability_results", [])
+        if not readability_results and readability_data and "status" in readability_data:
+            readability_results = [{"field_name": "mrp", "matched_field": "mrp", **readability_data}]
+        for visual in readability_results:
+            field = visual.get("field_name", "package_declarations")
+            read_stat = visual.get("status", "UNVERIFIED")
+            contrast, sharpness = visual.get("contrast"), visual.get("sharpness")
+            input_value = f"Contrast: {contrast * 100:.0f}%, Sharpness: {sharpness * 100:.0f}%" if contrast is not None and sharpness is not None else "UNVERIFIED"
+            checks.append(ComplianceCheckResult(
+                check_type="READABILITY", field_name=field, rule_code=leg_code, rule_version=leg_ver,
+                input_value=input_value, expected_condition="Conspicuous, prominent and legible declaration",
+                result=read_stat, confidence=0.95 if read_stat in {"PASS", "POTENTIAL_VIOLATION"} else 0.5,
+                explanation=visual.get("explanation", "Visual legibility was not measured."), source_reference=leg_ref,
+                evidence_id=get_field_evidence(visual.get("matched_field") or field),
+            ))
+            if read_stat == "POTENTIAL_VIOLATION":
+                violations.append({"type": "ILLEGIBLE_DECLARATION", "field": field, "severity": "HIGH", "confidence": 0.95,
+                                   "explanation": visual.get("explanation")})
+            elif read_stat in {"REVIEW", "UNVERIFIED"}:
+                review_items.append({"type": "READABILITY_REVIEW", "field": field, "severity": "MEDIUM", "confidence": 0.5,
+                                     "explanation": visual.get("explanation")})
 
         # 4. E-Commerce Specific Checks (Rule 6(10) / RULE-006-ECOM)
         if context.get("isEcommerce", False):

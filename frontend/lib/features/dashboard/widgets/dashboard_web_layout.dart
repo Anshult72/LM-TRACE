@@ -416,16 +416,6 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               final rawList = summary['commodity_spread'] as List<dynamic>?;
               var list = rawList?.whereType<Map<String, dynamic>>().toList() ?? [];
 
-              // If API list is empty or total count is 0, derive dynamically from loaded inspections
-              final totalAuditedAcrossCommodities = list.fold<int>(
-                0,
-                (sum, item) => sum + (((item['count'] ?? item['total']) as num?)?.toInt() ?? 0),
-              );
-
-              if ((list.isEmpty || totalAuditedAcrossCommodities == 0) && inspectionsState.inspections.isNotEmpty) {
-                list = _deriveCommoditySpread(inspectionsState.inspections);
-              }
-
               if (list.isEmpty) {
                 return Container(
                   padding: const EdgeInsets.symmetric(vertical: 24),
@@ -454,7 +444,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                 children: list.map((item) {
                   final name = (item['name'] ?? item['category']) as String? ?? 'Packaged Commodity';
                   final count = (((item['count'] ?? item['total']) as num?)?.toInt() ?? 0);
-                  final compRate = (((item['compliance_rate'] ?? item['rate']) as num?)?.toDouble() ?? 0.0);
+                  final compRate = ((item['compliance_rate'] ?? item['rate']) as num?)?.toDouble();
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: _buildCategoryBar(name, count, compRate),
@@ -463,20 +453,6 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               );
             },
             orElse: () {
-              if (inspectionsState.inspections.isNotEmpty) {
-                final list = _deriveCommoditySpread(inspectionsState.inspections);
-                return Column(
-                  children: list.map((item) {
-                    final name = item['name'] as String;
-                    final count = item['count'] as int;
-                    final compRate = (item['compliance_rate'] as num).toDouble();
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
-                      child: _buildCategoryBar(name, count, compRate),
-                    );
-                  }).toList(),
-                );
-              }
               return Container(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
@@ -498,7 +474,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Rule 7 Table-I font-height verification active on all calibrated physical inspections. Scale accuracy threshold: 2.0 px/mm.',
+                    'Physical font-height results are reported only when the captured image has an inspection-specific calibrated pixel-to-millimetre scale.',
                     style: TextStyle(fontSize: 11.5, color: AppColors.neutral700),
                   ),
                 ),
@@ -510,72 +486,8 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
     );
   }
 
-  List<Map<String, dynamic>> _deriveCommoditySpread(List<InspectionModel> inspections) {
-    final Map<String, Map<String, int>> map = {};
-    for (final ins in inspections) {
-      final combined = '${ins.businessName ?? ''} ${ins.sellerName ?? ''} ${ins.location} ${ins.notes ?? ''}'.toLowerCase();
-      String cat;
-      if (combined.contains('food') || combined.contains('rice') || combined.contains('spice') || combined.contains('flour') || combined.contains('agro') || combined.contains('supermarket') || combined.contains('fresh')) {
-        cat = 'Packaged Food & Staples';
-      } else if (combined.contains('shampoo') || combined.contains('soap') || combined.contains('cosmetic') || combined.contains('care') || combined.contains('luxe')) {
-        cat = 'Cosmetics & Personal Care';
-      } else if (combined.contains('beverage') || combined.contains('water') || combined.contains('drink') || combined.contains('juice')) {
-        cat = 'Packaged Beverages';
-      } else {
-        cat = 'Household FMCG & Goods';
-      }
-      map.putIfAbsent(cat, () => {'total': 0, 'compliant': 0});
-      map[cat]!['total'] = map[cat]!['total']! + 1;
-      if ((ins.score != null && ins.score! >= 80) || ['FINALIZED', 'COMPLIANT'].contains(ins.status.toUpperCase())) {
-        map[cat]!['compliant'] = map[cat]!['compliant']! + 1;
-      }
-    }
-    return map.entries.map((e) {
-      final t = e.value['total']!;
-      final c = e.value['compliant']!;
-      return {
-        'name': e.key,
-        'category': e.key,
-        'count': t,
-        'total': t,
-        'compliance_rate': t > 0 ? (c / t) : 0.85,
-      };
-    }).toList()..sort((a, b) => (b['count'] as int).compareTo(a['count'] as int));
-  }
-
-  List<Map<String, dynamic>> _deriveRuleHealth(List<InspectionModel> inspections) {
-    final total = inspections.isNotEmpty ? inspections.length : 1;
-    final r6Pass = inspections.where((i) => (i.score != null && i.score! >= 50) || ['FINALIZED', 'READY'].contains(i.status.toUpperCase())).length;
-    final r7Pass = inspections.where((i) => (i.score != null && i.score! >= 65) || ['FINALIZED', 'READY'].contains(i.status.toUpperCase())).length;
-    final r9Pass = inspections.where((i) => (i.score != null && i.score! >= 60) || ['FINALIZED', 'READY'].contains(i.status.toUpperCase())).length;
-    final r18Pass = inspections.where((i) => (i.score != null && i.score! >= 70) || ['FINALIZED', 'READY'].contains(i.status.toUpperCase())).length;
-
-    return [
-      {
-        'rule': 'Rule 6 (Mandatory Declarations)',
-        'rate': r6Pass / total,
-        'total_checked': inspections.length,
-      },
-      {
-        'rule': 'Rule 7 (Table-I Font & PDP Area)',
-        'rate': r7Pass / total,
-        'total_checked': inspections.length,
-      },
-      {
-        'rule': 'Rule 9 (Contrast & Legibility)',
-        'rate': r9Pass / total,
-        'total_checked': inspections.length,
-      },
-      {
-        'rule': 'Rule 18 (MRP & Unit Sale Price)',
-        'rate': r18Pass / total,
-        'total_checked': inspections.length,
-      },
-    ];
-  }
-
-  Widget _buildCategoryBar(String label, int total, double complianceRate) {
-    final compPercent = total > 0 ? (complianceRate * 100).toInt() : 0;
+  Widget _buildCategoryBar(String label, int total, double? complianceRate) {
+    final compPercent = complianceRate != null ? (complianceRate * 100).toInt() : 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -583,7 +495,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.neutral800)),
-            Text('$total Audited • $compPercent% Compliant', style: const TextStyle(fontSize: 11, color: AppColors.neutral600)),
+            Text('$total Audited • ${complianceRate == null ? '—' : '$compPercent%'} Compliant', style: const TextStyle(fontSize: 11, color: AppColors.neutral600)),
           ],
         ),
         const SizedBox(height: 5),
@@ -595,14 +507,14 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                 flex: compPercent > 0 ? compPercent : (total == 0 ? 0 : 1),
                 child: Container(
                   height: 7,
-                  color: total == 0 ? AppColors.neutral300 : AppColors.passGreen,
+                  color: complianceRate == null ? AppColors.neutral300 : AppColors.passGreen,
                 ),
               ),
               Expanded(
                 flex: (100 - compPercent) > 0 ? (100 - compPercent) : 0,
                 child: Container(
                   height: 7,
-                  color: total == 0 ? AppColors.neutral300 : AppColors.violationRed.withValues(alpha: 0.6),
+                  color: complianceRate == null ? AppColors.neutral300 : AppColors.violationRed.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -658,10 +570,6 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               final rawRules = summary['rule_health'] as List<dynamic>?;
               var rules = rawRules?.whereType<Map<String, dynamic>>().toList() ?? [];
 
-              if (rules.isEmpty && inspectionsState != null && inspectionsState.inspections.isNotEmpty) {
-                rules = _deriveRuleHealth(inspectionsState.inspections);
-              }
-
               if (rules.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
@@ -706,27 +614,6 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               );
             },
             orElse: () {
-              if (inspectionsState != null && inspectionsState.inspections.isNotEmpty) {
-                final rules = _deriveRuleHealth(inspectionsState.inspections);
-                return Column(
-                  children: List.generate(rules.length, (index) {
-                    final item = rules[index];
-                    final ruleName = item['rule'] as String;
-                    final rate = item['rate'] as num;
-                    final p = (rate.toDouble() * 100).toInt();
-                    final percentStr = '$p%';
-                    final progress = rate.toDouble();
-                    final color = rate >= 0.70 ? AppColors.passGreen : AppColors.reviewAmber;
-                    return Column(
-                      children: [
-                        _buildRuleHealthRow(ruleName, percentStr, progress, color),
-                        if (index < rules.length - 1)
-                          const Divider(height: 20, color: AppColors.neutral200),
-                      ],
-                    );
-                  }),
-                );
-              }
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
                 child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
