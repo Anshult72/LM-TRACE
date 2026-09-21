@@ -119,3 +119,26 @@ class IAuditLogRepository(ABC):
     async def append_log(self, log_entry: Dict[str, Any]) -> Dict[str, Any]: ...
     @abstractmethod
     async def list_logs(self, limit: int = 100) -> List[Dict[str, Any]]: ...
+    @abstractmethod
+    async def get_log_by_id(self, log_id: str) -> Optional[Dict[str, Any]]: ...
+    @abstractmethod
+    async def list_logs_filtered(
+        self,
+        q: Optional[str] = None,
+        action: Optional[str] = None,
+        event_type: Optional[str] = None,
+        actor_id: Optional[str] = None,
+        role: Optional[str] = None,
+        resource_type: Optional[str] = None,
+        inspection_id: Optional[str] = None,
+        result: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        correlation_id: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0
+    ) -> Dict[str, Any]: ...
+    @abstractmethod
+    async def get_audit_summary(self) -> Dict[str, Any]: ...
+    @abstractmethod
+    async def get_chain_of_custody(self, inspection_id: str) -> Dict[str, Any]: ...

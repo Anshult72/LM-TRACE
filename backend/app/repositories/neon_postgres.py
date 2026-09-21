@@ -1154,24 +1154,251 @@ class NeonPostgresRepository(
             }
 
     # --- IAuditLogRepository ---
+    def _format_audit_log(self, l: AuditLog) -> Dict[str, Any]:
+        meta = l.metadata_ or {}
+        return {
+            "id": l.id,
+            "event_id": l.event_id or f"AUD-{l.id[:8].upper()}",
+            "user_id": l.user_id,
+            "actor_id": l.user_id,
+            "actor_name": l.actor_name or l.user_id,
+            "role": l.role,
+            "action": l.action,
+            "resource_type": l.resource_type,
+            "target_type": l.resource_type,
+            "resource_id": l.resource_id,
+            "target_id": l.resource_id,
+            "inspection_id": l.inspection_id,
+            "result": l.result or "SUCCESS",
+            "description": l.description or f"{l.action} on {l.resource_type} {l.resource_id}",
+            "correlation_id": l.correlation_id,
+            "old_value": l.old_value,
+            "new_value": l.new_value,
+            "before_data": l.old_value,
+            "after_data": l.new_value,
+            "timestamp": l.timestamp.isoformat() if l.timestamp else None,
+            "metadata": meta,
+            "event_type": meta.get("event_type") or l.resource_type or "SYSTEM",
+            "source": meta.get("source") or ("SYSTEM_ENGINE" if l.role == "SYSTEM" else "WEB_APP"),
+        }
+
     async def append_log(self, log_entry: Dict[str, Any]) -> Dict[str, Any]:
         async with await self._get_session() as session:
-            clean_log = dict(log_entry)
-            if "timestamp" in clean_log:
-                clean_log["timestamp"] = _parse_dt(clean_log["timestamp"])
+            clean_log = {
+                "id": log_entry.get("id") or str(uuid.uuid4()),
+                "event_id": log_entry.get("event_id"),
+                "user_id": log_entry.get("user_id") or log_entry.get("actor_id") or "system",
+                "actor_name": log_entry.get("actor_name"),
+                "role": log_entry.get("role") or "INSPECTOR",
+                "action": log_entry.get("action") or "UNKNOWN",
+                "resource_type": log_entry.get("resource_type") or log_entry.get("target_type") or "SYSTEM",
+                "resource_id": str(log_entry.get("resource_id") or log_entry.get("target_id") or "0"),
+                "inspection_id": log_entry.get("inspection_id"),
+                "result": log_entry.get("result") or "SUCCESS",
+                "description": log_entry.get("description"),
+                "correlation_id": log_entry.get("correlation_id"),
+                "old_value": log_entry.get("old_value") or log_entry.get("before_data"),
+                "new_value": log_entry.get("new_value") or log_entry.get("after_data"),
+                "timestamp": _parse_dt(log_entry.get("timestamp")) or get_now_utc(),
+                "metadata_": log_entry.get("metadata") or log_entry.get("metadata_") or {},
+            }
             al = AuditLog(**clean_log)
             session.add(al)
             await session.commit()
-            return log_entry
+            return self._format_audit_log(al)
 
     async def list_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
         async with await self._get_session() as session:
             stmt = select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(limit)
             res = await session.execute(stmt)
             logs = res.scalars().all()
-            return [
-                {
-                    "id": l.id, "user_id": l.user_id, "role": l.role, "action": l.action,
-                    "resource_type": l.resource_type, "timestamp": l.timestamp.isoformat() if l.timestamp else None
-                } for l in logs
-            ]
+            return [self._format_audit_log(l) for l in logs]
+
+    async def get_log_by_id(self, log_id: str) -> Optional[Dict[str, Any]]:
+        async with await self._get_session() as session:
+            stmt = select(AuditLog).where(
+                or_(AuditLog.id == log_id, AuditLog.event_id == log_id)
+            )
+            res = await session.execute(stmt)
+            log = res.scalar_one_or_none()
+            if not log:
+                return None
+            return self._format_audit_log(log)
+
+    async def list_logs_filtered(
+        self,
+        q: Optional[str] = None,
+        action: Optional[str] = None,
+        event_type: Optional[str] = None,
+        actor_id: Optional[str] = None,
+        role: Optional[str] = None,
+        resource_type: Optional[str] = None,
+        inspection_id: Optional[str] = None,
+        result: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        correlation_id: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        async with await self._get_session() as session:
+            # Query matching logs
+            stmt = select(AuditLog)
+            if action:
+                stmt = stmt.where(AuditLog.action.ilike(action))
+            if actor_id:
+                stmt = stmt.where(AuditLog.user_id == actor_id)
+            if role and role != "ALL":
+                stmt = stmt.where(AuditLog.role == role)
+            if resource_type and resource_type != "ALL":
+                stmt = stmt.where(AuditLog.resource_type == resource_type)
+            if inspection_id:
+                stmt = stmt.where(
+                    or_(
+                        AuditLog.inspection_id == inspection_id,
+                        AuditLog.resource_id == inspection_id
+                    )
+                )
+            if result and result != "ALL":
+                stmt = stmt.where(AuditLog.result == result)
+            if correlation_id:
+                stmt = stmt.where(AuditLog.correlation_id == correlation_id)
+            if date_from:
+                dt_from = _parse_dt(date_from)
+                if dt_from:
+                    stmt = stmt.where(AuditLog.timestamp >= dt_from)
+            if date_to:
+                dt_to = _parse_dt(date_to)
+                if dt_to:
+                    stmt = stmt.where(AuditLog.timestamp <= dt_to)
+
+            stmt = stmt.order_by(AuditLog.timestamp.desc())
+            res = await session.execute(stmt)
+            logs = res.scalars().all()
+
+            formatted = [self._format_audit_log(l) for l in logs]
+
+            # In-memory post-filters for event_type and free-text q
+            if event_type and event_type != "ALL":
+                formatted = [
+                    l for l in formatted
+                    if l.get("event_type", "").upper() == event_type.upper()
+                ]
+
+            if q:
+                q_clean = q.lower().strip()
+                filtered = []
+                for l in formatted:
+                    searchable = " ".join([
+                        str(l.get("event_id") or ""),
+                        str(l.get("action") or ""),
+                        str(l.get("description") or ""),
+                        str(l.get("actor_name") or ""),
+                        str(l.get("inspection_id") or ""),
+                        str(l.get("resource_id") or ""),
+                        str(l.get("target_id") or ""),
+                        str(l.get("correlation_id") or ""),
+                    ]).lower()
+                    if q_clean in searchable:
+                        filtered.append(l)
+                formatted = filtered
+
+            total = len(formatted)
+            paged = formatted[offset : offset + limit]
+            return {
+                "items": paged,
+                "total": total,
+                "limit": limit,
+                "offset": offset
+            }
+
+    async def get_audit_summary(self) -> Dict[str, Any]:
+        async with await self._get_session() as session:
+            stmt = select(AuditLog)
+            res = await session.execute(stmt)
+            logs = res.scalars().all()
+            today_prefix = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            total = len(logs)
+            today = sum(1 for l in logs if l.timestamp and l.timestamp.strftime("%Y-%m-%d") == today_prefix)
+            ins_events = sum(
+                1 for l in logs
+                if l.inspection_id is not None
+                or l.resource_type in ("INSPECTION", "EVIDENCE", "OCR", "CV", "CALIBRATION", "COMPLIANCE", "FINDING", "REPORT", "RULE_ENGINE")
+            )
+            sec_events = sum(
+                1 for l in logs
+                if l.resource_type in ("AUTH", "SECURITY") or "LOGIN" in (l.action or "")
+            )
+            sys_events = sum(
+                1 for l in logs
+                if l.role == "SYSTEM" or l.user_id == "system"
+            )
+            return {
+                "total_events": total,
+                "today_events": today,
+                "inspection_events": ins_events,
+                "security_events": sec_events,
+                "system_events": sys_events,
+            }
+
+    async def get_chain_of_custody(self, inspection_id: str) -> Dict[str, Any]:
+        ins = await self.get_by_id(inspection_id)
+        ins_code = ins.get("code") if ins else inspection_id
+
+        async with await self._get_session() as session:
+            stmt = select(AuditLog).where(
+                or_(
+                    AuditLog.inspection_id == inspection_id,
+                    AuditLog.resource_id == inspection_id,
+                )
+            ).order_by(AuditLog.timestamp.asc())
+            res = await session.execute(stmt)
+            logs = res.scalars().all()
+            matching_events = [self._format_audit_log(l) for l in logs]
+
+        stage_definitions = [
+            ("INSPECTION_INITIATION", "Inspection Initiation", ["INSPECTION_CREATED"]),
+            ("EVIDENCE_INGESTION", "Evidence & Surface Ingestion", ["EVIDENCE_UPLOADED", "IMAGE_UPLOADED"]),
+            ("OCR_EXTRACTION", "Multi-Surface AI OCR Extraction", ["OCR_COMPLETED"]),
+            ("SCALE_CALIBRATION", "Scale Metric Calibration", ["CALIBRATION_CREATED"]),
+            ("CV_MEASUREMENT", "Computer Vision PDP & Typography", ["CV_ANALYSIS_COMPLETED"]),
+            ("STATUTORY_EVALUATION", "Statutory Rule Resolution", ["RULE_EVALUATION_COMPLETED", "RULE_RESOLVED"]),
+            ("COMPLIANCE_ASSESSMENT", "Compliance Engine Assessment", ["COMPLIANCE_EVALUATION_COMPLETED"]),
+            ("SUPERVISOR_VERIFICATION", "Officer & Supervisory Review", ["FINDING_CONFIRMED", "FINDING_REJECTED", "MANUAL_FINDING_ADDED", "SUPERVISOR_REVIEW_COMPLETED"]),
+            ("REPORT_FINALIZATION", "Statutory Report Archival", ["PDF_REPORT_GENERATED", "DOCX_REPORT_GENERATED", "INSPECTION_FINALIZED"]),
+        ]
+
+        stages = []
+        for stage_key, stage_name, target_actions in stage_definitions:
+            matched_event = next((e for e in matching_events if e.get("action") in target_actions), None)
+            if matched_event:
+                stages.append({
+                    "stage_key": stage_key,
+                    "stage_name": stage_name,
+                    "status": "COMPLETED",
+                    "actor": matched_event.get("actor_name") or matched_event.get("user_id"),
+                    "role": matched_event.get("role"),
+                    "timestamp": matched_event.get("timestamp"),
+                    "event_id": matched_event.get("event_id"),
+                    "details": matched_event.get("description"),
+                    "metadata": matched_event.get("metadata"),
+                })
+            else:
+                stages.append({
+                    "stage_key": stage_key,
+                    "stage_name": stage_name,
+                    "status": "PENDING",
+                    "actor": None,
+                    "role": None,
+                    "timestamp": None,
+                    "event_id": None,
+                    "details": f"{stage_name} pending execution or unrecorded.",
+                    "metadata": None,
+                })
+
+        return {
+            "inspection_id": inspection_id,
+            "inspection_code": ins_code,
+            "stages": stages,
+            "events": matching_events,
+        }

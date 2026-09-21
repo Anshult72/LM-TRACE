@@ -10,6 +10,7 @@ from app.services.reports.docx_generator import docx_report_generator
 from app.services.reports.pdf_generator import pdf_report_generator
 from app.schemas.domain import InspectionReportModel
 from app.core.logging import logger
+from app.services.audit.audit_service import audit_service
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
@@ -69,14 +70,18 @@ async def archive_pdf_report(
 
     saved = await repo.save_report_metadata(report_record)
 
-    await repo.append_log({
-        "user_id": user_payload["sub"],
-        "role": user_payload["role"],
-        "action": "PDF_REPORT_ARCHIVED",
-        "resource_type": "REPORT",
-        "resource_id": saved["id"],
-        "metadata": {"sha256": sha256, "version": version}
-    })
+    await audit_service.record_event(
+        action="PDF_REPORT_GENERATED",
+        actor_id=user_payload["sub"],
+        actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+        role=user_payload.get("role", "INSPECTOR"),
+        resource_type="REPORT",
+        resource_id=saved["id"],
+        inspection_id=canonical_id,
+        result="SUCCESS",
+        description=f"Statutory PDF inspection report v{version} generated and archived.",
+        metadata={"sha256": sha256, "version": version, "inspection_id": canonical_id}
+    )
 
     return {"success": True, "report": saved}
 
@@ -241,10 +246,18 @@ async def generate_and_archive_pdf(inspection_id: str, user_payload: dict = Depe
         "pdf_generated_at": get_utc_now_iso(), "archival_status": "ARCHIVED",
     })
     saved = await repo.save_report_metadata(record)
-    await repo.append_log({
-        "user_id": user_payload["sub"], "role": user_payload["role"], "action": "PDF_REPORT_GENERATED",
-        "resource_type": "REPORT", "resource_id": saved["id"], "metadata": {"sha256": sha256, "version": version},
-    })
+    await audit_service.record_event(
+        action="PDF_REPORT_GENERATED",
+        actor_id=user_payload["sub"],
+        actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+        role=user_payload.get("role", "INSPECTOR"),
+        resource_type="REPORT",
+        resource_id=saved["id"],
+        inspection_id=canonical_id,
+        result="SUCCESS",
+        description=f"Statutory PDF inspection report v{version} generated and archived.",
+        metadata={"sha256": sha256, "version": version, "inspection_id": canonical_id}
+    )
     return {"success": True, "report": saved, "summary": _violation_summary(ins)}
 
 @router.post("/{inspection_id}/docx")
@@ -281,14 +294,18 @@ async def generate_and_archive_docx(
 
     saved = await repo.save_report_metadata(report_record)
 
-    await repo.append_log({
-        "user_id": user_payload["sub"],
-        "role": user_payload["role"],
-        "action": "DOCX_REPORT_GENERATED",
-        "resource_type": "REPORT",
-        "resource_id": saved["id"],
-        "metadata": {"sha256": sha256, "version": version}
-    })
+    await audit_service.record_event(
+        action="DOCX_REPORT_GENERATED",
+        actor_id=user_payload["sub"],
+        actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+        role=user_payload.get("role", "INSPECTOR"),
+        resource_type="REPORT",
+        resource_id=saved["id"],
+        inspection_id=canonical_id,
+        result="SUCCESS",
+        description=f"Statutory Word DOCX inspection report v{version} generated and archived.",
+        metadata={"sha256": sha256, "version": version, "inspection_id": canonical_id}
+    )
 
     return {"success": True, "report": saved}
 

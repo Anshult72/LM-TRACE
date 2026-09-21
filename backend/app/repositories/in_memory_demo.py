@@ -768,31 +768,332 @@ class DemoInMemoryRepository(
             }
         }
 
-        # 8. Audit Logs
+        # 8. Audit Logs (Chronological Operational Trail)
         self.audit_logs: List[Dict[str, Any]] = [
             {
-                "id": "log-001",
+                "id": "aud-uuid-001",
+                "event_id": "AUD-000101",
+                "event_type": "AUTH",
+                "action": "USER_LOGIN",
                 "user_id": "u-insp-1",
+                "actor_id": "u-insp-1",
+                "actor_name": "Ramesh Verma",
                 "role": "INSPECTOR",
-                "action": "INSPECTION_CREATED",
-                "resource_type": "INSPECTION",
-                "resource_id": "ins-demo-001",
+                "resource_type": "AUTH",
+                "resource_id": "u-insp-1",
+                "target_type": "AUTH",
+                "target_id": "u-insp-1",
+                "inspection_id": None,
+                "result": "SUCCESS",
+                "description": "Officer Ramesh Verma authenticated into LM-TRACE inspection console.",
                 "old_value": None,
-                "new_value": {"code": "INS-2026-00101", "product": "ABC Premium Basmati Rice"},
-                "timestamp": "2026-09-07T10:15:00Z",
-                "metadata": {"location": "Sector 18, Noida"}
+                "new_value": None,
+                "before_data": None,
+                "after_data": None,
+                "metadata": {"officer_id": "LM-DL-2026-042", "ip_address": "10.0.1.42", "auth_method": "PASSWORD"},
+                "correlation_id": "TRACE-AUTH-u-insp-1",
+                "timestamp": "2026-09-07T09:30:00Z",
+                "source": "WEB_APP"
             },
             {
-                "id": "log-002",
+                "id": "aud-uuid-002",
+                "event_id": "AUD-000102",
+                "event_type": "INSPECTION",
+                "action": "INSPECTION_CREATED",
                 "user_id": "u-insp-1",
+                "actor_id": "u-insp-1",
+                "actor_name": "Ramesh Verma",
                 "role": "INSPECTOR",
-                "action": "INSPECTION_FINALIZED",
                 "resource_type": "INSPECTION",
                 "resource_id": "ins-demo-001",
+                "target_type": "INSPECTION",
+                "target_id": "ins-demo-001",
+                "inspection_id": "ins-demo-001",
+                "result": "SUCCESS",
+                "description": "Created new physical package inspection for ABC Premium Basmati Rice (INS-2026-00101) at Sector 18, Noida.",
+                "old_value": None,
+                "new_value": {"code": "INS-2026-00101", "product_category": "Packaged Food", "location": "Sector 18, Noida"},
+                "before_data": None,
+                "after_data": {"code": "INS-2026-00101", "product_category": "Packaged Food", "location": "Sector 18, Noida"},
+                "metadata": {"business_name": "Spencer Retail Ltd", "category": "Food & Beverages"},
+                "correlation_id": "TRACE-ins-demo-001",
+                "timestamp": "2026-09-07T09:35:10Z",
+                "source": "WEB_APP"
+            },
+            {
+                "id": "aud-uuid-003",
+                "event_id": "AUD-000103",
+                "event_type": "EVIDENCE",
+                "action": "EVIDENCE_UPLOADED",
+                "user_id": "u-insp-1",
+                "actor_id": "u-insp-1",
+                "actor_name": "Ramesh Verma",
+                "role": "INSPECTOR",
+                "resource_type": "EVIDENCE",
+                "resource_id": "img-demo-001-f",
+                "target_type": "EVIDENCE",
+                "target_id": "img-demo-001-f",
+                "inspection_id": "ins-demo-001",
+                "result": "SUCCESS",
+                "description": "Captured and uploaded front principal display panel evidence image for INS-2026-00101.",
+                "old_value": None,
+                "new_value": {"surface_type": "FRONT", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+                "before_data": None,
+                "after_data": {"surface_type": "FRONT", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+                "metadata": {"surface": "FRONT", "dimensions": "1920x1080", "file_size_bytes": 1048576},
+                "correlation_id": "TRACE-ins-demo-001",
+                "timestamp": "2026-09-07T09:38:22Z",
+                "source": "WEB_APP"
+            },
+            {
+                "id": "aud-uuid-004",
+                "event_id": "AUD-000104",
+                "event_type": "OCR",
+                "action": "OCR_COMPLETED",
+                "user_id": "system",
+                "actor_id": "system",
+                "actor_name": "Multi-Surface OCR Engine",
+                "role": "SYSTEM",
+                "resource_type": "OCR",
+                "resource_id": "ocr-ins-demo-001",
+                "target_type": "OCR",
+                "target_id": "ocr-ins-demo-001",
+                "inspection_id": "ins-demo-001",
+                "result": "COMPLETED",
+                "description": "Optical Character Recognition processed 2 package surfaces and extracted 18 declaration text blocks.",
+                "old_value": None,
+                "new_value": {"surfaces_count": 2, "blocks_count": 18, "mean_confidence": 0.96},
+                "before_data": None,
+                "after_data": {"surfaces_count": 2, "blocks_count": 18, "mean_confidence": 0.96},
+                "metadata": {"engine": "MultiSurfaceOCR_v2", "surfaces": ["FRONT", "BACK"]},
+                "correlation_id": "TRACE-ins-demo-001",
+                "timestamp": "2026-09-07T09:40:05Z",
+                "source": "SYSTEM_ENGINE"
+            },
+            {
+                "id": "aud-uuid-005",
+                "event_id": "AUD-000105",
+                "event_type": "CALIBRATION",
+                "action": "CALIBRATION_CREATED",
+                "user_id": "u-insp-1",
+                "actor_id": "u-insp-1",
+                "actor_name": "Ramesh Verma",
+                "role": "INSPECTOR",
+                "resource_type": "CALIBRATION",
+                "resource_id": "cal-demo-001",
+                "target_type": "CALIBRATION",
+                "target_id": "cal-demo-001",
+                "inspection_id": "ins-demo-001",
+                "result": "SUCCESS",
+                "description": "Established optical scale calibration at 2.05 px/mm using a 100.0 mm reference standard.",
+                "old_value": None,
+                "new_value": {"pixels_per_mm": 2.05, "known_distance_mm": 100.0, "pixel_distance": 205.0},
+                "before_data": None,
+                "after_data": {"pixels_per_mm": 2.05, "known_distance_mm": 100.0, "pixel_distance": 205.0},
+                "metadata": {"reference_type": "STANDARD_SCALE", "confidence": 0.98},
+                "correlation_id": "TRACE-ins-demo-001",
+                "timestamp": "2026-09-07T09:42:15Z",
+                "source": "WEB_APP"
+            },
+            {
+                "id": "aud-uuid-006",
+                "event_id": "AUD-000106",
+                "event_type": "CV",
+                "action": "CV_ANALYSIS_COMPLETED",
+                "user_id": "system",
+                "actor_id": "system",
+                "actor_name": "Computer Vision Service",
+                "role": "SYSTEM",
+                "resource_type": "CV",
+                "resource_id": "cv-ins-demo-001",
+                "target_type": "CV",
+                "target_id": "cv-ins-demo-001",
+                "inspection_id": "ins-demo-001",
+                "result": "COMPLETED",
+                "description": "Computed Table-I character font height proportions and contrast metrics across package surfaces.",
+                "old_value": None,
+                "new_value": {"pdp_area_cm2": 320.0, "font_height_mm": 3.2, "contrast_ratio": 4.8},
+                "before_data": None,
+                "after_data": {"pdp_area_cm2": 320.0, "font_height_mm": 3.2, "contrast_ratio": 4.8},
+                "metadata": {"rule_reference": "Rule 7 & Table-I, LM (PC) Rules, 2011"},
+                "correlation_id": "TRACE-ins-demo-001",
+                "timestamp": "2026-09-07T09:43:00Z",
+                "source": "SYSTEM_ENGINE"
+            },
+            {
+                "id": "aud-uuid-007",
+                "event_id": "AUD-000107",
+                "event_type": "RULE_ENGINE",
+                "action": "RULE_EVALUATION_COMPLETED",
+                "user_id": "system",
+                "actor_id": "system",
+                "actor_name": "Statutory Rule Engine",
+                "role": "SYSTEM",
+                "resource_type": "RULE_ENGINE",
+                "resource_id": "rule-eval-ins-demo-001",
+                "target_type": "RULE_ENGINE",
+                "target_id": "rule-eval-ins-demo-001",
+                "inspection_id": "ins-demo-001",
+                "result": "COMPLETED",
+                "description": "Statutory Rule Engine evaluated 8 applicable legal rules under LM (PC) Rules, 2011 (Version 2024.1).",
+                "old_value": None,
+                "new_value": {"applicable_rules_count": 8, "rule_version": "2024.1"},
+                "before_data": None,
+                "after_data": {"applicable_rules_count": 8, "rule_version": "2024.1"},
+                "metadata": {"act": "The Legal Metrology Act, 2009", "rules": "LM (PC) Rules, 2011"},
+                "correlation_id": "TRACE-ins-demo-001",
+                "timestamp": "2026-09-07T09:43:45Z",
+                "source": "SYSTEM_ENGINE"
+            },
+            {
+                "id": "aud-uuid-008",
+                "event_id": "AUD-000108",
+                "event_type": "COMPLIANCE",
+                "action": "COMPLIANCE_EVALUATION_COMPLETED",
+                "user_id": "system",
+                "actor_id": "system",
+                "actor_name": "Compliance Assessment Engine",
+                "role": "SYSTEM",
+                "resource_type": "COMPLIANCE",
+                "resource_id": "cmp-ins-demo-001",
+                "target_type": "COMPLIANCE",
+                "target_id": "cmp-ins-demo-001",
+                "inspection_id": "ins-demo-001",
+                "result": "COMPLETED",
+                "description": "Compliance Engine completed statutory assessment: 14 checks passed, 1 potential violation flagged.",
+                "old_value": None,
+                "new_value": {"passed_checks": 14, "violations_detected": 1, "compliance_score": 96.5},
+                "before_data": None,
+                "after_data": {"passed_checks": 14, "violations_detected": 1, "compliance_score": 96.5},
+                "metadata": {"status": "NEEDS_REVIEW"},
+                "correlation_id": "TRACE-ins-demo-001",
+                "timestamp": "2026-09-07T09:44:20Z",
+                "source": "SYSTEM_ENGINE"
+            },
+            {
+                "id": "aud-uuid-009",
+                "event_id": "AUD-000109",
+                "event_type": "FINDING",
+                "action": "FINDING_CONFIRMED",
+                "user_id": "u-insp-1",
+                "actor_id": "u-insp-1",
+                "actor_name": "Ramesh Verma",
+                "role": "INSPECTOR",
+                "resource_type": "VIOLATION",
+                "resource_id": "viol-demo-001",
+                "target_type": "VIOLATION",
+                "target_id": "viol-demo-001",
+                "inspection_id": "ins-demo-001",
+                "result": "SUCCESS",
+                "description": "Inspector verified and confirmed violation: Net Quantity numeral height is below Table-I requirement.",
+                "old_value": {"status": "AI_DETECTED"},
+                "new_value": {"status": "CONFIRMED", "comment": "Verified via optical calibration; font height is 2.8 mm vs 4.0 mm requirement."},
+                "before_data": {"status": "AI_DETECTED"},
+                "after_data": {"status": "CONFIRMED", "comment": "Verified via optical calibration; font height is 2.8 mm vs 4.0 mm requirement."},
+                "metadata": {"rule_code": "RULE-007", "severity": "MEDIUM"},
+                "correlation_id": "TRACE-ins-demo-001",
+                "timestamp": "2026-09-07T09:50:10Z",
+                "source": "WEB_APP"
+            },
+            {
+                "id": "aud-uuid-010",
+                "event_id": "AUD-000110",
+                "event_type": "REPORT",
+                "action": "PDF_REPORT_GENERATED",
+                "user_id": "u-insp-1",
+                "actor_id": "u-insp-1",
+                "actor_name": "Ramesh Verma",
+                "role": "INSPECTOR",
+                "resource_type": "REPORT",
+                "resource_id": "rep-ins-demo-001",
+                "target_type": "REPORT",
+                "target_id": "rep-ins-demo-001",
+                "inspection_id": "ins-demo-001",
+                "result": "SUCCESS",
+                "description": "Generated and archived statutory PDF inspection report (v1) with digital hash.",
+                "old_value": None,
+                "new_value": {"report_version": 1, "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"},
+                "before_data": None,
+                "after_data": {"report_version": 1, "sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"},
+                "metadata": {"archival_status": "ARCHIVED", "format": "PDF"},
+                "correlation_id": "TRACE-ins-demo-001",
+                "timestamp": "2026-09-07T10:10:00Z",
+                "source": "WEB_APP"
+            },
+            {
+                "id": "aud-uuid-011",
+                "event_id": "AUD-000111",
+                "event_type": "INSPECTION",
+                "action": "INSPECTION_FINALIZED",
+                "user_id": "u-insp-1",
+                "actor_id": "u-insp-1",
+                "actor_name": "Ramesh Verma",
+                "role": "INSPECTOR",
+                "resource_type": "INSPECTION",
+                "resource_id": "ins-demo-001",
+                "target_type": "INSPECTION",
+                "target_id": "ins-demo-001",
+                "inspection_id": "ins-demo-001",
+                "result": "SUCCESS",
+                "description": "Finalized statutory inspection INS-2026-00101 with compliance score 96.5% under Rule 6 & 7.",
                 "old_value": {"status": "READY"},
                 "new_value": {"status": "FINALIZED", "score": 96.5},
+                "before_data": {"status": "READY"},
+                "after_data": {"status": "FINALIZED", "score": 96.5},
+                "metadata": {"applied_rule_version": "2024.1", "final_outcome": "NOTICE_ISSUED"},
+                "correlation_id": "TRACE-ins-demo-001",
                 "timestamp": "2026-09-07T10:45:00Z",
-                "metadata": {"applied_rule_version": "2024.1"}
+                "source": "WEB_APP"
+            },
+            {
+                "id": "aud-uuid-012",
+                "event_id": "AUD-000112",
+                "event_type": "AUTH",
+                "action": "USER_LOGIN",
+                "user_id": "u-sup-1",
+                "actor_id": "u-sup-1",
+                "actor_name": "Anjali Sharma",
+                "role": "SUPERVISOR",
+                "resource_type": "AUTH",
+                "resource_id": "u-sup-1",
+                "target_type": "AUTH",
+                "target_id": "u-sup-1",
+                "inspection_id": None,
+                "result": "SUCCESS",
+                "description": "Supervisor Anjali Sharma authenticated into supervisory review portal.",
+                "old_value": None,
+                "new_value": None,
+                "before_data": None,
+                "after_data": None,
+                "metadata": {"officer_id": "LM-SUP-2026-009", "auth_method": "PASSWORD"},
+                "correlation_id": "TRACE-AUTH-u-sup-1",
+                "timestamp": "2026-09-07T11:00:00Z",
+                "source": "WEB_APP"
+            },
+            {
+                "id": "aud-uuid-013",
+                "event_id": "AUD-000113",
+                "event_type": "SUPERVISOR",
+                "action": "SUPERVISOR_REVIEW_COMPLETED",
+                "user_id": "u-sup-1",
+                "actor_id": "u-sup-1",
+                "actor_name": "Anjali Sharma",
+                "role": "SUPERVISOR",
+                "resource_type": "INSPECTION",
+                "resource_id": "ins-demo-001",
+                "target_type": "INSPECTION",
+                "target_id": "ins-demo-001",
+                "inspection_id": "ins-demo-001",
+                "result": "SUCCESS",
+                "description": "Supervisory review completed for INS-2026-00101: findings endorsed and statutory show-cause notice approved.",
+                "old_value": {"review_status": "PENDING"},
+                "new_value": {"review_status": "APPROVED", "decision": "ENDORSED"},
+                "before_data": {"review_status": "PENDING"},
+                "after_data": {"review_status": "APPROVED", "decision": "ENDORSED"},
+                "metadata": {"review_notes": "Violation confirmed by photographic calibration overlay. Notice issuance approved."},
+                "correlation_id": "TRACE-ins-demo-001",
+                "timestamp": "2026-09-07T11:20:00Z",
+                "source": "WEB_APP"
             }
         ]
 
@@ -1306,16 +1607,208 @@ class DemoInMemoryRepository(
 
     # --- IAuditLogRepository ---
     async def append_log(self, log_entry: Dict[str, Any]) -> Dict[str, Any]:
-        l_id = log_entry.get("id") or f"log-{len(self.audit_logs) + 1}"
+        l_id = log_entry.get("id") or f"aud-{len(self.audit_logs) + 1:04d}"
         log_entry["id"] = l_id
-        if "timestamp" not in log_entry:
+        if "event_id" not in log_entry or not log_entry["event_id"]:
+            log_entry["event_id"] = f"AUD-{len(self.audit_logs) + 101:06d}"
+        if "timestamp" not in log_entry or not log_entry["timestamp"]:
             log_entry["timestamp"] = get_now_iso()
-        self.audit_logs.append(copy.deepcopy(log_entry))
+        if "actor_id" not in log_entry:
+            log_entry["actor_id"] = log_entry.get("user_id", "system")
+        if "target_type" not in log_entry:
+            log_entry["target_type"] = log_entry.get("resource_type", "SYSTEM")
+        if "target_id" not in log_entry:
+            log_entry["target_id"] = str(log_entry.get("resource_id", "0"))
+        if "result" not in log_entry:
+            log_entry["result"] = "SUCCESS"
+        if "before_data" not in log_entry and "old_value" in log_entry:
+            log_entry["before_data"] = log_entry["old_value"]
+        if "after_data" not in log_entry and "new_value" in log_entry:
+            log_entry["after_data"] = log_entry["new_value"]
+        if "event_type" not in log_entry:
+            log_entry["event_type"] = log_entry.get("resource_type", "SYSTEM")
+        if "description" not in log_entry:
+            act = log_entry.get("action", "ACTION").replace("_", " ").title()
+            log_entry["description"] = f"{act} recorded for {log_entry['target_type']} {log_entry['target_id']}."
+        if "source" not in log_entry:
+            log_entry["source"] = "WEB_APP" if log_entry.get("role") != "SYSTEM" else "SYSTEM_ENGINE"
+
+        # Prepend so newest is first in memory list
+        self.audit_logs.insert(0, copy.deepcopy(log_entry))
         return copy.deepcopy(log_entry)
 
     async def list_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
         logs = copy.deepcopy(self.audit_logs)
-        logs.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+        logs.sort(key=lambda x: str(x.get("timestamp") or ""), reverse=True)
         return logs[:limit]
 
+    async def get_log_by_id(self, log_id: str) -> Optional[Dict[str, Any]]:
+        for l in self.audit_logs:
+            if l.get("id") == log_id or l.get("event_id") == log_id:
+                return copy.deepcopy(l)
+        return None
+
+    async def list_logs_filtered(
+        self,
+        q: Optional[str] = None,
+        action: Optional[str] = None,
+        event_type: Optional[str] = None,
+        actor_id: Optional[str] = None,
+        role: Optional[str] = None,
+        resource_type: Optional[str] = None,
+        inspection_id: Optional[str] = None,
+        result: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        correlation_id: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0
+    ) -> Dict[str, Any]:
+        logs = copy.deepcopy(self.audit_logs)
+
+        filtered = []
+        q_clean = q.lower().strip() if q else None
+        for l in logs:
+            if action and l.get("action", "").upper() != action.upper():
+                continue
+            if event_type and event_type != "ALL":
+                et = l.get("event_type") or l.get("resource_type") or ""
+                if et.upper() != event_type.upper():
+                    continue
+            if actor_id and l.get("user_id") != actor_id and l.get("actor_id") != actor_id:
+                continue
+            if role and role != "ALL" and l.get("role", "").upper() != role.upper():
+                continue
+            if resource_type and resource_type != "ALL":
+                rt = l.get("resource_type") or l.get("target_type") or ""
+                if rt.upper() != resource_type.upper():
+                    continue
+            if inspection_id and l.get("inspection_id") != inspection_id and str(l.get("resource_id")) != inspection_id:
+                continue
+            if result and result != "ALL" and l.get("result", "").upper() != result.upper():
+                continue
+            if correlation_id and l.get("correlation_id") != correlation_id:
+                continue
+            if date_from:
+                ts = str(l.get("timestamp") or "")
+                if ts and ts < date_from:
+                    continue
+            if date_to:
+                ts = str(l.get("timestamp") or "")
+                if ts and ts > date_to:
+                    continue
+            if q_clean:
+                searchable = " ".join([
+                    str(l.get("event_id") or ""),
+                    str(l.get("action") or ""),
+                    str(l.get("description") or ""),
+                    str(l.get("actor_name") or ""),
+                    str(l.get("inspection_id") or ""),
+                    str(l.get("resource_id") or ""),
+                    str(l.get("target_id") or ""),
+                    str(l.get("correlation_id") or ""),
+                ]).lower()
+                if q_clean not in searchable:
+                    continue
+
+            filtered.append(l)
+
+        filtered.sort(key=lambda x: str(x.get("timestamp") or ""), reverse=True)
+        total = len(filtered)
+        paged = filtered[offset : offset + limit]
+        return {
+            "items": paged,
+            "total": total,
+            "limit": limit,
+            "offset": offset
+        }
+
+    async def get_audit_summary(self) -> Dict[str, Any]:
+        logs = self.audit_logs
+        today_prefix = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        total = len(logs)
+        today = sum(1 for l in logs if str(l.get("timestamp") or "").startswith(today_prefix))
+        ins_events = sum(
+            1 for l in logs
+            if l.get("event_type") in ("INSPECTION", "EVIDENCE", "OCR", "CV", "CALIBRATION", "COMPLIANCE", "FINDING", "REPORT", "RULE_ENGINE")
+            or l.get("inspection_id") is not None
+        )
+        sec_events = sum(
+            1 for l in logs
+            if l.get("event_type") in ("AUTH", "SECURITY") or "LOGIN" in str(l.get("action") or "")
+        )
+        sys_events = sum(
+            1 for l in logs
+            if l.get("role") == "SYSTEM" or l.get("actor_id") == "system"
+        )
+        return {
+            "total_events": total,
+            "today_events": today,
+            "inspection_events": ins_events,
+            "security_events": sec_events,
+            "system_events": sys_events,
+        }
+
+    async def get_chain_of_custody(self, inspection_id: str) -> Dict[str, Any]:
+        ins = await self.get_by_id(inspection_id)
+        ins_code = ins.get("code") if ins else inspection_id
+
+        matching_events = [
+            copy.deepcopy(l) for l in self.audit_logs
+            if l.get("inspection_id") == inspection_id
+            or str(l.get("resource_id") or "") == inspection_id
+            or (ins and ins.get("code") and ins["code"] in str(l.get("description") or ""))
+            or (l.get("correlation_id") and inspection_id in l["correlation_id"])
+        ]
+        matching_events.sort(key=lambda x: str(x.get("timestamp") or ""))
+
+        # Defined standard stages for LM-TRACE inspection chain of custody
+        stage_definitions = [
+            ("INSPECTION_INITIATION", "Inspection Initiation", ["INSPECTION_CREATED"]),
+            ("EVIDENCE_INGESTION", "Evidence & Surface Ingestion", ["EVIDENCE_UPLOADED", "IMAGE_UPLOADED"]),
+            ("OCR_EXTRACTION", "Multi-Surface AI OCR Extraction", ["OCR_COMPLETED"]),
+            ("SCALE_CALIBRATION", "Scale Metric Calibration", ["CALIBRATION_CREATED"]),
+            ("CV_MEASUREMENT", "Computer Vision PDP & Typography", ["CV_ANALYSIS_COMPLETED"]),
+            ("STATUTORY_EVALUATION", "Statutory Rule Resolution", ["RULE_EVALUATION_COMPLETED", "RULE_RESOLVED"]),
+            ("COMPLIANCE_ASSESSMENT", "Compliance Engine Assessment", ["COMPLIANCE_EVALUATION_COMPLETED"]),
+            ("SUPERVISOR_VERIFICATION", "Officer & Supervisory Review", ["FINDING_CONFIRMED", "FINDING_REJECTED", "MANUAL_FINDING_ADDED", "SUPERVISOR_REVIEW_COMPLETED"]),
+            ("REPORT_FINALIZATION", "Statutory Report Archival", ["PDF_REPORT_GENERATED", "DOCX_REPORT_GENERATED", "INSPECTION_FINALIZED"]),
+        ]
+
+        stages = []
+        for stage_key, stage_name, target_actions in stage_definitions:
+            matched_event = next((e for e in matching_events if e.get("action") in target_actions), None)
+            if matched_event:
+                stages.append({
+                    "stage_key": stage_key,
+                    "stage_name": stage_name,
+                    "status": "COMPLETED",
+                    "actor": matched_event.get("actor_name") or matched_event.get("user_id"),
+                    "role": matched_event.get("role"),
+                    "timestamp": matched_event.get("timestamp"),
+                    "event_id": matched_event.get("event_id"),
+                    "details": matched_event.get("description"),
+                    "metadata": matched_event.get("metadata"),
+                })
+            else:
+                stages.append({
+                    "stage_key": stage_key,
+                    "stage_name": stage_name,
+                    "status": "PENDING",
+                    "actor": None,
+                    "role": None,
+                    "timestamp": None,
+                    "event_id": None,
+                    "details": f"{stage_name} pending execution or unrecorded.",
+                    "metadata": None,
+                })
+
+        return {
+            "inspection_id": inspection_id,
+            "inspection_code": ins_code,
+            "stages": stages,
+            "events": matching_events,
+        }
+
 demo_repository = DemoInMemoryRepository()
+

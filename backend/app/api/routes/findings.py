@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 from app.schemas.domain import FindingConfirmRequest, FindingRejectRequest, ManualFindingCreate
 from app.repositories import get_repository
 from app.core.security import get_current_user_payload
+from app.services.audit.audit_service import audit_service
 
 router = APIRouter(prefix="/api", tags=["Findings & Verification"])
 
@@ -40,14 +41,19 @@ async def confirm_finding(
     if not updated:
         raise HTTPException(status_code=404, detail="Finding not found")
 
-    await repo.append_log({
-        "user_id": user_payload["sub"],
-        "role": user_payload["role"],
-        "action": "FINDING_CONFIRMED",
-        "resource_type": "VIOLATION",
-        "resource_id": finding_id,
-        "metadata": {"comment": req.inspector_comment}
-    })
+    target_ins_id = updated.get("inspection_id")
+    await audit_service.record_event(
+        action="FINDING_CONFIRMED",
+        actor_id=user_payload["sub"],
+        actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+        role=user_payload.get("role", "INSPECTOR"),
+        resource_type="VIOLATION",
+        resource_id=finding_id,
+        inspection_id=target_ins_id,
+        result="SUCCESS",
+        description=f"Inspector confirmed statutory violation {finding_id}: {req.inspector_comment or 'Physical verification confirmed.'}",
+        metadata={"comment": req.inspector_comment, "inspection_id": target_ins_id}
+    )
 
     return updated
 
@@ -69,14 +75,19 @@ async def reject_finding(
     if not updated:
         raise HTTPException(status_code=404, detail="Finding not found")
 
-    await repo.append_log({
-        "user_id": user_payload["sub"],
-        "role": user_payload["role"],
-        "action": "FINDING_REJECTED",
-        "resource_type": "VIOLATION",
-        "resource_id": finding_id,
-        "metadata": {"comment": req.inspector_comment}
-    })
+    target_ins_id = updated.get("inspection_id")
+    await audit_service.record_event(
+        action="FINDING_REJECTED",
+        actor_id=user_payload["sub"],
+        actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+        role=user_payload.get("role", "INSPECTOR"),
+        resource_type="VIOLATION",
+        resource_id=finding_id,
+        inspection_id=target_ins_id,
+        result="SUCCESS",
+        description=f"Inspector dismissed AI finding {finding_id}: {req.inspector_comment or 'Dismissed after physical inspection.'}",
+        metadata={"comment": req.inspector_comment, "inspection_id": target_ins_id}
+    )
 
     return updated
 
@@ -112,13 +123,17 @@ async def create_manual_finding(
     current_viols.append(finding_record)
     await repo.save_compliance_results(inspection_id, ins.get("checks", []), current_viols)
 
-    await repo.append_log({
-        "user_id": user_payload["sub"],
-        "role": user_payload["role"],
-        "action": "MANUAL_FINDING_ADDED",
-        "resource_type": "VIOLATION",
-        "resource_id": finding_record["id"],
-        "metadata": {"title": req.title}
-    })
+    await audit_service.record_event(
+        action="MANUAL_FINDING_ADDED",
+        actor_id=user_payload["sub"],
+        actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+        role=user_payload.get("role", "INSPECTOR"),
+        resource_type="VIOLATION",
+        resource_id=finding_record["id"],
+        inspection_id=inspection_id,
+        result="SUCCESS",
+        description=f"Manual finding added for inspection {ins.get('code', inspection_id)}: {req.title}.",
+        metadata={"title": req.title, "type": req.type, "severity": req.severity}
+    )
 
     return finding_record

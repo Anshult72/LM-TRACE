@@ -531,3 +531,59 @@ class StatutoryTraceabilityResponse(BaseModel):
     source_document: Optional[StatutoryDocumentResponse] = None
     traceability_chain: List[str] = []
 
+# --- Audit Trail & Chain of Custody Schemas ---
+
+class AuditEventResponse(BaseModel):
+    id: str
+    event_id: str
+    event_type: str
+    action: str
+    actor_id: str
+    actor_name: str
+    role: str
+    resource_type: str
+    resource_id: str
+    target_type: str
+    target_id: str
+    inspection_id: Optional[str] = None
+    result: str = "SUCCESS"
+    description: str
+    timestamp: str
+    old_value: Optional[Dict[str, Any]] = None
+    new_value: Optional[Dict[str, Any]] = None
+    before_data: Optional[Dict[str, Any]] = None
+    after_data: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    correlation_id: Optional[str] = None
+    source: str = "SYSTEM"
+
+class AuditSummaryResponse(BaseModel):
+    total_events: int
+    today_events: int
+    inspection_events: int
+    security_events: int
+    system_events: int
+
+class AuditListResponse(BaseModel):
+    items: List[AuditEventResponse]
+    total: int
+    limit: int
+    offset: int
+
+class ChainOfCustodyStage(BaseModel):
+    stage_key: str
+    stage_name: str
+    status: str  # COMPLETED, PENDING, SKIPPED, FAILED
+    actor: Optional[str] = None
+    role: Optional[str] = None
+    timestamp: Optional[str] = None
+    event_id: Optional[str] = None
+    details: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+class ChainOfCustodyResponse(BaseModel):
+    inspection_id: str
+    inspection_code: Optional[str] = None
+    stages: List[ChainOfCustodyStage]
+    events: List[AuditEventResponse]
+

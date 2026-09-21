@@ -20,9 +20,14 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Application lifespan handler:
-    On startup, safely triggers an asynchronous backfill task to reconcile
-    any legacy or unlinked historical inspections with the Product Intelligence Registry.
+    On startup, runs database schema upgrades and reconciles legacy records.
     """
+    try:
+        from migrate_audit_logs import migrate as migrate_audit
+        asyncio.create_task(migrate_audit())
+    except Exception as e:
+        logger.warning("Audit logs schema check on startup: %s", e)
+
     try:
         from app.services.product.product_intelligence_service import product_intelligence_service
         asyncio.create_task(product_intelligence_service.backfill_historical_inspections())

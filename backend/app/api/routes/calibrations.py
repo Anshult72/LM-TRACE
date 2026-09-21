@@ -10,6 +10,7 @@ from app.schemas.domain import (
     CalibrationMeasurementPreview,
 )
 from app.services.vision.calibration_service import calibration_service
+from app.services.audit.audit_service import audit_service
 
 router = APIRouter(prefix="/api/inspections/{inspection_id}/calibrations", tags=["Calibrations"])
 standalone_router = APIRouter(prefix="/api/calibrations", tags=["Calibrations"])
@@ -164,21 +165,25 @@ async def create_calibration(
             "package_construction_type": req.package_construction_type or "NORMAL"
         })
 
-    # Append audit log
-    await repo.append_log({
-        "user_id": user_payload.get("sub", "system"),
-        "role": user_payload.get("role", "INSPECTOR"),
-        "action": "CALIBRATION_CREATED",
-        "resource_type": "CALIBRATION",
-        "resource_id": saved["id"],
-        "new_value": {
+    # Append authoritative audit log
+    await audit_service.record_event(
+        action="CALIBRATION_CREATED",
+        actor_id=user_payload.get("sub", "system"),
+        actor_name=user_payload.get("full_name") or user_payload.get("sub", "system"),
+        role=user_payload.get("role", "INSPECTOR"),
+        resource_type="CALIBRATION",
+        resource_id=saved["id"],
+        inspection_id=ins["id"],
+        result="SUCCESS",
+        description=f"Physical scale calibration computed ({saved['pixels_per_unit']:.2f} px/mm on {saved['reference_type']}) for inspection {ins.get('code', ins['id'])}.",
+        new_value={
             "pixels_per_mm": saved["pixels_per_unit"],
             "known_distance_mm": saved["known_distance"],
             "pixel_distance": saved["pixel_distance"],
             "image_id": saved.get("image_id"),
             "reference_type": saved["reference_type"]
         }
-    })
+    )
 
     return CalibrationResponse(
         id=saved["id"],

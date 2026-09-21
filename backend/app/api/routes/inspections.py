@@ -27,6 +27,7 @@ from app.core.config import settings
 from app.core.logging import logger
 from app.services.inspection.surface_validator import validate_inspection_surfaces, REQUIRED_SURFACE_CODES, ALLOWED_SURFACE_CODES
 from app.services.product.product_intelligence_service import product_intelligence_service
+from app.services.audit.audit_service import audit_service
 
 router = APIRouter(prefix="/api/inspections", tags=["Inspections"])
 
@@ -67,14 +68,18 @@ async def create_inspection(
 
     created = await repo.create(ins_data)
 
-    await repo.append_log({
-        "user_id": user_payload["sub"],
-        "role": user_payload["role"],
-        "action": "INSPECTION_CREATED",
-        "resource_type": "INSPECTION",
-        "resource_id": created["id"],
-        "new_value": {"code": inspection_code, "location": req.location}
-    })
+    await audit_service.record_event(
+        action="INSPECTION_CREATED",
+        actor_id=user_payload["sub"],
+        actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+        role=user_payload.get("role", "INSPECTOR"),
+        resource_type="INSPECTION",
+        resource_id=created["id"],
+        inspection_id=created["id"],
+        result="SUCCESS",
+        description=f"Inspection case {inspection_code} created for {req.product_category} at {req.location}.",
+        new_value={"code": inspection_code, "location": req.location, "product_category": req.product_category}
+    )
 
     return created
 
@@ -244,14 +249,18 @@ async def upload_image(
 
     saved_img = await repo.add_image(inspection_id, image_record)
 
-    await repo.append_log({
-        "user_id": user_payload["sub"],
-        "role": user_payload["role"],
-        "action": "IMAGE_UPLOADED",
-        "resource_type": "INSPECTION_IMAGE",
-        "resource_id": saved_img["id"],
-        "metadata": {"surface": normalized_surface, "sha256": sha256}
-    })
+    await audit_service.record_event(
+        action="EVIDENCE_UPLOADED",
+        actor_id=user_payload["sub"],
+        actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+        role=user_payload.get("role", "INSPECTOR"),
+        resource_type="INSPECTION_IMAGE",
+        resource_id=saved_img["id"],
+        inspection_id=inspection_id,
+        result="SUCCESS",
+        description=f"Uploaded {normalized_surface} surface package image for inspection {ins.get('code', inspection_id)}.",
+        metadata={"surface": normalized_surface, "sha256": sha256, "image_id": saved_img["id"]}
+    )
 
     return saved_img
 
@@ -438,6 +447,19 @@ async def analyze_product(
             for result in ocr_results
         ]
 
+        await audit_service.record_event(
+            action="OCR_COMPLETED",
+            actor_id=user_payload["sub"],
+            actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+            role=user_payload.get("role", "INSPECTOR"),
+            resource_type="INSPECTION",
+            resource_id=inspection_id,
+            inspection_id=inspection_id,
+            result="SUCCESS",
+            description=f"Multi-surface OCR text extraction completed ({len(all_ocr_blocks)} text blocks identified across {len(ocr_results)} surfaces).",
+            metadata={"blocks_count": len(all_ocr_blocks), "surfaces_analyzed": len(ocr_results)}
+        )
+
         rule_context, applicability_inferences = declaration_applicability_service.build_context(ins, extracted_payload)
         correctness_data = declaration_correctness_service.evaluate_correctness(
             extracted_payload, all_ocr_blocks, is_imported=rule_context["isImported"]
@@ -579,12 +601,52 @@ async def analyze_product(
             "readability_results": readability_results,
             "typography_results": typography_results,
         }
+
+        await audit_service.record_event(
+            action="CV_ANALYSIS_COMPLETED",
+            actor_id=user_payload["sub"],
+            actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+            role=user_payload.get("role", "INSPECTOR"),
+            resource_type="INSPECTION",
+            resource_id=inspection_id,
+            inspection_id=inspection_id,
+            result="SUCCESS",
+            description=f"Computer Vision PDP and typography analysis completed ({len(readability_results)} readability checks, {len(typography_results)} character height measurements).",
+            metadata={"readability_count": len(readability_results), "typography_count": len(typography_results)}
+        )
+
         compliance_assessment = await compliance_engine.evaluate_compliance(
             extracted_declarations=extracted_payload.model_dump(),
             correctness_data=correctness_data,
             context=rule_context,
             readability_data=visual_analysis,
             placement_data=placement_results,
+        )
+
+        await audit_service.record_event(
+            action="RULE_EVALUATION_COMPLETED",
+            actor_id=user_payload["sub"],
+            actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+            role=user_payload.get("role", "INSPECTOR"),
+            resource_type="INSPECTION",
+            resource_id=inspection_id,
+            inspection_id=inspection_id,
+            result="SUCCESS",
+            description=f"Statutory rule applicability evaluated ({len(applicable_rules)} active rules applied under Legal Metrology Act).",
+            metadata={"applicable_rules_count": len(applicable_rules), "rule_version": "2024.1"}
+        )
+
+        await audit_service.record_event(
+            action="COMPLIANCE_EVALUATION_COMPLETED",
+            actor_id=user_payload["sub"],
+            actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+            role=user_payload.get("role", "INSPECTOR"),
+            resource_type="INSPECTION",
+            resource_id=inspection_id,
+            inspection_id=inspection_id,
+            result="SUCCESS",
+            description=f"Compliance assessment evaluated: score {compliance_assessment.score}%, {len(compliance_assessment.checks)} checks, {len(compliance_assessment.potential_violations)} violations.",
+            metadata={"score": compliance_assessment.score, "checks": len(compliance_assessment.checks), "violations": len(compliance_assessment.potential_violations)}
         )
 
         # Convert checks and violations to records
@@ -833,18 +895,22 @@ async def finalize_inspection(
     except Exception as fin_prod_err:
         logger.warning("Post-finalization product sync warning for %s: %s", inspection_id, fin_prod_err)
 
-    await repo.append_log({
-        "user_id": user_payload["sub"],
-        "role": user_payload["role"],
-        "action": "INSPECTION_FINALIZED",
-        "resource_type": "INSPECTION",
-        "resource_id": inspection_id,
-        "old_value": {"status": ins.get("status")},
-        "new_value": {
+    await audit_service.record_event(
+        action="INSPECTION_FINALIZED",
+        actor_id=user_payload["sub"],
+        actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+        role=user_payload.get("role", "INSPECTOR"),
+        resource_type="INSPECTION",
+        resource_id=inspection_id,
+        inspection_id=inspection_id,
+        result="SUCCESS",
+        description=f"Inspection case {ins.get('code', inspection_id)} formally finalized and sealed.",
+        old_value={"status": ins.get("status")},
+        new_value={
             "status": "FINALIZED",
             "business_name": effective_business_name,
             "location": effective_location
         }
-    })
+    )
 
     return {"success": True, "inspection": finalized}

@@ -343,11 +343,17 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
+    event_id = Column(String(50), nullable=True, index=True)
     user_id = Column(String(36), nullable=False, index=True)
+    actor_name = Column(String(150), nullable=True)
     role = Column(String(50), nullable=False)
     action = Column(String(100), nullable=False, index=True)
     resource_type = Column(String(100), nullable=False)
     resource_id = Column(String(100), nullable=False)
+    inspection_id = Column(String(100), nullable=True, index=True)
+    result = Column(String(50), nullable=True, default="SUCCESS")
+    description = Column(Text, nullable=True)
+    correlation_id = Column(String(100), nullable=True, index=True)
     old_value = Column(JSON, nullable=True)
     new_value = Column(JSON, nullable=True)
     timestamp = Column(DateTime(timezone=True), default=get_utc_now, index=True)
