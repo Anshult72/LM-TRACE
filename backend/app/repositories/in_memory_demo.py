@@ -2,6 +2,18 @@ from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 import copy
 from app.core.security import get_password_hash
+from app.core.statutory_registry import (
+    OFFICIAL_STATUTORY_DOCUMENTS,
+    OFFICIAL_STATUTORY_RULES,
+    STATUTORY_FAMILIES,
+    get_statutory_summary,
+    list_statutory_documents,
+    get_statutory_document_by_id,
+    list_statutory_rules,
+    get_statutory_rule_by_id,
+    get_statutory_families,
+    get_statutory_traceability,
+)
 from app.repositories.interfaces import (
     IUserRepository, IProductRepository, IInspectionRepository,
     IRuleRepository, IReportRepository, IAuditLogRepository
@@ -415,6 +427,13 @@ class DemoInMemoryRepository(
                 "is_demo_rule": False
             }
         ]
+
+        # 5b. Statutory Documents & Rules
+        self.legal_documents = {d["id"]: copy.deepcopy(d) for d in OFFICIAL_STATUTORY_DOCUMENTS}
+        self.statutory_rules = {r["id"]: copy.deepcopy(r) for r in OFFICIAL_STATUTORY_RULES}
+        self.statutory_families = copy.deepcopy(STATUTORY_FAMILIES)
+        self.rule_amendments = {}
+        self.rule_audit_logs = []
 
         # 6. Inspections
         self.inspections: Dict[str, Dict[str, Any]] = {
@@ -1230,6 +1249,40 @@ class DemoInMemoryRepository(
 
     async def get_rule_coverage(self) -> List[Dict[str, Any]]:
         return copy.deepcopy(self.rule_coverage)
+
+    async def get_statutory_summary(self) -> Dict[str, Any]:
+        return get_statutory_summary()
+
+    async def list_statutory_documents(
+        self,
+        doc_type: Optional[str] = None,
+        status: Optional[str] = None,
+        family: Optional[str] = None,
+        search: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        return list_statutory_documents(doc_type=doc_type, status=status, family=family, search=search)
+
+    async def get_statutory_document_by_id(self, doc_id: str) -> Optional[Dict[str, Any]]:
+        return get_statutory_document_by_id(doc_id)
+
+    async def list_statutory_rules(
+        self,
+        document_id: Optional[str] = None,
+        family: Optional[str] = None,
+        status: Optional[str] = None,
+        search: Optional[str] = None,
+        rule_code: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        return list_statutory_rules(document_id=document_id, family=family, status=status, search=search, rule_code=rule_code)
+
+    async def get_statutory_rule_by_id(self, rule_id: str) -> Optional[Dict[str, Any]]:
+        return get_statutory_rule_by_id(rule_id)
+
+    async def get_statutory_families(self) -> List[Dict[str, Any]]:
+        return get_statutory_families()
+
+    async def get_statutory_traceability(self, code: str) -> Dict[str, Any]:
+        return get_statutory_traceability(code)
 
     # --- IReportRepository ---
     async def save_report_metadata(self, report_data: Dict[str, Any]) -> Dict[str, Any]:

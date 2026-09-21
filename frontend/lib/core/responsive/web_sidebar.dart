@@ -144,8 +144,8 @@ class WebSidebar extends StatelessWidget {
                     label: 'Statutory Reference',
                     icon: Icons.menu_book_outlined,
                     activeIcon: Icons.menu_book,
-                    route: '/about',
-                    isActive: location.startsWith('/about'),
+                    route: '/statutory-reference',
+                    isActive: location.startsWith('/statutory-reference') || location.startsWith('/about'),
                   ),
                   _buildNavItem(
                     context,

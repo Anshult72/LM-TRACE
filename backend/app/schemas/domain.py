@@ -462,3 +462,72 @@ class LabelChangeComparisonResult(BaseModel):
     previous_mrp: Optional[str] = None
     current_mrp: Optional[str] = None
     visual_similarity: float
+
+# --- STATUTORY REFERENCE SCHEMAS ---
+class StatutoryDocumentResponse(BaseModel):
+    id: str
+    title: str
+    short_title: str
+    document_type: str  # ACT, PRINCIPAL_RULE, GAZETTE_AMENDMENT, OFFICIAL_ADVISORY, PROPOSED_AMENDMENT
+    authority: str
+    jurisdiction: str = "Government of India (Union)"
+    notification_number: Optional[str] = None
+    gazette_reference: Optional[str] = None
+    publication_date: Optional[str] = None
+    effective_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    status: str  # ACTIVE, SUPERSEDED, NOT_YET_EFFECTIVE, ARCHIVED
+    source_url: str
+    official_document_url: Optional[str] = None
+    version: str
+    parent_document_id: Optional[str] = None
+    rule_family: str
+    summary: str
+    rules_count: int = 0
+
+class StatutoryRuleResponse(BaseModel):
+    id: str
+    rule_code: str
+    document_id: str
+    document_title: str
+    rule_family: str
+    rule_number: str
+    title: str
+    requirement_summary: str
+    subject: str
+    applicability: str
+    source_reference: str
+    version: str
+    publication_date: Optional[str] = None
+    effective_from: str
+    effective_to: Optional[str] = None
+    status: str  # ACTIVE, SUPERSEDED, NOT_YET_EFFECTIVE, ARCHIVED
+    mapped_rule_engine_id: Optional[str] = None
+    mapped_rule_engine_code: Optional[str] = None
+    is_automated: bool = False
+    official_url: str
+
+class StatutorySummaryResponse(BaseModel):
+    total_documents: int
+    active_rules: int
+    total_rules: int
+    statutory_families_count: int
+    amendments_count: int
+    future_effective_count: int
+    mapped_to_engine_count: int
+
+class StatutoryFamilyResponse(BaseModel):
+    family_name: str
+    authority: str
+    parent_act: str
+    document_count: int
+    active_rules_count: int
+    description: str
+
+class StatutoryTraceabilityResponse(BaseModel):
+    finding_or_rule_code: str
+    statutory_rule: Optional[StatutoryRuleResponse] = None
+    rule_engine_rule: Optional[Dict[str, Any]] = None
+    source_document: Optional[StatutoryDocumentResponse] = None
+    traceability_chain: List[str] = []
+

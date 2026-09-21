@@ -32,4 +32,12 @@ class ApiConstants {
   static String inspectionActiveCalibration(String inspectionId) => "/api/inspections/$inspectionId/calibrations/active";
   static String inspectionCalibrationPreview(String inspectionId) => "/api/inspections/$inspectionId/calibrations/preview";
   static String inspectionImage(String inspectionId, String imageId) => "$baseUrl/api/inspections/$inspectionId/images/$imageId";
+
+  static const String statutorySummary = "/api/statutory/summary";
+  static const String statutoryDocuments = "/api/statutory/documents";
+  static String statutoryDocument(String id) => "/api/statutory/documents/$id";
+  static const String statutoryRules = "/api/statutory/rules";
+  static String statutoryRule(String id) => "/api/statutory/rules/$id";
+  static const String statutoryFamilies = "/api/statutory/families";
+  static String statutoryTraceability(String code) => "/api/statutory/traceability/$code";
 }

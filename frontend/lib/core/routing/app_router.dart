@@ -26,7 +26,7 @@ import '../../features/supervisor/supervisor_screen.dart';
 import '../../features/profile/officer_profile_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/audit/audit_trail_screen.dart';
-import '../../features/about/help_about_screen.dart';
+import '../../features/about/statutory_reference_screen.dart';
 import '../../features/landing/landing_page_screen.dart';
 
 import '../responsive/web_app_shell.dart';
@@ -224,8 +224,12 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
             builder: (context, state) => const AuditTrailScreen(),
           ),
           GoRoute(
+            path: '/statutory-reference',
+            builder: (context, state) => const StatutoryReferenceScreen(),
+          ),
+          GoRoute(
             path: '/about',
-            builder: (context, state) => const HelpAboutScreen(),
+            builder: (context, state) => const StatutoryReferenceScreen(),
           ),
         ],
       ),
