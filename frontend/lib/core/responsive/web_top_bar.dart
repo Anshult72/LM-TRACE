@@ -22,7 +22,7 @@ class WebTopBar extends ConsumerWidget {
     if (loc.startsWith('/rules')) return 'Statutory Rule Engine Registry';
     if (loc.startsWith('/calibration')) return 'Scale & Metric Calibration';
     if (loc.startsWith('/supervisor')) return 'Supervisor Enforcement Review';
-    if (loc.startsWith('/audit-trail')) return 'Chain of Custody Audit Trail';
+    if (loc.startsWith('/audit-trail')) return 'Audit Trail';
     if (loc.startsWith('/settings')) return 'System Configuration';
     if (loc.startsWith('/about')) return 'Statutory Standards & About';
     return 'Legal Metrology Compliance';

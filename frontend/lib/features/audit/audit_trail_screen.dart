@@ -4,7 +4,75 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/responsive/web_page_container.dart';
 import 'models/audit_models.dart';
+
+// --- Helper to Compute Resilient KPI Metrics from Loaded Events ---
+
+AuditSummary computeDerivedSummary(List<AuditEvent> events, [AuditSummary? serverSummary]) {
+  if (serverSummary != null && serverSummary.totalEvents > 0) {
+    return serverSummary;
+  }
+  if (events.isEmpty) {
+    return AuditSummary.empty();
+  }
+
+  // Indian Standard Time (IST = UTC + 5:30)
+  final istNow = DateTime.now().toUtc().add(const Duration(hours: 5, minutes: 30));
+  final todayStr = '${istNow.year}-${istNow.month.toString().padLeft(2, '0')}-${istNow.day.toString().padLeft(2, '0')}';
+
+  int todayCount = 0;
+  int inspectionCount = 0;
+  int securityCount = 0;
+  int systemCount = 0;
+
+  for (final ev in events) {
+    if (ev.timestamp != null) {
+      final evIst = ev.timestamp!.add(const Duration(hours: 5, minutes: 30));
+      final evDayStr = '${evIst.year}-${evIst.month.toString().padLeft(2, '0')}-${evIst.day.toString().padLeft(2, '0')}';
+      if (evDayStr == todayStr) {
+        todayCount++;
+      }
+    } else if (ev.rawTimestamp.contains(todayStr)) {
+      todayCount++;
+    }
+
+    final cat = ev.eventType.toUpperCase();
+    final act = ev.action.toUpperCase();
+
+    if (ev.inspectionId != null ||
+        cat.contains('INSPECT') ||
+        cat.contains('EVID') ||
+        cat.contains('OCR') ||
+        cat.contains('CV') ||
+        cat.contains('VISION') ||
+        cat.contains('CALIB') ||
+        cat.contains('RULE') ||
+        cat.contains('STATUT') ||
+        cat.contains('COMPLIANCE') ||
+        cat.contains('FINDING') ||
+        cat.contains('VIOL') ||
+        cat.contains('REPORT')) {
+      inspectionCount++;
+    }
+
+    if (cat.contains('AUTH') || cat.contains('SEC') || act.contains('LOGIN')) {
+      securityCount++;
+    }
+
+    if (ev.role.toUpperCase() == 'SYSTEM' || ev.actorId.toLowerCase() == 'system') {
+      systemCount++;
+    }
+  }
+
+  return AuditSummary(
+    totalEvents: events.length,
+    todayEvents: todayCount,
+    inspectionEvents: inspectionCount,
+    securityEvents: securityCount,
+    systemEvents: systemCount,
+  );
+}
 
 // --- State Providers ---
 
@@ -14,17 +82,52 @@ final auditResultFilterProvider = StateProvider<String>((ref) => 'ALL');
 final auditRoleFilterProvider = StateProvider<String>((ref) => 'ALL');
 final auditDateFilterProvider = StateProvider<String>((ref) => 'ALL'); // 'ALL', 'TODAY', 'WEEK'
 
+/// Unfiltered provider ensuring accurate summary totals even when search filters are active
+final unfilteredAuditLogsProvider = FutureProvider<List<AuditEvent>>((ref) async {
+  final client = ref.watch(apiClientProvider);
+  try {
+    final response = await client.get(
+      ApiConstants.auditLogs,
+      queryParameters: {'limit': 200, 'offset': 0},
+    );
+    if (response.statusCode == 200) {
+      List<dynamic> rawItems = [];
+      if (response.data is Map && response.data['items'] is List) {
+        rawItems = response.data['items'] as List<dynamic>;
+      } else if (response.data is List) {
+        rawItems = response.data as List<dynamic>;
+      }
+      return rawItems
+          .map((item) => AuditEvent.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+    }
+  } catch (e) {
+    debugPrint('Unfiltered audit logs fetch notice: $e');
+  }
+  return [];
+});
+
 final auditSummaryProvider = FutureProvider<AuditSummary>((ref) async {
   final client = ref.watch(apiClientProvider);
   try {
     final response = await client.get('${ApiConstants.auditLogs}/summary');
     if (response.statusCode == 200 && response.data is Map) {
-      return AuditSummary.fromJson(Map<String, dynamic>.from(response.data));
+      final summary = AuditSummary.fromJson(Map<String, dynamic>.from(response.data));
+      if (summary.totalEvents > 0) {
+        return summary;
+      }
     }
   } catch (e) {
-    debugPrint('Audit summary fetch error: $e');
+    debugPrint('Audit summary endpoint unavailable, deriving from logs: $e');
   }
-  return AuditSummary.empty();
+
+  // Resilient derivation from loaded records:
+  final allLogs = await ref.watch(unfilteredAuditLogsProvider.future);
+  if (allLogs.isNotEmpty) {
+    return computeDerivedSummary(allLogs);
+  }
+  final visibleLogs = await ref.watch(auditLogsProvider.future);
+  return computeDerivedSummary(visibleLogs);
 });
 
 final auditLogsProvider = FutureProvider<List<AuditEvent>>((ref) async {
@@ -95,6 +198,7 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
   }
 
   void _refreshAll() {
+    ref.invalidate(unfilteredAuditLogsProvider);
     ref.invalidate(auditSummaryProvider);
     ref.invalidate(auditLogsProvider);
   }
@@ -191,89 +295,86 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
   Widget build(BuildContext context) {
     final summaryAsync = ref.watch(auditSummaryProvider);
     final logsAsync = ref.watch(auditLogsProvider);
+    final unfilteredAsync = ref.watch(unfilteredAuditLogsProvider);
+    final effectiveLogs = unfilteredAsync.valueOrNull ?? logsAsync.valueOrNull ?? [];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: CustomScrollView(
-        slivers: [
-          // Sticky Top AppBar
-          SliverAppBar(
-            pinned: true,
-            elevation: 0,
-            backgroundColor: Colors.white,
-            titleSpacing: 24,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text(
-                  'Legal Metrology / System Audit',
-                  style: TextStyle(fontSize: 11, color: AppColors.neutral500, fontWeight: FontWeight.w500),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Audit Trail',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryNavy,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              OutlinedButton.icon(
-                onPressed: _showLookupChainDialog,
-                icon: const Icon(Icons.timeline_outlined, size: 16),
-                label: const Text('Trace Chain of Custody'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primaryNavy,
-                  side: const BorderSide(color: AppColors.neutral300),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(Icons.refresh, color: AppColors.neutral700),
-                tooltip: 'Refresh Audit Log',
-                onPressed: _refreshAll,
-              ),
-              const SizedBox(width: 16),
+      body: WebPageContainer(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Action Header
+              _buildTopActionBar(),
+              const SizedBox(height: 16),
+
+              // Statutory Header Banner
+              _buildStatutoryBanner(),
+              const SizedBox(height: 16),
+
+              // KPI Summary Cards (dynamically computed from live data)
+              _buildSummarySection(summaryAsync, effectiveLogs),
+              const SizedBox(height: 20),
+
+              // Filter & Search Controls
+              _buildFilterBar(),
+              const SizedBox(height: 16),
+
+              // Event Records List
+              _buildEventList(logsAsync),
             ],
-            bottom: const PreferredSize(
-              preferredSize: Size.fromHeight(1),
-              child: Divider(height: 1, color: AppColors.neutral200),
-            ),
           ),
-
-          // Main Content Sliver
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Statutory Header Banner
-                  _buildStatutoryBanner(),
-                  const SizedBox(height: 16),
-
-                  // KPI Summary Cards
-                  _buildSummarySection(summaryAsync),
-                  const SizedBox(height: 20),
-
-                  // Filter & Search Controls
-                  _buildFilterBar(),
-                  const SizedBox(height: 16),
-
-                  // Event Records List
-                  _buildEventList(logsAsync),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildTopActionBar() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'Audit Trail',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryNavy,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Immutable chronological system-of-record capturing inspection events, computer vision metrics, statutory reviews, and officer custody under the Legal Metrology Act, 2009.',
+                style: TextStyle(fontSize: 12, color: AppColors.neutral600),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        OutlinedButton.icon(
+          onPressed: _showLookupChainDialog,
+          icon: const Icon(Icons.timeline_outlined, size: 16),
+          label: const Text('Trace Chain of Custody'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primaryNavy,
+            side: const BorderSide(color: AppColors.neutral300),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          icon: const Icon(Icons.refresh, color: AppColors.neutral700),
+          tooltip: 'Refresh Audit Log',
+          onPressed: _refreshAll,
+        ),
+      ],
     );
   }
 
@@ -322,53 +423,59 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
     );
   }
 
-  Widget _buildSummarySection(AsyncValue<AuditSummary> summaryAsync) {
-    return summaryAsync.when(
-      data: (summary) => Row(
-        children: [
-          Expanded(
-            child: _buildMetricCard(
-              title: 'Total System Events',
-              value: summary.totalEvents.toString(),
-              icon: Icons.history_edu_outlined,
-              iconColor: const Color(0xFF2563EB),
-              subtitle: 'Append-only ledger entries',
-            ),
+  Widget _buildSummarySection(
+    AsyncValue<AuditSummary> summaryAsync,
+    List<AuditEvent> loadedEvents,
+  ) {
+    final serverSummary = summaryAsync.valueOrNull;
+    final summary = (serverSummary != null && serverSummary.totalEvents > 0)
+        ? serverSummary
+        : (loadedEvents.isNotEmpty)
+            ? computeDerivedSummary(loadedEvents, serverSummary)
+            : (serverSummary ?? AuditSummary.empty());
+
+    return Row(
+      children: [
+        Expanded(
+          child: _buildMetricCard(
+            title: 'Total System Events',
+            value: summary.totalEvents.toString(),
+            icon: Icons.history_edu_outlined,
+            iconColor: const Color(0xFF2563EB),
+            subtitle: 'Append-only ledger entries',
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildMetricCard(
-              title: "Today's Events (IST)",
-              value: summary.todayEvents.toString(),
-              icon: Icons.today_outlined,
-              iconColor: const Color(0xFF0D9488),
-              subtitle: 'Current working shift',
-            ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMetricCard(
+            title: "Today's Events (IST)",
+            value: summary.todayEvents.toString(),
+            icon: Icons.today_outlined,
+            iconColor: const Color(0xFF0D9488),
+            subtitle: 'Current working shift',
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildMetricCard(
-              title: 'Inspection Operations',
-              value: summary.inspectionEvents.toString(),
-              icon: Icons.assignment_turned_in_outlined,
-              iconColor: const Color(0xFF7C3AED),
-              subtitle: 'OCR, CV, rules & compliance',
-            ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMetricCard(
+            title: 'Inspection Operations',
+            value: summary.inspectionEvents.toString(),
+            icon: Icons.assignment_turned_in_outlined,
+            iconColor: const Color(0xFF7C3AED),
+            subtitle: 'OCR, CV, rules & compliance',
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildMetricCard(
-              title: 'Access & Security',
-              value: summary.securityEvents.toString(),
-              icon: Icons.shield_outlined,
-              iconColor: const Color(0xFFDC2626),
-              subtitle: 'Officer authentication & tokens',
-            ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMetricCard(
+            title: 'Access & Security',
+            value: summary.securityEvents.toString(),
+            icon: Icons.shield_outlined,
+            iconColor: const Color(0xFFDC2626),
+            subtitle: 'Officer authentication & tokens',
           ),
-        ],
-      ),
-      loading: () => const LinearProgressIndicator(minHeight: 3),
-      error: (err, stack) => const SizedBox.shrink(),
+        ),
+      ],
     );
   }
 
@@ -1298,6 +1405,88 @@ class _ChainOfCustodyModalState extends ConsumerState<_ChainOfCustodyModal> {
       }
       throw Exception('Unexpected response');
     } catch (e) {
+      // Resilient fallback: build chain from events in memory that reference this inspection
+      try {
+        final allEvents = ref.read(auditLogsProvider).valueOrNull ?? [];
+        final matching = allEvents.where((e) =>
+          e.inspectionId == widget.inspectionId ||
+          e.resourceId == widget.inspectionId ||
+          e.description.contains(widget.inspectionId)
+        ).toList();
+
+        if (matching.isNotEmpty) {
+          final stages = [
+            ChainOfCustodyStage(
+              stageKey: 'INSPECTION_INITIATION',
+              stageName: 'Inspection Initiation',
+              status: matching.any((e) => e.action.contains('CREATED')) ? 'COMPLETED' : 'PENDING',
+              actor: matching.firstWhere((e) => e.action.contains('CREATED'), orElse: () => matching.first).actorName,
+              timestamp: matching.firstWhere((e) => e.action.contains('CREATED'), orElse: () => matching.first).formattedIST,
+              details: 'Inspection case registered in system.',
+            ),
+            ChainOfCustodyStage(
+              stageKey: 'EVIDENCE_INGESTION',
+              stageName: 'Evidence & Surface Ingestion',
+              status: matching.any((e) => e.action.contains('IMAGE') || e.action.contains('EVIDENCE')) ? 'COMPLETED' : 'PENDING',
+              details: 'Package surface images ingested.',
+            ),
+            ChainOfCustodyStage(
+              stageKey: 'OCR_EXTRACTION',
+              stageName: 'Multi-Surface AI OCR Extraction',
+              status: matching.any((e) => e.action.contains('OCR')) ? 'COMPLETED' : 'PENDING',
+              details: 'Multi-surface text blocks extracted.',
+            ),
+            ChainOfCustodyStage(
+              stageKey: 'SCALE_CALIBRATION',
+              stageName: 'Scale Metric Calibration',
+              status: matching.any((e) => e.action.contains('CALIBRATION')) ? 'COMPLETED' : 'PENDING',
+              details: 'Physical metric calibration computed.',
+            ),
+            ChainOfCustodyStage(
+              stageKey: 'CV_MEASUREMENT',
+              stageName: 'Computer Vision PDP & Typography',
+              status: matching.any((e) => e.action.contains('CV')) ? 'COMPLETED' : 'PENDING',
+              details: 'Principal Display Panel measurement.',
+            ),
+            ChainOfCustodyStage(
+              stageKey: 'STATUTORY_EVALUATION',
+              stageName: 'Statutory Rule Resolution',
+              status: matching.any((e) => e.action.contains('RULE')) ? 'COMPLETED' : 'PENDING',
+              details: 'Applicable rules resolved.',
+            ),
+            ChainOfCustodyStage(
+              stageKey: 'COMPLIANCE_ASSESSMENT',
+              stageName: 'Compliance Engine Assessment',
+              status: matching.any((e) => e.action.contains('COMPLIANCE')) ? 'COMPLETED' : 'PENDING',
+              details: 'Compliance checks assessed.',
+            ),
+            ChainOfCustodyStage(
+              stageKey: 'SUPERVISOR_VERIFICATION',
+              stageName: 'Officer & Supervisory Review',
+              status: matching.any((e) => e.action.contains('FINDING')) ? 'COMPLETED' : 'PENDING',
+              details: 'Violations reviewed by officer.',
+            ),
+            ChainOfCustodyStage(
+              stageKey: 'REPORT_FINALIZATION',
+              stageName: 'Statutory Report Archival',
+              status: matching.any((e) => e.action.contains('REPORT') || e.action.contains('FINALIZED')) ? 'COMPLETED' : 'PENDING',
+              details: 'Formal compliance report finalized.',
+            ),
+          ];
+
+          setState(() {
+            _data = ChainOfCustodyData(
+              inspectionId: widget.inspectionId,
+              inspectionCode: widget.inspectionId,
+              stages: stages,
+              events: matching,
+            );
+            _loading = false;
+          });
+          return;
+        }
+      } catch (_) {}
+
       setState(() {
         _error = e.toString();
         _loading = false;
