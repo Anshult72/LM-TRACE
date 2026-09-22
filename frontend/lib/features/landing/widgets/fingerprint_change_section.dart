@@ -17,7 +17,7 @@ class FingerprintChangeSection extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: AppColors.neutral50,
+      color: AppColors.surfaceIvory,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 32,
         vertical: isMobile ? 56 : 96,
@@ -32,14 +32,14 @@ class FingerprintChangeSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withValues(alpha: 0.1),
+                  color: AppColors.primaryNavy.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.25)),
+                  border: Border.all(color: AppColors.primaryNavy.withValues(alpha: 0.2)),
                 ),
                 child: const Text(
                   'PACKAGING INTELLIGENCE & DOSSIERS',
                   style: TextStyle(
-                    color: AppColors.primaryLight,
+                    color: AppColors.primaryNavy,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -108,12 +108,12 @@ class FingerprintChangeSection extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(isMobile ? 18 : 28),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceIvory,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight, width: 1.2),
+        border: Border.all(color: AppColors.skyGrey, width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x040F172A),
+            color: Color(0x060F2D3A),
             blurRadius: 10,
             offset: Offset(0, 3),
           ),
@@ -128,10 +128,10 @@ class FingerprintChangeSection extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppColors.mintMist,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.fingerprint_rounded, color: AppColors.accentBlue, size: 22),
+                child: const Icon(Icons.fingerprint_rounded, color: AppColors.inspectionGreen, size: 22),
               ),
               const SizedBox(width: 14),
               const Expanded(
@@ -161,9 +161,9 @@ class FingerprintChangeSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.neutral50,
+              color: AppColors.surfaceIvory,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.neutral200),
+              border: Border.all(color: AppColors.skyGrey),
             ),
             child: Column(
               children: [
@@ -173,12 +173,12 @@ class FingerprintChangeSection extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.arrow_downward_rounded, size: 14, color: AppColors.accentBlue),
+                      Icon(Icons.arrow_downward_rounded, size: 14, color: AppColors.inspectionGreen),
                       SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           'Algorithmic Comparison',
-                          style: TextStyle(fontSize: 10, color: AppColors.accentBlue, fontWeight: FontWeight.w700),
+                          style: TextStyle(fontSize: 10, color: AppColors.inspectionGreen, fontWeight: FontWeight.w700),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -192,7 +192,7 @@ class FingerprintChangeSection extends StatelessWidget {
           const SizedBox(height: 16),
           const Row(
             children: [
-              Icon(Icons.info_outline_rounded, color: AppColors.reviewAmber, size: 16),
+              Icon(Icons.info_outline_rounded, color: AppColors.warningAmber, size: 16),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -211,10 +211,10 @@ class FingerprintChangeSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: isAlert ? AppColors.reviewAmberLight : Colors.white,
+        color: isAlert ? AppColors.warningAmber.withValues(alpha: 0.1) : AppColors.surfaceIvory,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: isAlert ? AppColors.reviewAmberBorder : AppColors.borderLight,
+          color: isAlert ? AppColors.warningAmber.withValues(alpha: 0.3) : AppColors.skyGrey,
         ),
       ),
       child: isMobile
@@ -224,7 +224,7 @@ class FingerprintChangeSection extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    color: isAlert ? const Color(0xFFB45309) : AppColors.textDark,
+                    color: isAlert ? AppColors.warningAmber : AppColors.textDark,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
@@ -233,7 +233,7 @@ class FingerprintChangeSection extends StatelessWidget {
                 Text(
                   detail,
                   style: TextStyle(
-                    color: isAlert ? const Color(0xFF92400E) : AppColors.textMuted,
+                    color: isAlert ? AppColors.warningAmber : AppColors.textMuted,
                     fontSize: 10,
                     fontFamily: 'monospace',
                   ),
@@ -244,12 +244,12 @@ class FingerprintChangeSection extends StatelessWidget {
           : Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(label, style: TextStyle(color: isAlert ? const Color(0xFFB45309) : AppColors.textDark, fontSize: 11.5, fontWeight: FontWeight.w700)),
+                Text(label, style: TextStyle(color: isAlert ? AppColors.warningAmber : AppColors.textDark, fontSize: 11.5, fontWeight: FontWeight.w700)),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     detail,
-                    style: TextStyle(color: isAlert ? const Color(0xFF92400E) : AppColors.textMuted, fontSize: 11, fontFamily: 'monospace'),
+                    style: TextStyle(color: isAlert ? AppColors.warningAmber : AppColors.textMuted, fontSize: 11, fontFamily: 'monospace'),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -262,12 +262,12 @@ class FingerprintChangeSection extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(isMobile ? 18 : 28),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceIvory,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight, width: 1.2),
+        border: Border.all(color: AppColors.skyGrey, width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x040F172A),
+            color: Color(0x060F2D3A),
             blurRadius: 10,
             offset: Offset(0, 3),
           ),
@@ -282,10 +282,10 @@ class FingerprintChangeSection extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
+                  color: AppColors.mintMist,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.description_outlined, color: AppColors.passGreen, size: 22),
+                child: const Icon(Icons.description_outlined, color: AppColors.inspectionGreen, size: 22),
               ),
               const SizedBox(width: 14),
               const Expanded(
@@ -315,9 +315,9 @@ class FingerprintChangeSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.neutral50,
+              color: AppColors.surfaceIvory,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.neutral200),
+              border: Border.all(color: AppColors.skyGrey),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,7 +353,7 @@ class FingerprintChangeSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 3.5),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.passGreen, size: 15),
+          Icon(icon, color: AppColors.inspectionGreen, size: 15),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

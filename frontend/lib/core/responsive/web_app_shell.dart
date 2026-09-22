@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'responsive_layout.dart';
 import 'web_sidebar.dart';
 import 'web_top_bar.dart';
@@ -35,7 +36,7 @@ class WebAppShell extends StatelessWidget {
     final isTablet = ResponsiveLayout.isTablet(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceIvory,
       body: Row(
         children: [
           // Left persistent sidebar

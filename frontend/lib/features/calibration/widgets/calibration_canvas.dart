@@ -111,9 +111,9 @@ class _CalibrationCanvasState extends State<CalibrationCanvas> {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A), // Sleek deep slate dark canvas
+        color: AppColors.primaryNavy, // Brand dark canvas
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF334155), width: 1.5),
+        border: Border.all(color: const Color(0xFF163E50), width: 1.5),
         boxShadow: const [
           BoxShadow(
             color: Color(0x33000000),
@@ -286,8 +286,8 @@ class _CalibrationCanvasState extends State<CalibrationCanvas> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: widget.activeTarget == 'A'
-                          ? const Color(0xFF06B6D4) // Cyan
-                          : const Color(0xFFF59E0B), // Amber
+                          ? AppColors.mintMist // Point A
+                          : AppColors.accentGold, // Point B
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -365,9 +365,9 @@ class _CalibrationCanvasState extends State<CalibrationCanvas> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xEE0F172A),
+                color: const Color(0xEE0A1F29),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF334155)),
+                border: Border.all(color: const Color(0xFF163E50)),
                 boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 6)],
               ),
               child: Row(
@@ -380,12 +380,12 @@ class _CalibrationCanvasState extends State<CalibrationCanvas> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: widget.activeTarget == 'A'
-                            ? const Color(0xFF06B6D4).withValues(alpha: 0.25)
+                            ? AppColors.mintMist.withValues(alpha: 0.25)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: widget.activeTarget == 'A'
-                              ? const Color(0xFF06B6D4)
+                              ? AppColors.mintMist
                               : Colors.white24,
                         ),
                       ),
@@ -395,7 +395,7 @@ class _CalibrationCanvasState extends State<CalibrationCanvas> {
                           const Text(
                             "Pt A: ",
                             style: TextStyle(
-                              color: Color(0xFF06B6D4),
+                              color: AppColors.mintMist,
                               fontWeight: FontWeight.bold,
                               fontSize: 11,
                             ),
@@ -420,12 +420,12 @@ class _CalibrationCanvasState extends State<CalibrationCanvas> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: widget.activeTarget == 'B'
-                            ? const Color(0xFFF59E0B).withValues(alpha: 0.25)
+                            ? AppColors.accentGold.withValues(alpha: 0.25)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: widget.activeTarget == 'B'
-                              ? const Color(0xFFF59E0B)
+                              ? AppColors.accentGold
                               : Colors.white24,
                         ),
                       ),
@@ -435,7 +435,7 @@ class _CalibrationCanvasState extends State<CalibrationCanvas> {
                           const Text(
                             "Pt B: ",
                             style: TextStyle(
-                              color: Color(0xFFF59E0B),
+                              color: AppColors.accentGold,
                               fontWeight: FontWeight.bold,
                               fontSize: 11,
                             ),
@@ -607,23 +607,23 @@ class _InteractiveCalibrationPainter extends CustomPainter {
       tp.paint(canvas, Offset(mid.dx - tp.width / 2, mid.dy - tp.height / 2));
     }
 
-    // Draw Point A handle (Cyan)
+    // Draw Point A handle (Mint Mist / Inspection Green)
     if (dispA != null) {
       _drawHandle(
         canvas: canvas,
         center: dispA,
-        color: const Color(0xFF06B6D4),
+        color: AppColors.mintMist,
         label: "A",
         isActive: activeTarget == 'A',
       );
     }
 
-    // Draw Point B handle (Amber)
+    // Draw Point B handle (Accent Gold)
     if (dispB != null) {
       _drawHandle(
         canvas: canvas,
         center: dispB,
-        color: const Color(0xFFF59E0B),
+        color: AppColors.accentGold,
         label: "B",
         isActive: activeTarget == 'B',
       );

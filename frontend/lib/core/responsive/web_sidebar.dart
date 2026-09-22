@@ -184,16 +184,31 @@ class WebSidebar extends ConsumerWidget {
                       route: '/audit-trail',
                       isActive: location.startsWith('/audit-trail'),
                     ),
-                  if (user?.canAccessRoute('/statutory-reference') ?? true)
+
+                  const SizedBox(height: 16),
+                  if (!isCollapsed)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                      child: Text(
+                        'SYSTEM',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
+                          color: AppColors.sage,
+                        ),
+                      ),
+                    ),
+                  if (user?.canAccessRoute('/about') ?? true)
                     _buildNavItem(
                       context,
                       label: 'Statutory Reference',
                       icon: Icons.menu_book_outlined,
                       activeIcon: Icons.menu_book,
-                      route: '/statutory-reference',
-                      isActive: location.startsWith('/statutory-reference') || location.startsWith('/about'),
+                      route: '/about',
+                      isActive: location.startsWith('/about'),
                     ),
-                  if (user?.canAccessRoute('/settings') ?? false)
+                  if (user?.canAccessRoute('/settings') ?? true)
                     _buildNavItem(
                       context,
                       label: 'System Settings',
@@ -257,14 +272,14 @@ class WebSidebar extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E3A5F).withValues(alpha: 0.6),
+                color: const Color(0xFF163E50).withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0xFF2E4D7A), width: 0.8),
+                border: Border.all(color: AppColors.inspectionGreen.withValues(alpha: 0.3), width: 0.8),
               ),
               child: const Text(
                 'Legal Metrology • Govt. of India',
                 style: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: AppColors.skyGrey,
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,
@@ -285,15 +300,15 @@ class WebSidebar extends ConsumerWidget {
     required String route,
     required bool isActive,
   }) {
-    final effectiveColor = isActive ? Colors.white : const Color(0xFFCBD5E1);
-    final effectiveBg = isActive ? const Color(0xFF1E3A5F) : Colors.transparent;
+    final effectiveColor = isActive ? Colors.white : AppColors.skyGrey;
+    final effectiveBg = isActive ? const Color(0xFF163E50) : Colors.transparent;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: InkWell(
         onTap: () => context.go(route),
         borderRadius: BorderRadius.circular(8),
-        hoverColor: const Color(0xFF162D4A),
+        hoverColor: const Color(0xFF133646),
         child: Container(
           padding: EdgeInsets.symmetric(
             horizontal: isCollapsed ? 0 : 12,
@@ -303,7 +318,7 @@ class WebSidebar extends ConsumerWidget {
             color: effectiveBg,
             borderRadius: BorderRadius.circular(8),
             border: isActive
-                ? Border.all(color: AppColors.accentBlue.withValues(alpha: 0.5), width: 1)
+                ? Border.all(color: AppColors.inspectionGreen, width: 1)
                 : null,
           ),
           alignment: isCollapsed ? Alignment.center : Alignment.centerLeft,
@@ -312,7 +327,7 @@ class WebSidebar extends ConsumerWidget {
             children: [
               Icon(
                 isActive ? activeIcon : icon,
-                color: isActive ? const Color(0xFF60A5FA) : effectiveColor,
+                color: isActive ? AppColors.mintMist : effectiveColor,
                 size: 20,
               ),
               if (!isCollapsed) ...[
@@ -333,7 +348,7 @@ class WebSidebar extends ConsumerWidget {
                     width: 6,
                     height: 6,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF60A5FA),
+                      color: AppColors.accentGold,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -361,8 +376,8 @@ class WebSidebar extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: const BoxDecoration(
-        color: Color(0xFF0B1B29),
-        border: Border(top: BorderSide(color: Color(0xFF1E3A5F), width: 1)),
+        color: Color(0xFF0A1F29),
+        border: Border(top: BorderSide(color: Color(0xFF163E50), width: 1)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -373,7 +388,7 @@ class WebSidebar extends ConsumerWidget {
                 width: 7,
                 height: 7,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF22C55E),
+                  color: AppColors.successGreen,
                   shape: BoxShape.circle,
                 ),
               ),
@@ -381,7 +396,7 @@ class WebSidebar extends ConsumerWidget {
               const Expanded(
                 child: Text(
                   'Engine Online • Rule v2024.1',
-                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w500),
+                  style: TextStyle(color: AppColors.steelBlue, fontSize: 11, fontWeight: FontWeight.w500),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -394,9 +409,9 @@ class WebSidebar extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: AppColors.alertRed.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.25), width: 0.8),
+                border: Border.all(color: AppColors.alertRed.withValues(alpha: 0.25), width: 0.8),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

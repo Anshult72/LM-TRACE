@@ -26,7 +26,7 @@ class MaanakNavigationDrawer extends ConsumerWidget {
     final officerId = user?.officerId ?? 'LM-001';
 
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surfaceIvory,
       child: Column(
         children: [
           // 1. Officer Header
@@ -48,7 +48,7 @@ class MaanakNavigationDrawer extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       radius: 28,
-                      backgroundColor: AppColors.secondaryBlue,
+                      backgroundColor: AppColors.inspectionGreen,
                       child: Text(
                         _getInitials(fullName),
                         style: const TextStyle(
@@ -182,7 +182,7 @@ class MaanakNavigationDrawer extends ConsumerWidget {
 
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: Divider(height: 1, color: AppColors.neutral200),
+                  child: Divider(height: 1, color: AppColors.skyGrey),
                 ),
 
                 // Account & System
@@ -230,23 +230,23 @@ class MaanakNavigationDrawer extends ConsumerWidget {
           ),
 
           // 3. Logout Section
-          const Divider(height: 1, color: AppColors.neutral200),
+          const Divider(height: 1, color: AppColors.skyGrey),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: ListTile(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              leading: const Icon(Icons.logout_rounded, color: AppColors.violationRed, size: 22),
+              leading: const Icon(Icons.logout_rounded, color: AppColors.alertRed, size: 22),
               title: const Text(
                 'Logout',
                 style: TextStyle(
-                  color: AppColors.violationRed,
+                  color: AppColors.alertRed,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               subtitle: const Text(
                 'End session & clear security credentials',
-                style: TextStyle(fontSize: 11, color: AppColors.neutral500),
+                style: TextStyle(fontSize: 11, color: AppColors.steelBlue),
               ),
               onTap: () => _confirmLogout(context, ref),
             ),
@@ -265,7 +265,7 @@ class MaanakNavigationDrawer extends ConsumerWidget {
           fontSize: 10,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.1,
-          color: AppColors.neutral500,
+          color: AppColors.steelBlue,
         ),
       ),
     );
@@ -290,7 +290,7 @@ class MaanakNavigationDrawer extends ConsumerWidget {
         dense: true,
         leading: Icon(
           isSelected && activeIcon != null ? activeIcon : icon,
-          color: isSelected ? AppColors.secondaryBlue : AppColors.neutral700,
+          color: isSelected ? AppColors.inspectionGreen : AppColors.steelBlue,
           size: 22,
         ),
         title: Text(
@@ -298,14 +298,14 @@ class MaanakNavigationDrawer extends ConsumerWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? AppColors.secondaryBlue : AppColors.neutral900,
+            color: isSelected ? AppColors.inspectionGreen : AppColors.textCharcoal,
           ),
         ),
         trailing: badgeText != null
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryBlue.withValues(alpha: 0.1),
+                  color: AppColors.mintMist,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -313,13 +313,13 @@ class MaanakNavigationDrawer extends ConsumerWidget {
                   style: const TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.secondaryBlue,
+                    color: AppColors.inspectionGreen,
                   ),
                 ),
               )
             : null,
         selected: isSelected,
-        selectedTileColor: AppColors.secondaryBlue.withValues(alpha: 0.08),
+        selectedTileColor: AppColors.mintMist.withValues(alpha: 0.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
         onTap: () {
@@ -352,7 +352,7 @@ class MaanakNavigationDrawer extends ConsumerWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.violationRed,
+              backgroundColor: AppColors.alertRed,
               foregroundColor: Colors.white,
             ),
             onPressed: () async {

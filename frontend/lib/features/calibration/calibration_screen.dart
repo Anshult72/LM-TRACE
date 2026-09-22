@@ -398,10 +398,10 @@ class _CalibrationScreenState extends ConsumerState<CalibrationScreen> {
     final isCalibrated = pxPerMm > 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9), // Subtle clean gov workspace background
+      backgroundColor: AppColors.surfaceIvory, // Official LM-TRACE institutional surface
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.secondaryBlue),
+              child: CircularProgressIndicator(color: AppColors.inspectionGreen),
             )
           : SingleChildScrollView(
               child: WebPageContainer(
@@ -629,14 +629,14 @@ class _CalibrationScreenState extends ConsumerState<CalibrationScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF), // Legal metrology soft blue notice
+        color: AppColors.mintMist,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFBFDBFE)),
+        border: Border.all(color: AppColors.inspectionGreen.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: const [
-          Icon(Icons.gavel_rounded, color: AppColors.secondaryBlue, size: 20),
+          Icon(Icons.gavel_rounded, color: AppColors.inspectionGreen, size: 20),
           SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -645,7 +645,7 @@ class _CalibrationScreenState extends ConsumerState<CalibrationScreen> {
               "This eliminates perspective distortion and ensures verifiable character height evaluation under Rule 7 Table-I.",
               style: TextStyle(
                 fontSize: 11.5,
-                color: Color(0xFF1E3A8A),
+                color: AppColors.primaryNavy,
                 height: 1.45,
                 fontWeight: FontWeight.w500,
               ),
@@ -689,7 +689,7 @@ class _CalibrationScreenState extends ConsumerState<CalibrationScreen> {
                       selected: isSelected,
                       onSelected: (_) => _onSurfaceChanged(img),
                       selectedColor: AppColors.primaryNavy,
-                      backgroundColor: const Color(0xFFF1F5F9),
+                      backgroundColor: AppColors.surfaceIvory,
                       label: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -844,9 +844,9 @@ class _CalibrationScreenState extends ConsumerState<CalibrationScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: AppColors.surfaceIvory,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.neutral200),
+              border: Border.all(color: AppColors.skyGrey),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

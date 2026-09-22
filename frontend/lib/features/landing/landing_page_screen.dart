@@ -74,7 +74,7 @@ class _LandingPageScreenState extends State<LandingPageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.neutral50,
+      backgroundColor: AppColors.surfaceIvory,
       body: Stack(
         children: [
           // Scrollable Content Body

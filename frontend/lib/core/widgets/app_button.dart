@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-enum AppButtonVariant { primary, secondary, ghost, danger }
+enum AppButtonVariant { primary, secondary, ghost, danger, highlight }
 enum AppButtonSize { sm, md, lg }
 
 /// Standardized, modern button for LM-TRACE.
@@ -40,6 +40,18 @@ class AppButton extends StatefulWidget {
     this.isFullWidth = false,
     this.customColor,
   }) : variant = AppButtonVariant.secondary;
+
+  const AppButton.highlight({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.icon,
+    this.trailingIcon,
+    this.size = AppButtonSize.md,
+    this.isLoading = false,
+    this.isFullWidth = false,
+    this.customColor,
+  }) : variant = AppButtonVariant.highlight;
 
   const AppButton.ghost({
     super.key,
@@ -111,37 +123,48 @@ class _AppButtonState extends State<AppButton> {
       case AppButtonVariant.primary:
         backgroundColor = widget.customColor ??
             (isEnabled
-                ? (_isHovered ? AppColors.secondaryBlue : AppColors.primaryNavy)
-                : AppColors.neutral300);
-        foregroundColor = isEnabled ? Colors.white : AppColors.neutral500;
+                ? (_isHovered ? AppColors.inspectionGreen : AppColors.primaryNavy)
+                : AppColors.skyGrey);
+        foregroundColor = isEnabled ? Colors.white : AppColors.steelBlue;
         if (isEnabled && _isHovered) {
-          boxShadow = AppShadows.glow(backgroundColor, opacity: 0.3);
+          boxShadow = AppShadows.glow(backgroundColor, opacity: 0.25);
         }
         break;
 
       case AppButtonVariant.secondary:
         backgroundColor = _isHovered
-            ? AppColors.neutral100
-            : (widget.customColor ?? Colors.white);
-        foregroundColor = isEnabled ? AppColors.primaryNavy : AppColors.neutral400;
+            ? AppColors.mintMist
+            : (widget.customColor ?? AppColors.surfaceIvory);
+        foregroundColor = isEnabled ? AppColors.primaryNavy : AppColors.steelBlue;
         border = Border.all(
-          color: _isHovered ? AppColors.neutral400 : AppColors.borderLight,
+          color: _isHovered ? AppColors.inspectionGreen : AppColors.skyGrey,
           width: 1.2,
         );
         break;
 
+      case AppButtonVariant.highlight:
+        backgroundColor = widget.customColor ??
+            (isEnabled
+                ? (_isHovered ? const Color(0xFFB5901F) : AppColors.accentGold)
+                : AppColors.skyGrey);
+        foregroundColor = Colors.white;
+        if (isEnabled && _isHovered) {
+          boxShadow = AppShadows.glow(AppColors.accentGold, opacity: 0.3);
+        }
+        break;
+
       case AppButtonVariant.ghost:
-        backgroundColor = _isHovered ? AppColors.neutral100 : Colors.transparent;
-        foregroundColor = isEnabled ? (widget.customColor ?? AppColors.primaryNavy) : AppColors.neutral400;
+        backgroundColor = _isHovered ? AppColors.mintMist.withValues(alpha: 0.3) : Colors.transparent;
+        foregroundColor = isEnabled ? (widget.customColor ?? AppColors.primaryNavy) : AppColors.steelBlue;
         break;
 
       case AppButtonVariant.danger:
         backgroundColor = isEnabled
-            ? (_isHovered ? const Color(0xFFDC2626) : AppColors.violationRed)
-            : AppColors.neutral300;
+            ? (_isHovered ? const Color(0xFFB93838) : AppColors.alertRed)
+            : AppColors.skyGrey;
         foregroundColor = Colors.white;
         if (isEnabled && _isHovered) {
-          boxShadow = AppShadows.glow(AppColors.violationRed, opacity: 0.3);
+          boxShadow = AppShadows.glow(AppColors.alertRed, opacity: 0.25);
         }
         break;
     }

@@ -436,15 +436,15 @@ class _InspectionDetailsFormState extends ConsumerState<InspectionDetailsForm> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.infoBg,
+              color: AppColors.mintMist.withValues(alpha: 0.35),
               borderRadius: AppRadii.sm,
-              border: Border.all(color: AppColors.secondaryBlue.withValues(alpha: 0.3)),
+              border: Border.all(color: AppColors.inspectionGreen.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
                 Icon(
                   isFinalizing ? Icons.verified_user_outlined : Icons.info_outline,
-                  color: AppColors.secondaryBlue,
+                  color: AppColors.inspectionGreen,
                   size: 22,
                 ),
                 const SizedBox(width: 10),
@@ -507,7 +507,7 @@ class _InspectionDetailsFormState extends ConsumerState<InspectionDetailsForm> {
             child: ElevatedButton(
               onPressed: widget.isLoading ? null : _handleSubmit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondaryBlue,
+                backgroundColor: AppColors.inspectionGreen,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -1284,10 +1284,10 @@ class _InspectionDetailsFormState extends ConsumerState<InspectionDetailsForm> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.secondaryBlue.withValues(alpha: 0.08) : Colors.white,
+          color: isSelected ? AppColors.mintMist.withValues(alpha: 0.35) : AppColors.surfaceIvory,
           borderRadius: AppRadii.sm,
           border: Border.all(
-            color: isSelected ? AppColors.secondaryBlue : AppColors.neutral300,
+            color: isSelected ? AppColors.inspectionGreen : AppColors.skyGrey,
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -1295,7 +1295,7 @@ class _InspectionDetailsFormState extends ConsumerState<InspectionDetailsForm> {
           children: [
             Icon(
               icon,
-              color: isSelected ? AppColors.secondaryBlue : AppColors.neutral600,
+              color: isSelected ? AppColors.inspectionGreen : AppColors.steelBlue,
               size: 24,
             ),
             const SizedBox(width: 10),
@@ -1308,13 +1308,13 @@ class _InspectionDetailsFormState extends ConsumerState<InspectionDetailsForm> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? AppColors.secondaryBlue : AppColors.textPrimary,
+                      color: isSelected ? AppColors.inspectionGreen : AppColors.primaryNavy,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 11, color: AppColors.neutral600),
+                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),

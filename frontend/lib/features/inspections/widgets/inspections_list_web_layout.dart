@@ -178,9 +178,9 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
           // 3. Desktop Table Container
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surfaceIvory,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.neutral200),
+              border: Border.all(color: AppColors.skyGrey),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.02),
@@ -203,22 +203,22 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
                           children: [
                             // Table Column Headers
                             Container(
-                              color: AppColors.neutral100,
+                              color: AppColors.sandBeige.withValues(alpha: 0.25),
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                               child: Row(
                                 children: const [
-                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('CASE ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
-                                  Expanded(flex: 4, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('ESTABLISHMENT / TRADER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
-                                  Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('LOCATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
-                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('INSPECTION TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
-                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('PACKAGE TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
-                                  Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
-                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('AUDIT DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
-                                  Expanded(flex: 3, child: Align(alignment: Alignment.centerRight, child: Text('ACTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral700)))),
+                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('CASE ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
+                                  Expanded(flex: 4, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('ESTABLISHMENT / TRADER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
+                                  Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('LOCATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
+                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('INSPECTION TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
+                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('PACKAGE TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
+                                  Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
+                                  Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('AUDIT DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
+                                  Expanded(flex: 3, child: Align(alignment: Alignment.centerRight, child: Text('ACTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
                                 ],
                               ),
                             ),
-                            const Divider(height: 1, color: AppColors.neutral200),
+                            const Divider(height: 1, color: AppColors.skyGrey),
 
                             // Table Rows or Empty State
                             if (state.isLoading)
@@ -232,11 +232,11 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
                                 child: Center(
                                   child: Column(
                                     children: [
-                                      const Icon(Icons.folder_open, size: 44, color: AppColors.neutral400),
+                                      const Icon(Icons.folder_open, size: 44, color: AppColors.textMuted),
                                       const SizedBox(height: 10),
-                                      const Text('No inspection cases match your filter criteria.', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.neutral700)),
+                                      const Text('No inspection cases match your filter criteria.', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textCharcoal)),
                                       const SizedBox(height: 4),
-                                      const Text('Try clearing search terms or selecting "All Cases".', style: TextStyle(fontSize: 12, color: AppColors.neutral500)),
+                                      const Text('Try clearing search terms or selecting "All Cases".', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                                       const SizedBox(height: 12),
                                       OutlinedButton(
                                         onPressed: () {
@@ -258,7 +258,7 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: filtered.length,
-                                separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.neutral200),
+                                separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.skyGrey),
                                 itemBuilder: (context, index) {
                                   final ins = filtered[index];
                                   return _buildTableRow(context, ins);
@@ -274,20 +274,20 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
                 // Table Footer / Counts
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFAFAFA),
-                    border: Border(top: BorderSide(color: AppColors.neutral200, width: 1)),
+                  decoration: BoxDecoration(
+                    color: AppColors.sandBeige.withValues(alpha: 0.15),
+                    border: const Border(top: BorderSide(color: AppColors.skyGrey, width: 1)),
                   ),
                   child: Row(
                     children: [
                       Text(
                         'Showing ${filtered.length} of ${allInspections.length} recorded cases',
-                        style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
+                        style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
                       ),
                       const Spacer(),
                       const Text(
                         'LM-TRACE Regulatory Inspection Database',
-                        style: TextStyle(fontSize: 11, color: AppColors.neutral400),
+                        style: TextStyle(fontSize: 11, color: AppColors.steelBlue),
                       ),
                     ],
                   ),
@@ -309,16 +309,16 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.secondaryBlue : AppColors.neutral100,
+          color: isSelected ? AppColors.inspectionGreen : AppColors.surfaceIvory,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: isSelected ? AppColors.secondaryBlue : AppColors.neutral300),
+          border: Border.all(color: isSelected ? AppColors.inspectionGreen : AppColors.skyGrey),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 11.5,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Colors.white : AppColors.neutral700,
+            color: isSelected ? Colors.white : AppColors.textCharcoal,
           ),
         ),
       ),
@@ -330,7 +330,7 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
 
     return InkWell(
       onTap: () => context.push('/inspections/${ins.id}'),
-      hoverColor: AppColors.neutral50,
+      hoverColor: AppColors.sandBeige.withValues(alpha: 0.15),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(

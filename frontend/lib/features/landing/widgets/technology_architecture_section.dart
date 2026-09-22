@@ -35,14 +35,14 @@ class TechnologyArchitectureSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.accentBlue.withValues(alpha: 0.1),
+                  color: AppColors.mintMist,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.accentBlue.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.sage),
                 ),
                 child: const Text(
                   'SYSTEM ARCHITECTURE',
                   style: TextStyle(
-                    color: AppColors.accentBlue,
+                    color: AppColors.inspectionGreen,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -57,7 +57,7 @@ class TechnologyArchitectureSection extends StatelessWidget {
                 'Production Technology Stack',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.textDark,
+                  color: AppColors.primaryNavy,
                   fontSize: isMobile ? 26 : 36,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.6,
@@ -73,7 +73,7 @@ class TechnologyArchitectureSection extends StatelessWidget {
                   'Engineered with modern, high-performance, and verifiable technologies designed for scalability, low-latency processing, and robust cryptographic auditability.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.textMuted,
+                    color: AppColors.steelBlue,
                     fontSize: 15,
                     height: 1.6,
                   ),
@@ -105,7 +105,7 @@ class TechnologyArchitectureSection extends StatelessWidget {
                         tech: 'Flutter Web & Mobile',
                         role: 'Cross-platform operational UI running unified code on desktop browsers and mobile field devices.',
                         icon: Icons.devices_rounded,
-                        color: const Color(0xFF0284C7),
+                        color: AppColors.inspectionGreen,
                       ),
                       _buildTechCard(
                         width: colWidth,
@@ -113,7 +113,7 @@ class TechnologyArchitectureSection extends StatelessWidget {
                         tech: 'FastAPI (Python 3.11)',
                         role: 'High-throughput asynchronous REST microservices hosting inspection logic, auth, and reporting pipelines.',
                         icon: Icons.api_rounded,
-                        color: const Color(0xFF059669),
+                        color: AppColors.successGreen,
                       ),
                       _buildTechCard(
                         width: colWidth,
@@ -121,7 +121,7 @@ class TechnologyArchitectureSection extends StatelessWidget {
                         tech: 'Multi-Surface OCR & Geometry',
                         role: '2D bounding coordinate extraction, Table-I PDP area calculation, and millimeter numeral height measurement.',
                         icon: Icons.remove_red_eye_outlined,
-                        color: AppColors.accentBlue,
+                        color: AppColors.steelBlue,
                       ),
                       _buildTechCard(
                         width: colWidth,
@@ -137,7 +137,7 @@ class TechnologyArchitectureSection extends StatelessWidget {
                         tech: 'Neon Serverless PostgreSQL',
                         role: 'ACID-compliant storage for versioned rule registries, inspection records, user profiles, and audit trails.',
                         icon: Icons.storage_rounded,
-                        color: const Color(0xFF7C3AED),
+                        color: AppColors.primaryNavy,
                       ),
                       _buildTechCard(
                         width: colWidth,
@@ -145,7 +145,7 @@ class TechnologyArchitectureSection extends StatelessWidget {
                         tech: 'Cloudinary Media Storage',
                         role: 'High-resolution photographic evidence storage with cryptographic SHA-256 hash preservation.',
                         icon: Icons.cloud_done_outlined,
-                        color: const Color(0xFFEA580C),
+                        color: AppColors.accentGold,
                       ),
                     ],
                   );
@@ -162,9 +162,9 @@ class TechnologyArchitectureSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F2537),
+        color: AppColors.primaryNavy,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1E3A5F), width: 1.2),
+        border: Border.all(color: const Color(0xFF163E50), width: 1.2),
       ),
       child: const SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -200,9 +200,9 @@ class TechnologyArchitectureSection extends StatelessWidget {
       width: width,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: AppColors.neutral50,
+        color: AppColors.surfaceIvory,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight, width: 1),
+        border: Border.all(color: AppColors.skyGrey, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,7 +226,7 @@ class TechnologyArchitectureSection extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.borderLight),
+                    border: Border.all(color: AppColors.skyGrey),
                   ),
                   child: Text(
                     layer,
@@ -246,7 +246,7 @@ class TechnologyArchitectureSection extends StatelessWidget {
           Text(
             tech,
             style: const TextStyle(
-              color: AppColors.textDark,
+              color: AppColors.primaryNavy,
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -255,7 +255,7 @@ class TechnologyArchitectureSection extends StatelessWidget {
           Text(
             role,
             style: const TextStyle(
-              color: AppColors.textMuted,
+              color: AppColors.steelBlue,
               fontSize: 13,
               height: 1.5,
             ),
@@ -275,9 +275,9 @@ class _FlowPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E3A5F),
+        color: const Color(0xFF163E50),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFF2E5685), width: 1),
+        border: Border.all(color: AppColors.inspectionGreen, width: 1),
       ),
       child: Text(
         text,
@@ -299,7 +299,7 @@ class _FlowConnector extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 8),
-      child: Icon(Icons.arrow_forward_rounded, color: Color(0xFF60A5FA), size: 14),
+      child: Icon(Icons.arrow_forward_rounded, color: AppColors.accentGold, size: 14),
     );
   }
 }

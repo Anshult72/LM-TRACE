@@ -188,7 +188,7 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
     final filters = ref.watch(statutoryFilterProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceIvory,
       body: WebPageContainer(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -208,7 +208,7 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
                     child: CircularProgressIndicator(),
                   ),
                 ),
-                error: (_, _) => const SizedBox.shrink(),
+                error: (e, _) => _buildSummaryKpis(kStatutorySummaryBaseline),
               ),
               const SizedBox(height: 24),
 
@@ -247,27 +247,22 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
         // Breadcrumb
         Row(
           children: [
-            const Icon(Icons.gavel_rounded, size: 14, color: AppColors.neutral500),
-            const SizedBox(width: 6),
-            Text(
-              'LEGAL METROLOGY',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.0,
-                color: AppColors.neutral500,
+            InkWell(
+              onTap: () => Navigator.of(context).pushReplacementNamed('/dashboard'),
+              child: const Text(
+                'Platform',
+                style: TextStyle(fontSize: 12, color: AppColors.steelBlue),
               ),
             ),
             const SizedBox(width: 6),
-            const Text('/', style: TextStyle(color: AppColors.neutral400, fontSize: 12)),
+            const Icon(Icons.chevron_right_rounded, size: 14, color: AppColors.steelBlue),
             const SizedBox(width: 6),
-            Text(
-              'STATUTORY REFERENCE',
+            const Text(
+              'Statutory Reference & Law Library',
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.0,
-                color: AppColors.secondaryBlue,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.inspectionGreen,
               ),
             ),
           ],
@@ -281,7 +276,7 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F2942),
+                color: AppColors.primaryNavy,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.menu_book_rounded, color: Colors.white, size: 24),
@@ -299,7 +294,7 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                          color: AppColors.textDark,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -312,7 +307,7 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
                     'Official statutory sources, gazette notifications, and legal provisions governing LM-TRACE automated compliance rules.',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF64748B),
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ],
@@ -329,8 +324,8 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
               icon: const Icon(Icons.refresh_rounded, size: 16),
               label: const Text('Refresh'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF0F2942),
-                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                foregroundColor: AppColors.primaryNavy,
+                side: const BorderSide(color: AppColors.skyGrey),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -341,7 +336,7 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
               icon: const Icon(Icons.open_in_new_rounded, size: 16),
               label: const Text('DCA Official Portal'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F2942),
+                backgroundColor: AppColors.primaryNavy,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -368,10 +363,10 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
               mainValue: '${summary.totalDocuments}',
               subText: '${summary.amendmentDocuments} Amendments & Advisories',
               icon: Icons.source_rounded,
-              color: const Color(0xFF2563EB),
+              color: AppColors.inspectionGreen,
               badgeText: 'DCA Verified',
-              badgeColor: const Color(0xFFEFF6FF),
-              badgeTextColor: const Color(0xFF1D4ED8),
+              badgeColor: AppColors.mintMist,
+              badgeTextColor: AppColors.primaryNavy,
               width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
             ),
             _buildKpiCard(
@@ -379,10 +374,10 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
               mainValue: '${summary.activeStatutoryRules}',
               subText: '${summary.automatedRulesCount} Automated Engine Mappings',
               icon: Icons.check_circle_outline_rounded,
-              color: const Color(0xFF059669),
+              color: AppColors.successGreen,
               badgeText: 'Legally Enforced',
-              badgeColor: const Color(0xFFECFDF5),
-              badgeTextColor: const Color(0xFF047857),
+              badgeColor: AppColors.mintMist,
+              badgeTextColor: AppColors.inspectionGreen,
               width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
             ),
             _buildKpiCard(
@@ -390,10 +385,10 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
               mainValue: '${summary.scheduledRules}',
               subText: 'Scheduled Effective: 1 July 2027',
               icon: Icons.schedule_rounded,
-              color: const Color(0xFFD97706),
+              color: AppColors.warningAmber,
               badgeText: 'NOT YET EFFECTIVE',
-              badgeColor: const Color(0xFFFFFBEB),
-              badgeTextColor: const Color(0xFFB45309),
+              badgeColor: AppColors.warningAmber.withValues(alpha: 0.1),
+              badgeTextColor: AppColors.warningAmber,
               width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
             ),
             _buildKpiCard(
@@ -401,10 +396,10 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
               mainValue: 'Union of India',
               subText: 'Dept of Consumer Affairs, MoCA',
               icon: Icons.account_balance_rounded,
-              color: const Color(0xFF475569),
+              color: AppColors.steelBlue,
               badgeText: 'National Scope',
-              badgeColor: const Color(0xFFF1F5F9),
-              badgeTextColor: const Color(0xFF334155),
+              badgeColor: AppColors.surfaceIvory,
+              badgeTextColor: AppColors.primaryNavy,
               width: isWide ? (constraints.maxWidth - 48) / 4 : (constraints.maxWidth - 16) / 2,
             ),
           ],

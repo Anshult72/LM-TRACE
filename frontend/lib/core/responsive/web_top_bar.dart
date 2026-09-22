@@ -43,7 +43,7 @@ class WebTopBar extends ConsumerWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.violationRed,
+              backgroundColor: AppColors.alertRed,
               foregroundColor: Colors.white,
             ),
             onPressed: () async {
@@ -75,8 +75,8 @@ class WebTopBar extends ConsumerWidget {
       height: Breakpoints.topBarHeight,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: AppColors.neutral200, width: 1)),
+        color: AppColors.surfaceIvory,
+        border: Border(bottom: BorderSide(color: AppColors.skyGrey, width: 1)),
       ),
       child: Row(
         children: [
@@ -97,14 +97,14 @@ class WebTopBar extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.neutral500,
+                      color: AppColors.steelBlue,
                       letterSpacing: 0.3,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Text(
+                  Text(
                     '/',
-                    style: TextStyle(fontSize: 11, color: AppColors.neutral400),
+                    style: TextStyle(fontSize: 11, color: AppColors.steelBlue.withValues(alpha: 0.6)),
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -112,7 +112,7 @@ class WebTopBar extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.secondaryBlue,
+                      color: AppColors.inspectionGreen,
                     ),
                   ),
                 ],
@@ -143,7 +143,7 @@ class WebTopBar extends ConsumerWidget {
             if (user?.isSupervisor == true)
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0284C7),
+                  backgroundColor: AppColors.inspectionGreen,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -159,7 +159,7 @@ class WebTopBar extends ConsumerWidget {
             else if (user?.canAccessRoute('/new-inspection') ?? true)
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondaryBlue,
+                  backgroundColor: AppColors.primaryNavy,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -177,7 +177,7 @@ class WebTopBar extends ConsumerWidget {
 
           const SizedBox(
             height: 28,
-            child: VerticalDivider(color: AppColors.neutral300, thickness: 1),
+            child: VerticalDivider(color: AppColors.skyGrey, thickness: 1),
           ),
           const SizedBox(width: 12),
 
@@ -187,7 +187,7 @@ class WebTopBar extends ConsumerWidget {
             offset: const Offset(0, 48),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
-              side: const BorderSide(color: AppColors.neutral200),
+              side: const BorderSide(color: AppColors.skyGrey),
             ),
             onSelected: (value) {
               if (value == 'profile') {
@@ -209,9 +209,9 @@ class WebTopBar extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${user?.role ?? "INSPECTOR"} • ${user?.officerId ?? "LM-001"}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.neutral600),
+                      style: const TextStyle(fontSize: 11, color: AppColors.steelBlue),
                     ),
-                    const Divider(height: 12, color: AppColors.neutral200),
+                    const Divider(height: 12, color: AppColors.skyGrey),
                   ],
                 ),
               ),
@@ -229,9 +229,9 @@ class WebTopBar extends ConsumerWidget {
                 value: 'logout',
                 child: Row(
                   children: [
-                    Icon(Icons.logout_rounded, size: 18, color: AppColors.violationRed),
+                    Icon(Icons.logout_rounded, size: 18, color: AppColors.alertRed),
                     SizedBox(width: 10),
-                    Text('Sign Out', style: TextStyle(fontSize: 13, color: AppColors.violationRed, fontWeight: FontWeight.w600)),
+                    Text('Sign Out', style: TextStyle(fontSize: 13, color: AppColors.alertRed, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -267,7 +267,7 @@ class WebTopBar extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                               decoration: BoxDecoration(
-                                color: AppColors.neutral200,
+                                color: AppColors.mintMist,
                                 borderRadius: BorderRadius.circular(3),
                               ),
                               child: Text(
@@ -275,21 +275,21 @@ class WebTopBar extends ConsumerWidget {
                                 style: const TextStyle(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.neutral700,
+                                  color: AppColors.primaryNavy,
                                 ),
                               ),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               (user?.zone != null && user!.zone.isNotEmpty) ? user.zone : (user?.department ?? 'Legal Metrology'),
-                              style: const TextStyle(fontSize: 10.5, color: AppColors.neutral500),
+                              style: const TextStyle(fontSize: 10.5, color: AppColors.steelBlue),
                             ),
                           ],
                         ),
                       ],
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.arrow_drop_down, size: 18, color: AppColors.neutral500),
+                    const Icon(Icons.arrow_drop_down, size: 18, color: AppColors.steelBlue),
                   ],
                 ],
               ),
@@ -300,9 +300,9 @@ class WebTopBar extends ConsumerWidget {
 
           // Dedicated Quick Sign Out Icon Button
           IconButton(
-            icon: const Icon(Icons.logout_rounded, size: 19, color: AppColors.neutral600),
+            icon: const Icon(Icons.logout_rounded, size: 19, color: AppColors.steelBlue),
             tooltip: 'Sign Out of LM-TRACE',
-            hoverColor: Colors.red.withValues(alpha: 0.1),
+            hoverColor: AppColors.alertRed.withValues(alpha: 0.1),
             onPressed: () => _confirmLogout(context, ref, user),
           ),
         ],

@@ -60,10 +60,10 @@ class _AppCardState extends State<AppCard> {
     final effectiveBorder = widget.border ??
         Border.all(
           color: widget.isSelected
-              ? (widget.selectedBorderColor ?? AppColors.accentBlue)
+              ? (widget.selectedBorderColor ?? AppColors.inspectionGreen)
               : (_isHovered && isInteractive
-                  ? AppColors.neutral300
-                  : AppColors.borderLight),
+                  ? AppColors.steelBlue
+                  : AppColors.skyGrey),
           width: widget.isSelected ? 1.5 : 1.0,
         );
 
@@ -84,8 +84,8 @@ class _AppCardState extends State<AppCard> {
         child: InkWell(
           onTap: widget.onTap,
           borderRadius: effectiveRadius,
-          hoverColor: isInteractive ? AppColors.neutral50.withValues(alpha: 0.5) : Colors.transparent,
-          splashColor: AppColors.accentBlue.withValues(alpha: 0.06),
+          hoverColor: isInteractive ? AppColors.mintMist.withValues(alpha: 0.15) : Colors.transparent,
+          splashColor: AppColors.inspectionGreen.withValues(alpha: 0.08),
           highlightColor: Colors.transparent,
           child: Padding(
             padding: widget.padding,

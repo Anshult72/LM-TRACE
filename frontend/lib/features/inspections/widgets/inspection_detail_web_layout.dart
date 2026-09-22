@@ -278,9 +278,9 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                         height: 175,
                         margin: EdgeInsets.only(right: index < images.length - 1 ? 12 : 0),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.primaryNavy,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.neutral300),
+                          border: Border.all(color: AppColors.skyGrey),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.06),
@@ -464,12 +464,12 @@ class InspectionDetailWebLayout extends ConsumerWidget {
         loadingBuilder: (ctx, child, progress) {
           if (progress == null) return child;
           return Container(
-            color: const Color(0xFF1E293B),
+            color: const Color(0xFF163E50),
             alignment: Alignment.center,
             child: const SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.secondaryBlue),
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.inspectionGreen),
             ),
           );
         },
@@ -481,7 +481,7 @@ class InspectionDetailWebLayout extends ConsumerWidget {
 
   Widget _buildFallbackSurfacePlaceholder(String surface) {
     return Container(
-      color: const Color(0xFF1E293B),
+      color: const Color(0xFF163E50),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -528,7 +528,7 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                 width: MediaQuery.of(ctx).size.width * 0.90,
                 height: MediaQuery.of(ctx).size.height * 0.90,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: AppColors.primaryNavy,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                   boxShadow: [
@@ -545,7 +545,7 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: const Color(0xFF163E50),
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                         border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
                       ),
@@ -692,7 +692,7 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: const Color(0xFF163E50),
                         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
                         border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
                       ),
@@ -722,13 +722,13 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
-                                          color: isSelected ? const Color(0xFF38BDF8) : Colors.white24,
+                                          color: isSelected ? AppColors.mintMist : Colors.white24,
                                           width: isSelected ? 2 : 1,
                                         ),
                                         boxShadow: isSelected
                                             ? [
                                                 BoxShadow(
-                                                  color: const Color(0xFF38BDF8).withValues(alpha: 0.3),
+                                                  color: AppColors.mintMist.withValues(alpha: 0.3),
                                                   blurRadius: 8,
                                                 ),
                                               ]
@@ -750,7 +750,7 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                                               child: Text(
                                                 thumbSurface,
                                                 style: TextStyle(
-                                                  color: isSelected ? const Color(0xFF38BDF8) : Colors.white,
+                                                  color: isSelected ? AppColors.mintMist : Colors.white,
                                                   fontSize: 9,
                                                   fontWeight: FontWeight.bold,
                                                 ),

@@ -137,7 +137,7 @@ class _CapabilitiesSectionState extends State<CapabilitiesSection> {
 
     return Container(
       width: double.infinity,
-      color: AppColors.neutral50,
+      color: AppColors.surfaceIvory,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 32,
         vertical: isMobile ? 56 : 96,
@@ -152,14 +152,14 @@ class _CapabilitiesSectionState extends State<CapabilitiesSection> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withValues(alpha: 0.1),
+                  color: AppColors.mintMist,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.25)),
+                  border: Border.all(color: AppColors.sage),
                 ),
                 child: const Text(
                   'COMPREHENSIVE CAPABILITIES',
                   style: TextStyle(
-                    color: AppColors.primaryLight,
+                    color: AppColors.inspectionGreen,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -174,7 +174,7 @@ class _CapabilitiesSectionState extends State<CapabilitiesSection> {
                 'Built for Legal Metrology Enforcement Workflows',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.textDark,
+                  color: AppColors.primaryNavy,
                   fontSize: isMobile ? 26 : 36,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.6,
@@ -190,7 +190,7 @@ class _CapabilitiesSectionState extends State<CapabilitiesSection> {
                   'Every module is precision-engineered to address statutory requirements under the Legal Metrology Act, 2009 and Packaged Commodities Rules, 2011.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.textMuted,
+                    color: AppColors.steelBlue,
                     fontSize: 15,
                     height: 1.6,
                   ),
@@ -257,14 +257,14 @@ class _CapabilitiesSectionState extends State<CapabilitiesSection> {
           color: isSelected ? AppColors.primaryNavy : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? AppColors.primaryNavy : AppColors.borderLight,
+            color: isSelected ? AppColors.primaryNavy : AppColors.skyGrey,
             width: 1.2,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.neutral700,
+            color: isSelected ? Colors.white : AppColors.textCharcoal,
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),
@@ -280,7 +280,7 @@ class _CapabilitiesSectionState extends State<CapabilitiesSection> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight, width: 1),
+        border: Border.all(color: AppColors.skyGrey, width: 1),
         boxShadow: const [
           BoxShadow(
             color: Color(0x040F172A),
@@ -299,21 +299,22 @@ class _CapabilitiesSectionState extends State<CapabilitiesSection> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
+                  color: AppColors.surfaceIvory,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.skyGrey.withValues(alpha: 0.6)),
                 ),
-                child: Icon(item.icon, color: AppColors.primaryLight, size: 22),
+                child: Icon(item.icon, color: AppColors.inspectionGreen, size: 22),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                 decoration: BoxDecoration(
-                  color: AppColors.neutral100,
+                  color: AppColors.mintMist.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   item.tag,
                   style: const TextStyle(
-                    color: AppColors.neutral600,
+                    color: AppColors.inspectionGreen,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
@@ -326,7 +327,7 @@ class _CapabilitiesSectionState extends State<CapabilitiesSection> {
           Text(
             item.title,
             style: const TextStyle(
-              color: AppColors.textDark,
+              color: AppColors.primaryNavy,
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -335,7 +336,7 @@ class _CapabilitiesSectionState extends State<CapabilitiesSection> {
           Text(
             item.subtitle,
             style: const TextStyle(
-              color: AppColors.accentBlue,
+              color: AppColors.inspectionGreen,
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
             ),
@@ -344,7 +345,7 @@ class _CapabilitiesSectionState extends State<CapabilitiesSection> {
           Text(
             item.description,
             style: const TextStyle(
-              color: AppColors.textMuted,
+              color: AppColors.steelBlue,
               fontSize: 13,
               height: 1.55,
             ),

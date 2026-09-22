@@ -34,36 +34,37 @@ class AppStatusBadge extends StatelessWidget {
         normalized == 'APPROVED' ||
         normalized == 'FINALIZED' ||
         normalized == 'ACTIVE') {
-      textColor = AppColors.passGreen;
-      bgColor = AppColors.passGreenLight;
-      borderColor = AppColors.passGreenBorder;
+      textColor = AppColors.successGreen;
+      bgColor = AppColors.mintMist.withValues(alpha: 0.4);
+      borderColor = AppColors.sage;
     } else if (normalized == 'VIOLATION' ||
         normalized == 'NON_COMPLIANT' ||
         normalized == 'FAILED' ||
         normalized == 'REJECTED' ||
         normalized == 'CRITICAL') {
-      textColor = AppColors.violationRed;
-      bgColor = AppColors.violationRedLight;
-      borderColor = AppColors.violationRedBorder;
+      textColor = AppColors.alertRed;
+      bgColor = AppColors.alertRed.withValues(alpha: 0.08);
+      borderColor = AppColors.alertRed.withValues(alpha: 0.3);
     } else if (normalized == 'REVIEW_REQUIRED' ||
         normalized == 'REVIEW' ||
         normalized == 'WARNING' ||
         normalized == 'PENDING' ||
         normalized == 'FLAGGED') {
-      textColor = AppColors.reviewAmber;
-      bgColor = AppColors.reviewAmberLight;
-      borderColor = AppColors.reviewAmberBorder;
+      textColor = AppColors.warningAmber;
+      bgColor = AppColors.warningAmber.withValues(alpha: 0.1);
+      borderColor = AppColors.warningAmber.withValues(alpha: 0.3);
     } else if (normalized == 'AI_ANALYZED' ||
         normalized == 'PROCESSING' ||
-        normalized == 'SCANNING') {
-      textColor = AppColors.aiPurple;
-      bgColor = AppColors.aiPurpleLight;
-      borderColor = AppColors.aiPurpleBorder;
+        normalized == 'SCANNING' ||
+        normalized == 'INFO') {
+      textColor = AppColors.steelBlue;
+      bgColor = AppColors.skyGrey.withValues(alpha: 0.35);
+      borderColor = AppColors.skyGrey;
     } else {
       // Neutral/Draft
-      textColor = AppColors.neutral600;
-      bgColor = AppColors.neutral100;
-      borderColor = AppColors.neutral200;
+      textColor = AppColors.steelBlue;
+      bgColor = AppColors.skyGrey.withValues(alpha: 0.25);
+      borderColor = AppColors.skyGrey;
     }
 
     if (customColor != null) textColor = customColor!;

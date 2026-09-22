@@ -55,7 +55,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.neutral100,
+      backgroundColor: AppColors.surfaceIvory,
       body: Stack(
         children: [
           // Ambient background glow
@@ -67,7 +67,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               height: 380,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.accentBlue.withValues(alpha: 0.08),
+                color: AppColors.mintMist.withValues(alpha: 0.4),
               ),
             ),
           ),
@@ -79,7 +79,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               height: 440,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primaryLight.withValues(alpha: 0.06),
+                color: AppColors.sandBeige.withValues(alpha: 0.35),
               ),
             ),
           ),
@@ -93,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: AppRadii.xl,
-                      border: Border.all(color: AppColors.borderLight, width: 1.2),
+                      border: Border.all(color: AppColors.skyGrey, width: 1.2),
                       boxShadow: AppShadows.lg,
                     ),
                     padding: const EdgeInsets.all(32),
@@ -135,7 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.textMuted,
+                              color: AppColors.steelBlue,
                               height: 1.35,
                             ),
                           ),
@@ -147,14 +147,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                             decoration: BoxDecoration(
-                              color: AppColors.violationRedLight,
+                              color: AppColors.alertRed.withValues(alpha: 0.08),
                               borderRadius: AppRadii.sm,
-                              border: Border.all(color: AppColors.violationRedBorder),
+                              border: Border.all(color: AppColors.alertRed.withValues(alpha: 0.25)),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.error_outline_rounded, size: 18, color: AppColors.violationRed),
+                                const Icon(Icons.error_outline_rounded, size: 18, color: AppColors.alertRed),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
@@ -162,7 +162,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     style: const TextStyle(
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w500,
-                                      color: AppColors.violationRed,
+                                      color: AppColors.alertRed,
                                       height: 1.3,
                                     ),
                                   ),
@@ -209,7 +209,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         // Authorized Role Selection Header
                         Row(
                           children: [
-                            const Expanded(child: Divider(color: AppColors.borderLight)),
+                            const Expanded(child: Divider(color: AppColors.skyGrey)),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 10),
                               child: Text(
@@ -218,11 +218,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
-                                  color: AppColors.textMuted.withValues(alpha: 0.85),
+                                  color: AppColors.steelBlue,
                                 ),
                               ),
                             ),
-                            const Expanded(child: Divider(color: AppColors.borderLight)),
+                            const Expanded(child: Divider(color: AppColors.skyGrey)),
                           ],
                         ),
                         const SizedBox(height: 14),
@@ -265,7 +265,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               width: 6,
                               height: 6,
                               decoration: const BoxDecoration(
-                                color: AppColors.passGreen,
+                                color: AppColors.successGreen,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -276,7 +276,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.textMuted,
+                                  color: AppColors.steelBlue,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -307,10 +307,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             duration: const Duration(milliseconds: 140),
             padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primaryNavy : AppColors.neutral50,
+              color: isSelected ? AppColors.primaryNavy : AppColors.surfaceIvory,
               borderRadius: AppRadii.sm,
               border: Border.all(
-                color: isSelected ? AppColors.primaryNavy : AppColors.borderLight,
+                color: isSelected ? AppColors.primaryNavy : AppColors.skyGrey,
                 width: 1.1,
               ),
               boxShadow: isSelected
@@ -330,7 +330,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Icon(
                   icon,
                   size: 14,
-                  color: isSelected ? Colors.white : AppColors.neutral600,
+                  color: isSelected ? Colors.white : AppColors.steelBlue,
                 ),
                 const SizedBox(width: 4),
                 Flexible(
@@ -341,7 +341,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                      color: isSelected ? Colors.white : AppColors.neutral700,
+                      color: isSelected ? Colors.white : AppColors.textCharcoal,
                     ),
                   ),
                 ),

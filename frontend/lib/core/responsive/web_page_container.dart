@@ -59,7 +59,7 @@ class _WebPageContainerState extends State<WebPageContainer> {
 
     if (!widget.scrollable) {
       return Container(
-        color: AppColors.neutral50,
+        color: AppColors.surfaceIvory,
         width: double.infinity,
         height: double.infinity,
         child: constrainedContent,
@@ -69,7 +69,7 @@ class _WebPageContainerState extends State<WebPageContainer> {
     final controller = _effectiveController;
 
     return Container(
-      color: AppColors.neutral50,
+      color: AppColors.surfaceIvory,
       width: double.infinity,
       height: double.infinity,
       child: Scrollbar(

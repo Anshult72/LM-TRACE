@@ -32,14 +32,14 @@ class HowItWorksSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.passGreen.withValues(alpha: 0.1),
+                  color: AppColors.mintMist,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.passGreen.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.sage),
                 ),
                 child: const Text(
                   'THE 7-STEP COMPLIANCE PIPELINE',
                   style: TextStyle(
-                    color: Color(0xFF047857),
+                    color: AppColors.inspectionGreen,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -54,7 +54,7 @@ class HowItWorksSection extends StatelessWidget {
                 'How LM-TRACE Evaluates Packaging Compliance',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.textDark,
+                  color: AppColors.primaryNavy,
                   fontSize: isMobile ? 26 : 36,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.6,
@@ -70,7 +70,7 @@ class HowItWorksSection extends StatelessWidget {
                   'A disciplined, multi-stage architecture separating intelligent data comprehension from deterministic statutory rule evaluation, ensuring complete legal defensibility.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.textMuted,
+                    color: AppColors.steelBlue,
                     fontSize: 15,
                     height: 1.6,
                   ),
@@ -84,19 +84,19 @@ class HowItWorksSection extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 860),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
+                  color: AppColors.mintMist.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFBBF7D0), width: 1.2),
+                  border: Border.all(color: AppColors.sage, width: 1.2),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.verified_outlined, color: Color(0xFF15803D), size: 20),
+                    Icon(Icons.verified_outlined, color: AppColors.successGreen, size: 20),
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Architectural Separation of Concerns: AI assists in understanding, parsing, and normalizing label data from noisy physical surfaces. The statutory Rule Engine executes deterministic evaluation against enacted law.',
                         style: TextStyle(
-                          color: Color(0xFF166534),
+                          color: AppColors.primaryNavy,
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                           height: 1.45,
@@ -124,7 +124,7 @@ class HowItWorksSection extends StatelessWidget {
         number: '01',
         title: 'Capture & Ingestion',
         role: 'DATA INGESTION',
-        roleColor: const Color(0xFF64748B),
+        roleColor: AppColors.steelBlue,
         description:
             'High-resolution multi-surface package image capture (Front, Back, Sides, Top, Bottom) or digital e-commerce marketplace PDP viewport retrieval.',
         icon: Icons.camera_enhance_outlined,
@@ -133,7 +133,7 @@ class HowItWorksSection extends StatelessWidget {
         number: '02',
         title: 'Multi-Surface OCR',
         role: 'GEOMETRIC EXTRACTION',
-        roleColor: AppColors.accentBlue,
+        roleColor: AppColors.inspectionGreen,
         description:
             'Optical Character Recognition extracts text clusters while preserving precise 2D pixel coordinate bounding boxes and label orientation across every package face.',
         icon: Icons.document_scanner_outlined,
@@ -142,7 +142,7 @@ class HowItWorksSection extends StatelessWidget {
         number: '03',
         title: 'AI Understanding & Structuring',
         role: 'INTELLIGENT NORMALIZATION',
-        roleColor: AppColors.aiPurple,
+        roleColor: AppColors.steelBlue,
         description:
             'AI semantic models categorize raw OCR blocks into statutory declaration entities (Net Qty, MRP, Unit Sale Price, Packer Details, Month/Year, Consumer Care). AI structures—it does NOT decide the law.',
         icon: Icons.psychology_outlined,
@@ -151,7 +151,7 @@ class HowItWorksSection extends StatelessWidget {
         number: '04',
         title: 'Computer Vision Geometry',
         role: 'PDP AREA & FONT MEASUREMENT',
-        roleColor: const Color(0xFF0284C7),
+        roleColor: AppColors.inspectionGreen,
         description:
             'Algorithmic measurement of the Principal Display Panel (PDP) surface area in cm² and precise pixel-to-millimeter calculation of numeral and letter heights.',
         icon: Icons.straighten_outlined,
@@ -160,7 +160,7 @@ class HowItWorksSection extends StatelessWidget {
         number: '05',
         title: 'Applicable Statutory Rules',
         role: 'RULE CONTEXT IDENTIFICATION',
-        roleColor: const Color(0xFFD97706),
+        roleColor: AppColors.warningAmber,
         description:
             'The platform resolves the governing statutory mandate based on packaging geometry, commodity nature, and manufacture date (LMPC Rules, 2011, GSR 629(E), GSR 779(E)).',
         icon: Icons.rule_folder_outlined,
@@ -169,7 +169,7 @@ class HowItWorksSection extends StatelessWidget {
         number: '06',
         title: 'Deterministic Evaluation',
         role: 'STATUTORY RULE ENGINE',
-        roleColor: AppColors.passGreen,
+        roleColor: AppColors.successGreen,
         description:
             'Deterministic rule logic verifies compliance thresholds: presence of all mandatory declarations, Table-I font sizes, 1/3 numeral width ratios, and single MRP constraints.',
         icon: Icons.gavel_rounded,
@@ -206,9 +206,9 @@ class HowItWorksSection extends StatelessWidget {
       width: width,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: AppColors.neutral50,
+        color: AppColors.surfaceIvory,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight, width: 1.2),
+        border: Border.all(color: AppColors.skyGrey, width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +262,7 @@ class HowItWorksSection extends StatelessWidget {
                 child: Text(
                   step.title,
                   style: const TextStyle(
-                    color: AppColors.textDark,
+                    color: AppColors.primaryNavy,
                     fontSize: 15.5,
                     fontWeight: FontWeight.w700,
                   ),
@@ -274,7 +274,7 @@ class HowItWorksSection extends StatelessWidget {
           Text(
             step.description,
             style: const TextStyle(
-              color: AppColors.textMuted,
+              color: AppColors.steelBlue,
               fontSize: 13,
               height: 1.55,
             ),

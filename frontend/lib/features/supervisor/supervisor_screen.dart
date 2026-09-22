@@ -126,7 +126,7 @@ class SupervisorScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(color: AppColors.secondaryBlue),
+              CircularProgressIndicator(color: AppColors.inspectionGreen),
               SizedBox(height: 16),
               Text('Loading supervisory enforcement data...', style: TextStyle(color: AppColors.textMuted)),
             ],
@@ -162,7 +162,7 @@ class SupervisorScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.neutral50,
+      backgroundColor: AppColors.surfaceIvory,
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,

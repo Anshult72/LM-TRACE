@@ -123,7 +123,7 @@ class _OnlineListingScreenState extends ConsumerState<OnlineListingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.neutral50,
+      backgroundColor: AppColors.surfaceIvory,
       appBar: AppBar(
         title: const Text('E-Commerce Listing Audit (Rule 2027)'),
       ),
@@ -136,18 +136,18 @@ class _OnlineListingScreenState extends ConsumerState<OnlineListingScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.infoBg,
+                color: AppColors.mintMist.withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+                border: Border.all(color: AppColors.inspectionGreen.withValues(alpha: 0.3)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.gavel_outlined, color: AppColors.secondary, size: 24),
+                  Icon(Icons.gavel_outlined, color: AppColors.inspectionGreen, size: 24),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Legal Metrology E-Commerce Rules require marketplaces to display all mandatory Rule 6 declarations (MRP, Net Quantity, Expiry, Country of Origin, Manufacturer Address) before checkout.',
-                      style: TextStyle(fontSize: 11, color: AppColors.neutral800),
+                      style: TextStyle(fontSize: 11, color: AppColors.textCharcoal),
                     ),
                   ),
                 ],

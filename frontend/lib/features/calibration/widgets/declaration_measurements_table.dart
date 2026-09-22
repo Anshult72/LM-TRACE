@@ -20,9 +20,9 @@ class DeclarationMeasurementsTable extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceIvory,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.neutral200),
+        border: Border.all(color: AppColors.skyGrey),
         boxShadow: const [
           BoxShadow(
             color: Color(0x06000000),
@@ -37,10 +37,10 @@ class DeclarationMeasurementsTable extends StatelessWidget {
           // Header Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(9)),
-              border: Border(bottom: BorderSide(color: AppColors.neutral200)),
+            decoration: BoxDecoration(
+              color: AppColors.sandBeige.withValues(alpha: 0.25),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(9)),
+              border: const Border(bottom: BorderSide(color: AppColors.skyGrey)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

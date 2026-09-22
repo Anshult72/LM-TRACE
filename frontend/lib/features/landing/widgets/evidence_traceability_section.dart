@@ -16,7 +16,7 @@ class EvidenceTraceabilitySection extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: Colors.white,
+      color: AppColors.surfaceIvory,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 32,
         vertical: isMobile ? 56 : 96,
@@ -31,14 +31,14 @@ class EvidenceTraceabilitySection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                  color: AppColors.primaryNavy.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.primaryNavy.withValues(alpha: 0.2)),
                 ),
                 child: const Text(
                   'END-TO-END AUDIT INTEGRITY',
                   style: TextStyle(
-                    color: Color(0xFF4F46E5),
+                    color: AppColors.primaryNavy,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -85,16 +85,16 @@ class EvidenceTraceabilitySection extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: AppColors.neutral50,
+                      color: AppColors.surfaceIvory,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.borderLight, width: 1.2),
+                      border: Border.all(color: AppColors.skyGrey, width: 1.2),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Row(
                           children: [
-                            Icon(Icons.link_rounded, color: AppColors.accentBlue, size: 22),
+                            Icon(Icons.link_rounded, color: AppColors.inspectionGreen, size: 22),
                             SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -149,12 +149,12 @@ class EvidenceTraceabilitySection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surfaceIvory,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                  border: Border.all(color: AppColors.skyGrey, width: 1.2),
                   boxShadow: const [
                     BoxShadow(
-                      color: Color(0x040F172A),
+                      color: Color(0x060F2D3A),
                       blurRadius: 10,
                       offset: Offset(0, 3),
                     ),
@@ -166,10 +166,10 @@ class EvidenceTraceabilitySection extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.passGreenLight,
+                        color: AppColors.mintMist,
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.verified_rounded, color: AppColors.passGreen, size: 24),
+                      child: const Icon(Icons.verified_rounded, color: AppColors.inspectionGreen, size: 24),
                     ),
                     const SizedBox(width: 16),
                     const Expanded(
@@ -210,10 +210,10 @@ class EvidenceTraceabilitySection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceIvory,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isLast ? AppColors.passGreenBorder : AppColors.borderLight,
+          color: isLast ? AppColors.inspectionGreen : AppColors.skyGrey,
           width: isLast ? 1.5 : 1.0,
         ),
       ),
@@ -226,13 +226,13 @@ class EvidenceTraceabilitySection extends StatelessWidget {
               Text(
                 num,
                 style: const TextStyle(
-                  color: AppColors.accentBlue,
+                  color: AppColors.inspectionGreen,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   fontFamily: 'monospace',
                 ),
               ),
-              Icon(icon, size: 18, color: isLast ? AppColors.passGreen : AppColors.neutral500),
+              Icon(icon, size: 18, color: isLast ? AppColors.inspectionGreen : AppColors.steelBlue),
             ],
           ),
           const SizedBox(height: 10),
@@ -261,7 +261,7 @@ class EvidenceTraceabilitySection extends StatelessWidget {
   Widget _buildChainArrow() {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 6),
-      child: Icon(Icons.arrow_forward_rounded, color: Color(0xFF94A3B8), size: 18),
+      child: Icon(Icons.arrow_forward_rounded, color: AppColors.steelBlue, size: 18),
     );
   }
 }

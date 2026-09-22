@@ -15,7 +15,7 @@ class WhyLmTraceSection extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: AppColors.neutral50,
+      color: AppColors.surfaceIvory,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 32,
         vertical: isMobile ? 56 : 96,
@@ -30,14 +30,14 @@ class WhyLmTraceSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.passGreen.withValues(alpha: 0.1),
+                  color: AppColors.mintMist,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.passGreen.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.sage),
                 ),
                 child: const Text(
                   'INSTITUTIONAL VALUE',
                   style: TextStyle(
-                    color: Color(0xFF047857),
+                    color: AppColors.inspectionGreen,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -52,7 +52,7 @@ class WhyLmTraceSection extends StatelessWidget {
                 'Why Legal Metrology Enforcement Relies on LM-TRACE',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: AppColors.textDark,
+                  color: AppColors.primaryNavy,
                   fontSize: isMobile ? 26 : 36,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.6,
@@ -68,7 +68,7 @@ class WhyLmTraceSection extends StatelessWidget {
                   'Bridging statutory legal standards with digital verification to protect consumer interests, prevent deceptive packaging, and ensure standardized regulatory fairness.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.textMuted,
+                    color: AppColors.steelBlue,
                     fontSize: 15,
                     height: 1.6,
                   ),
@@ -154,7 +154,7 @@ class WhyLmTraceSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight, width: 1),
+        border: Border.all(color: AppColors.skyGrey, width: 1),
         boxShadow: const [
           BoxShadow(
             color: Color(0x040F172A),
@@ -170,16 +170,17 @@ class WhyLmTraceSection extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
+              color: AppColors.surfaceIvory,
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.skyGrey.withValues(alpha: 0.6)),
             ),
-            child: Icon(icon, color: AppColors.accentBlue, size: 22),
+            child: Icon(icon, color: AppColors.inspectionGreen, size: 22),
           ),
           const SizedBox(height: 16),
           Text(
             title,
             style: const TextStyle(
-              color: AppColors.textDark,
+              color: AppColors.primaryNavy,
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -188,7 +189,7 @@ class WhyLmTraceSection extends StatelessWidget {
           Text(
             description,
             style: const TextStyle(
-              color: AppColors.textMuted,
+              color: AppColors.steelBlue,
               fontSize: 13,
               height: 1.55,
             ),

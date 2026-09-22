@@ -31,7 +31,7 @@ class PublicFooter extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: const Color(0xFF07121D),
+      color: const Color(0xFF07161E),
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 32,
         vertical: isMobile ? 48 : 64,
@@ -75,7 +75,7 @@ class PublicFooter extends StatelessWidget {
                     ),
 
               const SizedBox(height: 48),
-              const Divider(color: Color(0xFF162D47), height: 1),
+              const Divider(color: Color(0xFF163E50), height: 1),
               const SizedBox(height: 24),
 
               // Bottom Attribution Bar
@@ -94,14 +94,14 @@ class PublicFooter extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F2537),
+                        color: AppColors.primaryNavy,
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: const Color(0xFF1E3A5F), width: 1),
+                        border: Border.all(color: const Color(0xFF163E50), width: 1),
                       ),
                       child: const Text(
                         'Production Release v1.0.0',
                         style: TextStyle(
-                          color: Color(0xFF8DA4C4),
+                          color: AppColors.sage,
                           fontSize: 11,
                           fontFamily: 'monospace',
                           fontWeight: FontWeight.w600,
@@ -126,14 +126,14 @@ class PublicFooter extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F2537),
+                        color: AppColors.primaryNavy,
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: const Color(0xFF1E3A5F), width: 1),
+                        border: Border.all(color: const Color(0xFF163E50), width: 1),
                       ),
                       child: const Text(
                         'Production Release v1.0.0',
                         style: TextStyle(
-                          color: Color(0xFF8DA4C4),
+                          color: AppColors.sage,
                           fontSize: 11,
                           fontFamily: 'monospace',
                           fontWeight: FontWeight.w600,
@@ -175,7 +175,7 @@ class PublicFooter extends StatelessWidget {
         const Text(
           'Legal Metrology Compliance & Inspection Platform combining multi-surface OCR, computer vision geometry, deterministic statutory rule evaluation, and non-repudiable evidence dossiers.',
           style: TextStyle(
-            color: Color(0xFF8DA4C4),
+            color: AppColors.sage,
             fontSize: 13,
             height: 1.55,
           ),
@@ -183,12 +183,12 @@ class PublicFooter extends StatelessWidget {
         const SizedBox(height: 16),
         Row(
           children: [
-            const Icon(Icons.email_outlined, color: Color(0xFF60A5FA), size: 15),
+            const Icon(Icons.email_outlined, color: AppColors.accentGold, size: 15),
             const SizedBox(width: 8),
             Text(
               AppBrand.supportEmail,
               style: const TextStyle(
-                color: Color(0xFFCBD5E1),
+                color: Color(0xFFD9E2EA),
                 fontSize: 12.5,
                 fontFamily: 'monospace',
               ),
@@ -206,7 +206,7 @@ class PublicFooter extends StatelessWidget {
         const Text(
           'PLATFORM NAVIGATION',
           style: TextStyle(
-            color: Color(0xFF93C5FD),
+            color: AppColors.mintMist,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8,
@@ -227,12 +227,12 @@ class PublicFooter extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.login_rounded, color: AppColors.accentBlue, size: 14),
+                Icon(Icons.login_rounded, color: AppColors.inspectionGreen, size: 14),
                 SizedBox(width: 6),
                 Text(
                   'Login to Platform',
                   style: TextStyle(
-                    color: Color(0xFF60A5FA),
+                    color: AppColors.mintMist,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -252,7 +252,7 @@ class PublicFooter extends StatelessWidget {
         Text(
           'STATUTORY GOVERNANCE',
           style: TextStyle(
-            color: Color(0xFF93C5FD),
+            color: AppColors.mintMist,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.8,
@@ -262,7 +262,7 @@ class PublicFooter extends StatelessWidget {
         Text(
           '• The Legal Metrology Act, 2009 (Act No. 1 of 2010)\n• The Legal Metrology (Packaged Commodities) Rules, 2011\n• E-Commerce Marketplace Amendment (GSR 629(E))\n• Unit Sale Price Mandate (GSR 779(E))\n• Electronics QR Provisions (GSR 529(E))',
           style: TextStyle(
-            color: Color(0xFF8DA4C4),
+            color: AppColors.sage,
             fontSize: 12,
             height: 1.6,
           ),
@@ -279,7 +279,7 @@ class PublicFooter extends StatelessWidget {
         child: Text(
           label,
           style: const TextStyle(
-            color: Color(0xFFCBD5E1),
+            color: Color(0xFFD9E2EA),
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),

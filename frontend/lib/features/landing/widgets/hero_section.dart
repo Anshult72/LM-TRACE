@@ -35,8 +35,8 @@ class _HeroSectionState extends State<HeroSection> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF0F2537),
-            Color(0xFF091624),
+            AppColors.primaryNavy,
+            Color(0xFF091D26),
           ],
         ),
       ),
@@ -51,7 +51,7 @@ class _HeroSectionState extends State<HeroSection> {
               height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.accentBlue.withValues(alpha: 0.07),
+                color: AppColors.mintMist.withValues(alpha: 0.08),
               ),
             ),
           ),
@@ -63,7 +63,7 @@ class _HeroSectionState extends State<HeroSection> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.passGreen.withValues(alpha: 0.04),
+                color: AppColors.inspectionGreen.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -120,9 +120,9 @@ class _HeroSectionState extends State<HeroSection> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E3A5F).withValues(alpha: 0.6),
+            color: AppColors.inspectionGreen.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF2E5685), width: 1),
+            border: Border.all(color: AppColors.inspectionGreen, width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -132,7 +132,7 @@ class _HeroSectionState extends State<HeroSection> {
                 height: 7,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.passGreen,
+                  color: AppColors.successGreen,
                 ),
               ),
               const SizedBox(width: 8),
@@ -140,7 +140,7 @@ class _HeroSectionState extends State<HeroSection> {
                 child: Text(
                   'LEGAL METROLOGY COMPLIANCE & INSPECTION PLATFORM',
                   style: TextStyle(
-                    color: Color(0xFFBAE6FD),
+                    color: AppColors.mintMist,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -174,7 +174,7 @@ class _HeroSectionState extends State<HeroSection> {
           'LM-TRACE modernizes regulatory inspection workflows for physical pre-packaged commodities and e-commerce marketplaces under the Legal Metrology Act, 2009 and Packaged Commodities Rules, 2011.',
           textAlign: isMobile ? TextAlign.center : TextAlign.start,
           style: const TextStyle(
-            color: Color(0xFF94A3B8),
+            color: AppColors.sage,
             fontSize: 16,
             height: 1.6,
             fontWeight: FontWeight.w400,
@@ -193,12 +193,12 @@ class _HeroSectionState extends State<HeroSection> {
             ElevatedButton(
               onPressed: () => context.go('/login'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accentBlue,
+                backgroundColor: AppColors.inspectionGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 elevation: 0,
-                shadowColor: AppColors.accentBlue.withValues(alpha: 0.5),
+                shadowColor: AppColors.inspectionGreen.withValues(alpha: 0.4),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
@@ -221,14 +221,14 @@ class _HeroSectionState extends State<HeroSection> {
               onPressed: widget.onExploreTap,
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFE2E8F0),
-                side: const BorderSide(color: Color(0xFF2E4E73), width: 1.2),
+                side: const BorderSide(color: AppColors.sage, width: 1.2),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.play_circle_outline_rounded, size: 18, color: Color(0xFF93C5FD)),
+                  Icon(Icons.play_circle_outline_rounded, size: 18, color: AppColors.mintMist),
                   SizedBox(width: 8),
                   Flexible(
                     child: Text(
@@ -265,12 +265,12 @@ class _HeroSectionState extends State<HeroSection> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: const Color(0xFF60A5FA), size: 15),
+        Icon(icon, color: AppColors.accentGold, size: 15),
         const SizedBox(width: 6),
         Text(
           label,
           style: const TextStyle(
-            color: Color(0xFF8DA4C4),
+            color: AppColors.sage,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
@@ -283,9 +283,9 @@ class _HeroSectionState extends State<HeroSection> {
   Widget _buildInteractiveTerminal(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0B1928),
+        color: const Color(0xFF0A1F29),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF1E3A5F), width: 1.4),
+        border: Border.all(color: const Color(0xFF1A4556), width: 1.4),
         boxShadow: const [
           BoxShadow(
             color: Color(0x3D000000),
@@ -293,7 +293,7 @@ class _HeroSectionState extends State<HeroSection> {
             offset: Offset(0, 12),
           ),
           BoxShadow(
-            color: Color(0x1F2563EB),
+            color: Color(0x1F2E7D6B),
             blurRadius: 20,
             offset: Offset(0, 4),
           ),
@@ -306,38 +306,38 @@ class _HeroSectionState extends State<HeroSection> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
-              color: Color(0xFF0F2537),
+              color: AppColors.primaryNavy,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(15),
                 topRight: Radius.circular(15),
               ),
-              border: Border(bottom: BorderSide(color: Color(0xFF1E3A5F), width: 1)),
+              border: Border(bottom: BorderSide(color: Color(0xFF1A4556), width: 1)),
             ),
             child: Row(
               children: [
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFEF4444)),
+                  decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.alertRed),
                 ),
                 const SizedBox(width: 6),
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFF59E0B)),
+                  decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.warningAmber),
                 ),
                 const SizedBox(width: 6),
                 Container(
                   width: 10,
                   height: 10,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF10B981)),
+                  decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.successGreen),
                 ),
                 const SizedBox(width: 14),
                 const Expanded(
                   child: Text(
                     'LM-TRACE // COMPLIANCE EVALUATION ENGINE v1.0',
                     style: TextStyle(
-                      color: Color(0xFF94A3B8),
+                      color: AppColors.sage,
                       fontSize: 11,
                       fontFamily: 'monospace',
                       fontWeight: FontWeight.w600,
@@ -348,14 +348,14 @@ class _HeroSectionState extends State<HeroSection> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: AppColors.passGreen.withValues(alpha: 0.15),
+                    color: AppColors.successGreen.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.passGreen.withValues(alpha: 0.4), width: 0.8),
+                    border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.4), width: 0.8),
                   ),
                   child: const Text(
                     'EVALUATED',
                     style: TextStyle(
-                      color: AppColors.passGreen,
+                      color: AppColors.successGreen,
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.5,
@@ -370,8 +370,8 @@ class _HeroSectionState extends State<HeroSection> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: const BoxDecoration(
-              color: Color(0xFF091624),
-              border: Border(bottom: BorderSide(color: Color(0xFF162D47), width: 1)),
+              color: Color(0xFF081820),
+              border: Border(bottom: BorderSide(color: Color(0xFF122E3B), width: 1)),
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -400,16 +400,16 @@ class _HeroSectionState extends State<HeroSection> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: const BoxDecoration(
-              color: Color(0xFF091624),
+              color: Color(0xFF081820),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(15),
                 bottomRight: Radius.circular(15),
               ),
-              border: Border(top: BorderSide(color: Color(0xFF162D47), width: 1)),
+              border: Border(top: BorderSide(color: Color(0xFF122E3B), width: 1)),
             ),
             child: const Row(
               children: [
-                Icon(Icons.fingerprint_rounded, color: Color(0xFF60A5FA), size: 14),
+                Icon(Icons.fingerprint_rounded, color: AppColors.accentGold, size: 14),
                 SizedBox(width: 6),
                 Flexible(
                   child: Text(
@@ -426,7 +426,7 @@ class _HeroSectionState extends State<HeroSection> {
                 Text(
                   'Traceable Dossier',
                   style: TextStyle(
-                    color: Color(0xFF8DA4C4),
+                    color: AppColors.sage,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w500,
                   ),
@@ -447,7 +447,7 @@ class _HeroSectionState extends State<HeroSection> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF1E3A5F) : Colors.transparent,
+          color: isActive ? const Color(0xFF163E50) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
@@ -456,13 +456,13 @@ class _HeroSectionState extends State<HeroSection> {
             Icon(
               icon,
               size: 13,
-              color: isActive ? Colors.white : const Color(0xFF8DA4C4),
+              color: isActive ? Colors.white : AppColors.sage,
             ),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                color: isActive ? Colors.white : const Color(0xFF8DA4C4),
+                color: isActive ? Colors.white : AppColors.sage,
                 fontSize: 11.5,
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
               ),
@@ -500,7 +500,7 @@ class _HeroSectionState extends State<HeroSection> {
             const Text(
               'EXTRACTED STATUTORY DECLARATIONS',
               style: TextStyle(
-                color: Color(0xFF93C5FD),
+                color: AppColors.mintMist,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5,
@@ -509,12 +509,12 @@ class _HeroSectionState extends State<HeroSection> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: AppColors.passGreen.withValues(alpha: 0.15),
+                color: AppColors.successGreen.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: const Text(
                 '6/6 Present',
-                style: TextStyle(color: AppColors.passGreen, fontSize: 11, fontWeight: FontWeight.w700),
+                style: TextStyle(color: AppColors.successGreen, fontSize: 11, fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -538,7 +538,7 @@ class _HeroSectionState extends State<HeroSection> {
         children: [
           Icon(
             isPass ? Icons.check_circle_rounded : Icons.cancel_rounded,
-            color: isPass ? AppColors.passGreen : AppColors.violationRed,
+            color: isPass ? AppColors.successGreen : AppColors.alertRed,
             size: 14,
           ),
           const SizedBox(width: 8),
@@ -561,12 +561,12 @@ class _HeroSectionState extends State<HeroSection> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
             decoration: BoxDecoration(
-              color: const Color(0xFF162D47),
+              color: const Color(0xFF163E50),
               borderRadius: BorderRadius.circular(3),
             ),
             child: Text(
               rule,
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 9.5, fontWeight: FontWeight.w600),
+              style: const TextStyle(color: AppColors.sage, fontSize: 9.5, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -582,7 +582,7 @@ class _HeroSectionState extends State<HeroSection> {
         const Text(
           'PRINCIPAL DISPLAY PANEL (PDP) TABLE-I VERIFICATION',
           style: TextStyle(
-            color: Color(0xFF93C5FD),
+            color: AppColors.mintMist,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
@@ -618,14 +618,14 @@ class _HeroSectionState extends State<HeroSection> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: isPass == null
-                  ? const Color(0xFF162D47)
-                  : (isPass ? AppColors.passGreen.withValues(alpha: 0.15) : AppColors.violationRed.withValues(alpha: 0.15)),
+                  ? const Color(0xFF163E50)
+                  : (isPass ? AppColors.successGreen.withValues(alpha: 0.15) : AppColors.alertRed.withValues(alpha: 0.15)),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               val,
               style: TextStyle(
-                color: isPass == null ? const Color(0xFF93C5FD) : (isPass ? AppColors.passGreen : AppColors.violationRed),
+                color: isPass == null ? AppColors.mintMist : (isPass ? AppColors.successGreen : AppColors.alertRed),
                 fontSize: 11,
                 fontFamily: 'monospace',
                 fontWeight: FontWeight.w700,
@@ -645,7 +645,7 @@ class _HeroSectionState extends State<HeroSection> {
         const Text(
           'DETERMINISTIC STATUTORY RULE EXECUTION',
           style: TextStyle(
-            color: Color(0xFF93C5FD),
+            color: AppColors.mintMist,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
@@ -669,7 +669,7 @@ class _HeroSectionState extends State<HeroSection> {
           Container(
             width: 8,
             height: 8,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.passGreen),
+            decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.successGreen),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -693,13 +693,13 @@ class _HeroSectionState extends State<HeroSection> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.passGreen.withValues(alpha: 0.15),
+              color: AppColors.successGreen.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: AppColors.passGreen.withValues(alpha: 0.3), width: 0.8),
+              border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.3), width: 0.8),
             ),
             child: Text(
               status,
-              style: const TextStyle(color: AppColors.passGreen, fontSize: 10, fontWeight: FontWeight.w800),
+              style: const TextStyle(color: AppColors.successGreen, fontSize: 10, fontWeight: FontWeight.w800),
             ),
           ),
         ],

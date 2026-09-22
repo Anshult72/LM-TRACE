@@ -300,7 +300,7 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
     final effectiveLogs = unfilteredAsync.valueOrNull ?? logsAsync.valueOrNull ?? [];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.surfaceIvory,
       body: WebPageContainer(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
@@ -325,6 +325,7 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
 
               // Event Records List
               _buildEventList(logsAsync),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -359,7 +360,7 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
               const SizedBox(height: 4),
               const Text(
                 'Immutable chronological system-of-record capturing inspection events, computer vision metrics, statutory reviews, and officer custody under the Legal Metrology Act, 2009.',
-                style: TextStyle(fontSize: 12, color: AppColors.neutral600),
+                style: TextStyle(fontSize: 12, color: AppColors.textMuted),
               ),
             ],
           ),
@@ -371,14 +372,14 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
           label: const Text('Trace Chain of Custody'),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primaryNavy,
-            side: const BorderSide(color: AppColors.neutral300),
+            side: const BorderSide(color: AppColors.skyGrey),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
         const SizedBox(width: 8),
         IconButton(
-          icon: const Icon(Icons.refresh, color: AppColors.neutral700),
+          icon: const Icon(Icons.refresh, color: AppColors.primaryNavy),
           tooltip: 'Refresh Audit Log',
           onPressed: _refreshAll,
         ),
@@ -390,19 +391,19 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        color: AppColors.surfaceIvory,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFBBF7D0)),
+        border: Border.all(color: AppColors.skyGrey),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFDCFCE7),
+              color: AppColors.mintMist,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.gavel_outlined, size: 20, color: Color(0xFF15803D)),
+            child: const Icon(Icons.gavel_outlined, size: 20, color: AppColors.inspectionGreen),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -414,14 +415,14 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF166534),
+                    color: AppColors.inspectionGreen,
                     letterSpacing: 0.5,
                   ),
                 ),
                 SizedBox(height: 2),
                 Text(
                   'Chronological, cryptographically sealed record of officer authentications, computer vision scale metrics, rule calibrations, supervisory confirmations, and statutory report generation.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF14532D), height: 1.3),
+                  style: TextStyle(fontSize: 12, color: AppColors.textCharcoal, height: 1.3),
                 ),
               ],
             ),
@@ -449,7 +450,7 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
             title: 'Total System Events',
             value: summary.totalEvents.toString(),
             icon: Icons.history_edu_outlined,
-            iconColor: const Color(0xFF2563EB),
+            iconColor: AppColors.primaryNavy,
             subtitle: 'Append-only ledger entries',
           ),
         ),
@@ -459,7 +460,7 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
             title: "Today's Events (IST)",
             value: summary.todayEvents.toString(),
             icon: Icons.today_outlined,
-            iconColor: const Color(0xFF0D9488),
+            iconColor: AppColors.inspectionGreen,
             subtitle: 'Current working shift',
           ),
         ),
@@ -469,7 +470,7 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
             title: 'Inspection Operations',
             value: summary.inspectionEvents.toString(),
             icon: Icons.assignment_turned_in_outlined,
-            iconColor: const Color(0xFF7C3AED),
+            iconColor: AppColors.accentGold,
             subtitle: 'OCR, CV, rules & compliance',
           ),
         ),
@@ -479,7 +480,7 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
             title: 'Access & Security',
             value: summary.securityEvents.toString(),
             icon: Icons.shield_outlined,
-            iconColor: const Color(0xFFDC2626),
+            iconColor: AppColors.alertRed,
             subtitle: 'Officer authentication & tokens',
           ),
         ),
@@ -988,18 +989,18 @@ class _AuditTrailScreenState extends ConsumerState<AuditTrailScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
+                              color: AppColors.mintMist,
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: const Color(0xFFBFDBFE)),
+                              border: Border.all(color: AppColors.inspectionGreen.withValues(alpha: 0.3)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.timeline, size: 12, color: Color(0xFF2563EB)),
+                                const Icon(Icons.timeline, size: 12, color: AppColors.inspectionGreen),
                                 const SizedBox(width: 3),
                                 Text(
                                   'Case: ${event.inspectionId}',
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
                                 ),
                               ],
                             ),
@@ -1217,7 +1218,7 @@ class _EventDetailModal extends StatelessWidget {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.primaryNavy,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -1225,7 +1226,7 @@ class _EventDetailModal extends StatelessWidget {
                           style: const TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 11,
-                            color: Color(0xFF38BDF8),
+                            color: AppColors.mintMist,
                           ),
                         ),
                       ),
@@ -1236,18 +1237,18 @@ class _EventDetailModal extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: AppColors.surfaceIvory,
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.neutral300),
+                        border: Border.all(color: AppColors.skyGrey),
                       ),
                       child: Row(
                         children: const [
-                          Icon(Icons.verified, size: 16, color: Color(0xFF0284C7)),
+                          Icon(Icons.verified, size: 16, color: AppColors.inspectionGreen),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Certified Immutable Record • Tamper-Evident • Legal Metrology Act, 2009 Standards',
-                              style: TextStyle(fontSize: 11, color: AppColors.neutral600, fontWeight: FontWeight.w500),
+                              style: TextStyle(fontSize: 11, color: AppColors.textCharcoal, fontWeight: FontWeight.w500),
                             ),
                           ),
                         ],
@@ -1334,34 +1335,34 @@ class _EventDetailModal extends StatelessWidget {
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(12),
-              color: const Color(0xFFFEF2F2),
+              color: AppColors.alertRed.withValues(alpha: 0.08),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('PREVIOUS STATE (OLD)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF991B1B))),
+                  const Text('PREVIOUS STATE (OLD)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.alertRed)),
                   const SizedBox(height: 6),
                   Text(
                     before != null ? const JsonEncoder.withIndent('  ').convert(before) : 'None / Initial creation',
-                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Color(0xFF7F1D1D)),
+                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppColors.alertRed),
                   ),
                 ],
               ),
             ),
           ),
-          const VerticalDivider(width: 1, color: AppColors.neutral200),
+          const VerticalDivider(width: 1, color: AppColors.skyGrey),
           // After
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(12),
-              color: const Color(0xFFF0FDF4),
+              color: AppColors.successGreen.withValues(alpha: 0.08),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('UPDATED STATE (NEW)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                  const Text('UPDATED STATE (NEW)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.successGreen)),
                   const SizedBox(height: 6),
                   Text(
                     after != null ? const JsonEncoder.withIndent('  ').convert(after) : 'None / Final state',
-                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Color(0xFF14532D)),
+                    style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: AppColors.textCharcoal),
                   ),
                 ],
               ),
@@ -1515,12 +1516,12 @@ class _ChainOfCustodyModalState extends ConsumerState<_ChainOfCustodyModal> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: const BoxDecoration(
-                color: Color(0xFF1E293B),
+                color: AppColors.primaryNavy,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.timeline, color: Color(0xFF38BDF8), size: 22),
+                  const Icon(Icons.timeline, color: AppColors.mintMist, size: 22),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -1532,7 +1533,7 @@ class _ChainOfCustodyModalState extends ConsumerState<_ChainOfCustodyModal> {
                         ),
                         Text(
                           'Inspection: ${_data?.inspectionCode ?? widget.inspectionId}',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8), fontFamily: 'monospace'),
+                          style: const TextStyle(fontSize: 12, color: AppColors.sage, fontFamily: 'monospace'),
                         ),
                       ],
                     ),

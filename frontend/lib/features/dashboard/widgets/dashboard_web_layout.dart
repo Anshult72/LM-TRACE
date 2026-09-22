@@ -99,10 +99,10 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.neutral200),
+        border: Border.all(color: AppColors.skyGrey),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: AppColors.primaryNavy.withValues(alpha: 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -112,7 +112,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: isSupervisor ? const Color(0xFF0284C7) : AppColors.primaryNavy,
+            backgroundColor: isSupervisor ? AppColors.inspectionGreen : AppColors.primaryNavy,
             child: Icon(roleIcon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 14),
@@ -135,13 +135,13 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
                         color: isSupervisor
-                            ? const Color(0xFFE0F2FE)
-                            : (isAdmin ? const Color(0xFFFEF3C7) : AppColors.secondaryBlue.withValues(alpha: 0.1)),
+                            ? AppColors.mintMist
+                            : (isAdmin ? AppColors.sandBeige : AppColors.mintMist.withValues(alpha: 0.6)),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
                           color: isSupervisor
-                              ? const Color(0xFFBAE6FD)
-                              : (isAdmin ? const Color(0xFFFDE68A) : AppColors.secondaryBlue.withValues(alpha: 0.2)),
+                              ? AppColors.sage
+                              : (isAdmin ? AppColors.accentGold.withValues(alpha: 0.4) : AppColors.sage),
                           width: 0.8,
                         ),
                       ),
@@ -151,8 +151,8 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           color: isSupervisor
-                              ? const Color(0xFF0369A1)
-                              : (isAdmin ? const Color(0xFFB45309) : AppColors.secondaryBlue),
+                              ? AppColors.inspectionGreen
+                              : (isAdmin ? AppColors.primaryNavy : AppColors.inspectionGreen),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -164,7 +164,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                 const SizedBox(height: 3),
                 Text(
                   '${user?.department ?? "Legal Metrology Department"} • $zoneText • $roleLabel',
-                  style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
+                  style: const TextStyle(fontSize: 12, color: AppColors.steelBlue),
                 ),
               ],
             ),
@@ -174,7 +174,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           if (isSupervisor)
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0284C7),
+                backgroundColor: AppColors.inspectionGreen,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -200,7 +200,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           else
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondaryBlue,
+                backgroundColor: AppColors.primaryNavy,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -229,7 +229,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
             value: '$audited',
             subtitle: audited == 0 ? 'No finalized audits yet' : 'Statutory Audits Finalized',
             icon: Icons.assignment_turned_in_outlined,
-            accentColor: AppColors.secondaryBlue,
+            accentColor: AppColors.inspectionGreen,
             onTap: () => context.go('/inspections'),
           ),
         ),
@@ -240,7 +240,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
             value: compRate != null ? '${compRate.toStringAsFixed(1)}%' : '—',
             subtitle: compRate != null ? 'Rule 6 & 7 Compliant' : 'No audits completed',
             icon: Icons.verified_outlined,
-            accentColor: AppColors.passGreen,
+            accentColor: AppColors.successGreen,
             trendText: compRate != null ? (compRate >= 70 ? 'Optimal' : 'Needs Review') : null,
             isPositiveTrend: compRate != null ? compRate >= 70 : true,
           ),
@@ -252,7 +252,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
             value: '$violations',
             subtitle: violations == 0 ? 'Zero active violations' : 'Non-compliant Goods',
             icon: Icons.gavel_outlined,
-            accentColor: AppColors.violationRed,
+            accentColor: AppColors.alertRed,
             trendText: violations > 0 ? '$violations Alerts' : '0 Alerts',
             isPositiveTrend: violations == 0,
             onTap: () => context.go('/inspections'),
@@ -265,7 +265,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
             value: '$pending',
             subtitle: pending == 0 ? 'All reviews completed' : 'Awaiting Sign-off',
             icon: Icons.pending_actions_outlined,
-            accentColor: AppColors.reviewAmber,
+            accentColor: AppColors.warningAmber,
             trendText: pending > 0 ? '$pending pending' : 'All clear',
             isPositiveTrend: pending == 0,
             onTap: () => context.go('/inspections'),
@@ -326,17 +326,17 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
         margin: const EdgeInsets.only(bottom: 20),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0FDF4),
+          color: AppColors.mintMist.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFBBF7D0)),
+          border: Border.all(color: AppColors.sage),
         ),
         child: Row(
           children: const [
-            Icon(Icons.check_circle_outline, color: Color(0xFF16A34A), size: 18),
+            Icon(Icons.check_circle_outline, color: AppColors.successGreen, size: 18),
             SizedBox(width: 10),
             Text(
               'All statutory compliance reviews are up to date. Zero items requiring urgent officer sign-off.',
-              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF166534)),
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.primaryNavy),
             ),
           ],
         ),
@@ -347,17 +347,17 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: AppColors.sandBeige.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        border: Border.all(color: AppColors.sandBeige),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 20),
+          const Icon(Icons.warning_amber_rounded, color: AppColors.warningAmber, size: 20),
           const SizedBox(width: 10),
           const Text(
             'ACTION REQUIRED:',
-            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF92400E)),
+            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.primaryNavy),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -366,13 +366,13 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               runSpacing: 6,
               children: [
                 if (pending > 0)
-                  _buildActionPill('$pending Pending Reviews', const Color(0xFFD97706), () => context.go('/inspections')),
+                  _buildActionPill('$pending Pending Reviews', AppColors.warningAmber, () => context.go('/inspections')),
                 if (violations > 0)
-                  _buildActionPill('$violations Violations Flagged', const Color(0xFFDC2626), () => context.go('/inspections')),
+                  _buildActionPill('$violations Violations Flagged', AppColors.alertRed, () => context.go('/inspections')),
                 if (labelChanges > 0)
-                  _buildActionPill('$labelChanges Packaging Changes', const Color(0xFF0F766E), () => context.go('/products')),
+                  _buildActionPill('$labelChanges Packaging Changes', AppColors.inspectionGreen, () => context.go('/products')),
                 if (lowConfidence > 0)
-                  _buildActionPill('$lowConfidence Low Confidence', const Color(0xFFC2410C), () => context.go('/inspections')),
+                  _buildActionPill('$lowConfidence Low Confidence', AppColors.accentGold, () => context.go('/inspections')),
               ],
             ),
           ),
@@ -382,7 +382,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               minimumSize: Size.zero,
             ),
-            child: const Text('Review Cases →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF92400E))),
+            child: const Text('Review Cases →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)),
           ),
         ],
       ),
@@ -417,7 +417,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.neutral200),
+        border: Border.all(color: AppColors.skyGrey),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -437,9 +437,9 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                 runSpacing: 4,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  _buildLegendIndicator('Compliant', AppColors.passGreen),
-                  _buildLegendIndicator('Under Review', AppColors.reviewAmber),
-                  _buildLegendIndicator('Violation', AppColors.violationRed),
+                  _buildLegendIndicator('Compliant', AppColors.successGreen),
+                  _buildLegendIndicator('Under Review', AppColors.warningAmber),
+                  _buildLegendIndicator('Violation', AppColors.alertRed),
                 ],
               ),
             ],
@@ -501,17 +501,18 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.neutral100,
+              color: AppColors.surfaceIvory,
               borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.skyGrey.withValues(alpha: 0.7)),
             ),
             child: Row(
               children: const [
-                Icon(Icons.info_outline, size: 16, color: AppColors.neutral600),
+                Icon(Icons.info_outline, size: 16, color: AppColors.steelBlue),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Physical font-height results are reported only when the captured image has an inspection-specific calibrated pixel-to-millimetre scale.',
-                    style: TextStyle(fontSize: 11.5, color: AppColors.neutral700),
+                    style: TextStyle(fontSize: 11.5, color: AppColors.textCharcoal),
                   ),
                 ),
               ],
@@ -530,8 +531,8 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.neutral800)),
-            Text('$total Audited • ${complianceRate == null ? '—' : '$compPercent%'} Compliant', style: const TextStyle(fontSize: 11, color: AppColors.neutral600)),
+            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textCharcoal)),
+            Text('$total Audited • ${complianceRate == null ? '—' : '$compPercent%'} Compliant', style: const TextStyle(fontSize: 11, color: AppColors.steelBlue)),
           ],
         ),
         const SizedBox(height: 5),
@@ -543,14 +544,14 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                 flex: compPercent > 0 ? compPercent : (total == 0 ? 0 : 1),
                 child: Container(
                   height: 7,
-                  color: complianceRate == null ? AppColors.neutral300 : AppColors.passGreen,
+                  color: complianceRate == null ? AppColors.skyGrey : AppColors.successGreen,
                 ),
               ),
               Expanded(
                 flex: (100 - compPercent) > 0 ? (100 - compPercent) : 0,
                 child: Container(
                   height: 7,
-                  color: complianceRate == null ? AppColors.neutral300 : AppColors.violationRed.withValues(alpha: 0.6),
+                  color: complianceRate == null ? AppColors.skyGrey : AppColors.alertRed.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -570,7 +571,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 5),
-        Text(text, style: const TextStyle(fontSize: 11, color: AppColors.neutral600)),
+        Text(text, style: const TextStyle(fontSize: 11, color: AppColors.steelBlue)),
       ],
     );
   }
@@ -584,7 +585,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.neutral200),
+        border: Border.all(color: AppColors.skyGrey),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -596,7 +597,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           const SizedBox(height: 4),
           const Text(
             'Live Legal Metrology rule enforcement compliance',
-            style: TextStyle(fontSize: 11, color: AppColors.neutral500),
+            style: TextStyle(fontSize: 11, color: AppColors.steelBlue),
           ),
           const SizedBox(height: 18),
 
@@ -612,7 +613,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                   child: Center(
                     child: Text(
                       'No statutory rule health data available yet.',
-                      style: TextStyle(fontSize: 12, color: AppColors.neutral500),
+                      style: TextStyle(fontSize: 12, color: AppColors.steelBlue),
                     ),
                   ),
                 );
@@ -631,19 +632,19 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                   if (rate == null) {
                     percentStr = '—';
                     progress = 0.0;
-                    color = AppColors.neutral400;
+                    color = AppColors.steelBlue;
                   } else {
                     final p = (rate.toDouble() * 100).toInt();
                     percentStr = '$p%';
                     progress = rate.toDouble();
-                    color = rate >= 0.70 ? AppColors.passGreen : AppColors.reviewAmber;
+                    color = rate >= 0.70 ? AppColors.successGreen : AppColors.warningAmber;
                   }
 
                   return Column(
                     children: [
                       _buildRuleHealthRow(ruleName, percentStr, progress, color),
                       if (index < rules.length - 1)
-                        const Divider(height: 20, color: AppColors.neutral200),
+                        const Divider(height: 20, color: AppColors.skyGrey),
                     ],
                   );
                 }),
@@ -663,7 +664,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 9),
-                side: const BorderSide(color: AppColors.neutral300),
+                side: const BorderSide(color: AppColors.skyGrey),
               ),
               onPressed: () => context.go('/rules'),
               child: const Text('View Rule Engine Registry →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)),
@@ -681,13 +682,13 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.neutral800)),
+              Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textCharcoal)),
               const SizedBox(height: 4),
               ClipRRect(
                 borderRadius: BorderRadius.circular(3),
                 child: LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: AppColors.neutral100,
+                  backgroundColor: AppColors.skyGrey.withValues(alpha: 0.3),
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                   minHeight: 5,
                 ),
@@ -724,7 +725,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.neutral200),
+        border: Border.all(color: AppColors.skyGrey),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,7 +749,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                     const SizedBox(width: 8),
                     Text(
                       '(${inspections.length} total)',
-                      style: const TextStyle(fontSize: 12, color: AppColors.neutral500),
+                      style: const TextStyle(fontSize: 12, color: AppColors.steelBlue),
                     ),
                   ],
                 ),
@@ -764,14 +765,14 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                     const SizedBox(width: 8),
                     TextButton(
                       onPressed: () => context.go('/inspections'),
-                      child: const Text('View All Registry →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: const Text('View All Registry →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          const Divider(height: 1, color: AppColors.neutral200),
+          const Divider(height: 1, color: AppColors.skyGrey),
 
           // Horizontally scrollable table container for complete responsive safety
           LayoutBuilder(
@@ -785,21 +786,21 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                     children: [
                       // Data Table Header
                       Container(
-                        color: AppColors.neutral100,
+                        color: AppColors.surfaceIvory,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         child: Row(
                           children: const [
-                            Expanded(flex: 2, child: Text('CASE ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                            Expanded(flex: 4, child: Text('ESTABLISHMENT / TRADER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                            Expanded(flex: 3, child: Text('LOCATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                            Expanded(flex: 2, child: Text('INSPECTION TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                            Expanded(flex: 3, child: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                            Expanded(flex: 2, child: Text('DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600))),
-                            Expanded(flex: 2, child: Align(alignment: Alignment.centerRight, child: Text('ACTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.neutral600)))),
+                            Expanded(flex: 2, child: Text('CASE ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.steelBlue))),
+                            Expanded(flex: 4, child: Text('ESTABLISHMENT / TRADER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.steelBlue))),
+                            Expanded(flex: 3, child: Text('LOCATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.steelBlue))),
+                            Expanded(flex: 2, child: Text('INSPECTION TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.steelBlue))),
+                            Expanded(flex: 3, child: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.steelBlue))),
+                            Expanded(flex: 2, child: Text('DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.steelBlue))),
+                            Expanded(flex: 2, child: Align(alignment: Alignment.centerRight, child: Text('ACTION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.steelBlue)))),
                           ],
                         ),
                       ),
-                      const Divider(height: 1, color: AppColors.neutral200),
+                      const Divider(height: 1, color: AppColors.skyGrey),
 
                       // Data Rows or Clean Empty States
                       if (inspections.isEmpty)
@@ -812,10 +813,11 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: AppColors.neutral100,
+                                    color: AppColors.surfaceIvory,
                                     shape: BoxShape.circle,
+                                    border: Border.all(color: AppColors.skyGrey),
                                   ),
-                                  child: const Icon(Icons.assignment_outlined, size: 32, color: AppColors.neutral400),
+                                  child: const Icon(Icons.assignment_outlined, size: 32, color: AppColors.steelBlue),
                                 ),
                                 const SizedBox(height: 12),
                                 const Text(
@@ -825,7 +827,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                                 const SizedBox(height: 4),
                                 const Text(
                                   'Create your first inspection or launch a physical scan to begin statutory audits.',
-                                  style: TextStyle(fontSize: 12, color: AppColors.neutral600),
+                                  style: TextStyle(fontSize: 12, color: AppColors.steelBlue),
                                 ),
                               ],
                             ),
@@ -837,7 +839,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                           child: Center(
                             child: Text(
                               'No inspection cases match selected filter "$_tableFilter".',
-                              style: const TextStyle(color: AppColors.neutral500, fontSize: 13),
+                              style: const TextStyle(color: AppColors.steelBlue, fontSize: 13),
                             ),
                           ),
                         )
@@ -846,7 +848,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: filtered.length,
-                          separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.neutral200),
+                          separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.skyGrey),
                           itemBuilder: (context, index) {
                             final ins = filtered[index];
                             return _buildTableRow(context, ins);
@@ -871,16 +873,16 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.secondaryBlue : Colors.transparent,
+          color: isSelected ? AppColors.inspectionGreen : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: isSelected ? AppColors.secondaryBlue : AppColors.neutral300),
+          border: Border.all(color: isSelected ? AppColors.inspectionGreen : AppColors.skyGrey),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 11,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? Colors.white : AppColors.neutral700,
+            color: isSelected ? Colors.white : AppColors.textCharcoal,
           ),
         ),
       ),
@@ -892,7 +894,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
 
     return InkWell(
       onTap: () => context.push('/inspections/${ins.id}'),
-      hoverColor: AppColors.neutral50,
+      hoverColor: AppColors.mintMist.withValues(alpha: 0.15),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(
@@ -908,7 +910,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               flex: 4,
               child: Text(
                 ins.businessName ?? ins.sellerName ?? 'Retail Enterprise',
-                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500),
+                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.textCharcoal),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -916,7 +918,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               flex: 3,
               child: Text(
                 ins.location,
-                style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
+                style: const TextStyle(fontSize: 12, color: AppColors.steelBlue),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -924,7 +926,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               flex: 2,
               child: Text(
                 ins.inspectionType,
-                style: const TextStyle(fontSize: 12, color: AppColors.neutral700),
+                style: const TextStyle(fontSize: 12, color: AppColors.textCharcoal),
               ),
             ),
             Expanded(
@@ -941,7 +943,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               flex: 2,
               child: Text(
                 dateStr,
-                style: const TextStyle(fontSize: 12, color: AppColors.neutral600),
+                style: const TextStyle(fontSize: 12, color: AppColors.steelBlue),
               ),
             ),
             Expanded(
@@ -954,8 +956,8 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-                  icon: const Icon(Icons.open_in_new, size: 12),
-                  label: const Text('View', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.open_in_new, size: 12, color: AppColors.inspectionGreen),
+                  label: const Text('View', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.inspectionGreen)),
                   onPressed: () => context.push('/inspections/${ins.id}'),
                 ),
               ),

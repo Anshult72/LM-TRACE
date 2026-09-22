@@ -406,10 +406,10 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
           'package_construction_type': packageConstructionType,
           'applicability_context': applicabilityContext,
           'notes': notes,
-          if (listingUrl != null) 'listing_url': listingUrl,
-          if (canonicalUrl != null) 'canonical_url': canonicalUrl,
-          if (marketplace != null) 'marketplace': marketplace,
-          if (listingMetadata != null) 'listing_metadata': listingMetadata,
+          'listing_url': ?listingUrl,
+          'canonical_url': ?canonicalUrl,
+          'marketplace': ?marketplace,
+          'listing_metadata': ?listingMetadata,
         },
       );
       if (response.statusCode == 200) {
@@ -462,9 +462,9 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
       final response = await _apiClient.post(
         "${ApiConstants.onlineListings}/analyze",
         data: {
-          if (url != null) 'url': url,
-          if (inspectionId != null) 'inspection_id': inspectionId,
-          if (extractedData != null) 'extracted_data': extractedData,
+          'url': ?url,
+          'inspection_id': ?inspectionId,
+          'extracted_data': ?extractedData,
         },
       );
       state = state.copyWith(isLoading: false);

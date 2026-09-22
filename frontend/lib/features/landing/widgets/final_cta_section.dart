@@ -22,8 +22,8 @@ class FinalCtaSection extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF0F2537),
-            Color(0xFF0A192A),
+            AppColors.primaryNavy,
+            Color(0xFF091D26),
           ],
         ),
       ),
@@ -40,14 +40,14 @@ class FinalCtaSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.accentBlue.withValues(alpha: 0.15),
+                  color: AppColors.inspectionGreen.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.accentBlue.withValues(alpha: 0.4)),
+                  border: Border.all(color: AppColors.inspectionGreen),
                 ),
                 child: const Text(
                   'ACCESS ENFORCEMENT PLATFORM',
                   style: TextStyle(
-                    color: Color(0xFF93C5FD),
+                    color: AppColors.mintMist,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
@@ -77,7 +77,7 @@ class FinalCtaSection extends StatelessWidget {
                   'Access field inspection registries, multi-surface scanner tools, automated Table-I PDP calculators, versioned statutory rule configurations, and tamper-evident audit dossiers.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF94A3B8),
+                    color: AppColors.sage,
                     fontSize: 15.5,
                     height: 1.6,
                   ),
@@ -90,7 +90,7 @@ class FinalCtaSection extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => context.go('/login'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentBlue,
+                  backgroundColor: AppColors.inspectionGreen,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(
                     horizontal: isMobile ? 20 : 32,
@@ -98,7 +98,7 @@ class FinalCtaSection extends StatelessWidget {
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   elevation: 0,
-                  shadowColor: AppColors.accentBlue.withValues(alpha: 0.5),
+                  shadowColor: AppColors.inspectionGreen.withValues(alpha: 0.4),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
@@ -122,14 +122,14 @@ class FinalCtaSection extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.lock_outline_rounded, color: Color(0xFF64748B), size: 14),
+                  const Icon(Icons.lock_outline_rounded, color: AppColors.accentGold, size: 14),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       'Protected Regulatory Access // Authorized Personnel Only',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: const Color(0xFF8DA4C4).withValues(alpha: 0.8),
+                        color: AppColors.sage.withValues(alpha: 0.9),
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500,
                       ),

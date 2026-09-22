@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
 class AuditEvent {
   final String id;
@@ -119,29 +120,29 @@ class AuditEvent {
   Color get resultColor {
     switch (result) {
       case 'SUCCESS':
-        return const Color(0xFF10B981);
+        return AppColors.successGreen;
       case 'FAILURE':
-        return const Color(0xFFEF4444);
+        return AppColors.alertRed;
       case 'WARNING':
-        return const Color(0xFFF59E0B);
+        return AppColors.warningAmber;
       default:
-        return const Color(0xFF6B7280);
+        return AppColors.steelBlue;
     }
   }
 
   Color get categoryColor {
     final t = eventType.toUpperCase();
-    if (t.contains('INSPECT')) return const Color(0xFF2563EB);
-    if (t.contains('EVID')) return const Color(0xFF8B5CF6);
-    if (t.contains('OCR')) return const Color(0xFF06B6D4);
-    if (t.contains('CV') || t.contains('VISION')) return const Color(0xFF6366F1);
-    if (t.contains('CALIB')) return const Color(0xFF0D9488);
-    if (t.contains('RULE') || t.contains('STATUT')) return const Color(0xFFEA580C);
-    if (t.contains('COMPLIANCE')) return const Color(0xFF059669);
-    if (t.contains('FINDING') || t.contains('VIOL')) return const Color(0xFFD97706);
-    if (t.contains('REPORT')) return const Color(0xFF4F46E5);
-    if (t.contains('AUTH') || t.contains('SEC')) return const Color(0xFFDC2626);
-    return const Color(0xFF64748B);
+    if (t.contains('INSPECT')) return AppColors.primaryNavy;
+    if (t.contains('EVID')) return AppColors.inspectionGreen;
+    if (t.contains('OCR')) return AppColors.steelBlue;
+    if (t.contains('CV') || t.contains('VISION')) return AppColors.inspectionGreen;
+    if (t.contains('CALIB')) return AppColors.accentGold;
+    if (t.contains('RULE') || t.contains('STATUT')) return AppColors.primaryNavy;
+    if (t.contains('COMPLIANCE')) return AppColors.successGreen;
+    if (t.contains('FINDING') || t.contains('VIOL')) return AppColors.warningAmber;
+    if (t.contains('REPORT')) return AppColors.primaryNavy;
+    if (t.contains('AUTH') || t.contains('SEC')) return AppColors.alertRed;
+    return AppColors.steelBlue;
   }
 
   IconData get categoryIcon {

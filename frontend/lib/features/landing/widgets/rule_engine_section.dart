@@ -18,7 +18,7 @@ class RuleEngineSection extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: AppColors.neutral50,
+      color: AppColors.surfaceIvory,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 32,
         vertical: isMobile ? 56 : 96,
@@ -116,12 +116,12 @@ class RuleEngineSection extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(isMobile ? 18 : 28),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceIvory,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderLight, width: 1.2),
+        border: Border.all(color: AppColors.skyGrey, width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x040F172A),
+            color: Color(0x060F2D3A),
             blurRadius: 10,
             offset: Offset(0, 3),
           ),
@@ -136,10 +136,10 @@ class RuleEngineSection extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppColors.mintMist,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.history_toggle_off_rounded, color: AppColors.accentBlue, size: 20),
+                child: const Icon(Icons.history_toggle_off_rounded, color: AppColors.inspectionGreen, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -215,9 +215,9 @@ class RuleEngineSection extends StatelessWidget {
               height: 14,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isActive ? AppColors.passGreen : const Color(0xFFCBD5E1),
+                color: isActive ? AppColors.inspectionGreen : AppColors.skyGrey,
                 border: Border.all(
-                  color: isActive ? const Color(0xFFA7F3D0) : Colors.white,
+                  color: isActive ? AppColors.mintMist : AppColors.surfaceIvory,
                   width: 2.5,
                 ),
               ),
@@ -226,7 +226,7 @@ class RuleEngineSection extends StatelessWidget {
               Container(
                 width: 2,
                 height: 54,
-                color: const Color(0xFFE2E8F0),
+                color: AppColors.skyGrey,
               ),
           ],
         ),
@@ -254,20 +254,20 @@ class RuleEngineSection extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
-                          color: AppColors.passGreenLight,
+                          color: AppColors.mintMist,
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: AppColors.passGreenBorder, width: 0.8),
+                          border: Border.all(color: AppColors.inspectionGreen.withValues(alpha: 0.3), width: 0.8),
                         ),
                         child: const Text(
                           'ACTIVE LAW',
-                          style: TextStyle(color: AppColors.passGreen, fontSize: 9, fontWeight: FontWeight.w800),
+                          style: TextStyle(color: AppColors.inspectionGreen, fontSize: 9, fontWeight: FontWeight.w800),
                         ),
                       ),
                   ],
                 ),
                 Text(
                   notification,
-                  style: const TextStyle(color: AppColors.accentBlue, fontSize: 11, fontWeight: FontWeight.w600),
+                  style: const TextStyle(color: AppColors.steelBlue, fontSize: 11, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -286,12 +286,12 @@ class RuleEngineSection extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(isMobile ? 18 : 28),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F2537),
+        color: AppColors.primaryNavy,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF1E3A5F), width: 1.2),
+        border: Border.all(color: const Color(0xFF163E50), width: 1.2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x1F000000),
+            color: Color(0x26000000),
             blurRadius: 16,
             offset: Offset(0, 6),
           ),
@@ -309,13 +309,13 @@ class RuleEngineSection extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.terminal_rounded, color: Color(0xFF60A5FA), size: 20),
+                  const Icon(Icons.terminal_rounded, color: AppColors.mintMist, size: 20),
                   const SizedBox(width: 10),
                   Flexible(
                     child: const Text(
                       'RULE EXECUTION DEFINITION',
                       style: TextStyle(
-                        color: Color(0xFF93C5FD),
+                        color: AppColors.mintMist,
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
@@ -328,7 +328,7 @@ class RuleEngineSection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E3A5F),
+                  color: const Color(0xFF163E50),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
@@ -351,23 +351,23 @@ class RuleEngineSection extends StatelessWidget {
           const SizedBox(height: 6),
           const Text(
             'Statutory Basis: Rule 7 & Table-I, Legal Metrology (Packaged Commodities) Rules, 2011',
-            style: TextStyle(color: Color(0xFF8DA4C4), fontSize: 12),
+            style: TextStyle(color: AppColors.sage, fontSize: 12),
           ),
           const SizedBox(height: 20),
           // Parameters Matrix
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF091624),
+              color: const Color(0xFF0A1F29),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF162D47), width: 1),
+              border: Border.all(color: const Color(0xFF163E50), width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'DETERMINISTIC EVALUATION PARAMETERS (TABLE-I)',
-                  style: TextStyle(color: Color(0xFF60A5FA), fontSize: 10.5, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: AppColors.mintMist, fontSize: 10.5, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 10),
                 _buildParamRow('Area ≤ 50 cm²', 'Min Numeral: 1.0 mm', 'Min Letter: 1.0 mm', isMobile: isMobile),
@@ -381,7 +381,7 @@ class RuleEngineSection extends StatelessWidget {
           const SizedBox(height: 18),
           const Row(
             children: [
-              Icon(Icons.shield_outlined, color: AppColors.passGreen, size: 16),
+              Icon(Icons.shield_outlined, color: AppColors.inspectionGreen, size: 16),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -403,14 +403,14 @@ class RuleEngineSection extends StatelessWidget {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(area, style: const TextStyle(color: Color(0xFF60A5FA), fontSize: 11, fontFamily: 'monospace', fontWeight: FontWeight.w700)),
+                Text(area, style: const TextStyle(color: AppColors.mintMist, fontSize: 11, fontFamily: 'monospace', fontWeight: FontWeight.w700)),
                 const SizedBox(height: 1),
                 Wrap(
                   spacing: 8,
                   runSpacing: 2,
                   children: [
                     Text(numH, style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 10.5, fontWeight: FontWeight.w600)),
-                    Text(letH, style: const TextStyle(color: Color(0xFF8DA4C4), fontSize: 10)),
+                    Text(letH, style: const TextStyle(color: AppColors.skyGrey, fontSize: 10)),
                   ],
                 ),
               ],
@@ -418,9 +418,9 @@ class RuleEngineSection extends StatelessWidget {
           : Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(area, style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 11, fontFamily: 'monospace')),
+                Text(area, style: const TextStyle(color: AppColors.mintMist, fontSize: 11, fontFamily: 'monospace')),
                 Text(numH, style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 11, fontWeight: FontWeight.w600)),
-                Text(letH, style: const TextStyle(color: Color(0xFF8DA4C4), fontSize: 10.5)),
+                Text(letH, style: const TextStyle(color: AppColors.skyGrey, fontSize: 10.5)),
               ],
             ),
     );

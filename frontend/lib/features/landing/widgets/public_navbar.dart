@@ -50,12 +50,12 @@ class _PublicNavbarState extends State<PublicNavbar> {
     final isMobile = ResponsiveLayout.isMobile(context);
 
     final bgColor = widget.isScrolled
-        ? AppColors.primaryNavy.withValues(alpha: 0.96)
+        ? AppColors.primaryNavy.withValues(alpha: 0.98)
         : AppColors.primaryNavy;
 
     final borderColor = widget.isScrolled
-        ? const Color(0xFF1E3A5F)
-        : const Color(0xFF162D47);
+        ? const Color(0xFF163E50)
+        : const Color(0xFF123444);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -109,17 +109,17 @@ class _PublicNavbarState extends State<PublicNavbar> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: AppColors.accentBlue.withValues(alpha: 0.25),
+                                      color: AppColors.inspectionGreen.withValues(alpha: 0.3),
                                       borderRadius: BorderRadius.circular(4),
                                       border: Border.all(
-                                        color: AppColors.accentBlue.withValues(alpha: 0.5),
+                                        color: AppColors.inspectionGreen,
                                         width: 0.8,
                                       ),
                                     ),
                                     child: const Text(
                                       'GOV',
                                       style: TextStyle(
-                                        color: Color(0xFF93C5FD),
+                                        color: AppColors.mintMist,
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 0.8,
@@ -132,7 +132,7 @@ class _PublicNavbarState extends State<PublicNavbar> {
                               Text(
                                 isMobile ? 'Compliance Platform' : 'Legal Metrology Compliance & Inspection',
                                 style: const TextStyle(
-                                  color: Color(0xFF94A3B8),
+                                  color: AppColors.sage,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -181,7 +181,7 @@ class _PublicNavbarState extends State<PublicNavbar> {
         if (isMobile && _mobileMenuOpen)
           AnimatedContainer(
             duration: const Duration(milliseconds: 220),
-            color: const Color(0xFF0C1D2C),
+            color: AppColors.primaryNavy,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -235,7 +235,7 @@ class _PublicNavbarState extends State<PublicNavbar> {
                   },
                 ),
                 const SizedBox(height: 16),
-                const Divider(color: Color(0xFF1E3A5F), height: 1),
+                const Divider(color: Color(0xFF163E50), height: 1),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: () {
@@ -245,7 +245,7 @@ class _PublicNavbarState extends State<PublicNavbar> {
                   icon: const Icon(Icons.login_rounded, size: 18),
                   label: const Text('Login to LM-TRACE'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accentBlue,
+                    backgroundColor: AppColors.inspectionGreen,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -285,7 +285,7 @@ class _NavLinkState extends State<_NavLink> {
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 150),
             style: TextStyle(
-              color: _isHovered ? Colors.white : const Color(0xFFCBD5E1),
+              color: _isHovered ? AppColors.mintMist : const Color(0xFFD9E2EA),
               fontSize: 13.5,
               fontWeight: _isHovered ? FontWeight.w600 : FontWeight.w500,
             ),
@@ -314,12 +314,12 @@ class _LoginButtonState extends State<_LoginButton> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
-          color: _isHovered ? const Color(0xFF1D4ED8) : AppColors.accentBlue,
+          color: _isHovered ? const Color(0xFF236355) : AppColors.inspectionGreen,
           borderRadius: BorderRadius.circular(8),
           boxShadow: _isHovered
               ? [
                   BoxShadow(
-                    color: AppColors.accentBlue.withValues(alpha: 0.4),
+                    color: AppColors.inspectionGreen.withValues(alpha: 0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 3),
                   ),
@@ -377,7 +377,7 @@ class _MobileNavLink extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         child: Row(
           children: [
-            Icon(icon, color: const Color(0xFF8DA4C4), size: 18),
+            Icon(icon, color: AppColors.sage, size: 18),
             const SizedBox(width: 14),
             Text(
               label,
@@ -388,7 +388,7 @@ class _MobileNavLink extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFF64748B), size: 18),
+            const Icon(Icons.chevron_right_rounded, color: AppColors.steelBlue, size: 18),
           ],
         ),
       ),

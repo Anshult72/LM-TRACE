@@ -18,7 +18,7 @@ class AboutSection extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      color: Colors.white,
+      color: AppColors.surfaceIvory,
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? 20 : 32,
         vertical: isMobile ? 56 : 96,
@@ -70,9 +70,16 @@ class AboutSection extends StatelessWidget {
                 child: Container(
                   padding: EdgeInsets.all(isMobile ? 18 : 32),
                   decoration: BoxDecoration(
-                    color: AppColors.neutral50,
+                    color: AppColors.surfaceIvory,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.borderLight, width: 1.2),
+                    border: Border.all(color: AppColors.skyGrey, width: 1.2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x060F2D3A),
+                        blurRadius: 10,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
@@ -101,7 +108,7 @@ class AboutSection extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Divider(color: AppColors.borderLight, height: 1),
+                      const Divider(color: AppColors.skyGrey, height: 1),
                       const SizedBox(height: 24),
                       Wrap(
                         spacing: 24,
@@ -129,20 +136,20 @@ class AboutSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceIvory,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.neutral300),
+        border: Border.all(color: AppColors.skyGrey),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle_outline_rounded, size: 14, color: AppColors.accentBlue),
+          const Icon(Icons.check_circle_outline_rounded, size: 14, color: AppColors.inspectionGreen),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
               text,
               style: const TextStyle(
-                color: AppColors.neutral800,
+                color: AppColors.textDark,
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
               ),
