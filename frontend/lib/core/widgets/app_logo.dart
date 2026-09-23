@@ -162,16 +162,36 @@ class AppLogo extends StatelessWidget {
         isAntiAlias: true,
         semanticLabel: effectiveTooltip,
         errorBuilder: (context, error, stackTrace) {
-          // Graceful fallback if asset path is momentarily reloading
-          return Container(
+          // Graceful fallback to alternate logo key if one is not yet indexed in asset bundle
+          return Image.asset(
+            'assets/images/logo/lm_trace_logo.png',
             width: effectiveWidth,
             height: effectiveHeight,
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F2537),
-              borderRadius: effectiveRadius,
-            ),
-            alignment: Alignment.center,
-            child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.cyanAccent, size: 24),
+            fit: fit,
+            filterQuality: FilterQuality.high,
+            isAntiAlias: true,
+            errorBuilder: (context2, error2, stackTrace2) {
+              return Image.asset(
+                'assets/images/logo/lm_trace_brand_master.png',
+                width: effectiveWidth,
+                height: effectiveHeight,
+                fit: fit,
+                filterQuality: FilterQuality.high,
+                isAntiAlias: true,
+                errorBuilder: (context3, error3, stackTrace3) {
+                  return Container(
+                    width: effectiveWidth,
+                    height: effectiveHeight,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F2537),
+                      borderRadius: effectiveRadius,
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.cyanAccent, size: 24),
+                  );
+                },
+              );
+            },
           );
         },
       ),
