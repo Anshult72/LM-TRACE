@@ -79,7 +79,7 @@ class _NewInspectionScreenState extends ConsumerState<NewInspectionScreen> {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'Record establishment particulars and select inspection channel',
+                      'Create the inspection case and provide the minimum information needed to begin.',
                       style: TextStyle(fontSize: 13, color: AppColors.neutral600),
                     ),
                   ],
@@ -90,7 +90,6 @@ class _NewInspectionScreenState extends ConsumerState<NewInspectionScreen> {
             InspectionDetailsForm(
               isFinalizing: false,
               isLoading: state.isLoading,
-              submitButtonLabel: 'Create & Proceed to Capture',
               onSubmit: _handleCreate,
             ),
             const SizedBox(height: 32),
@@ -109,7 +108,6 @@ class _NewInspectionScreenState extends ConsumerState<NewInspectionScreen> {
         child: InspectionDetailsForm(
           isFinalizing: false,
           isLoading: state.isLoading,
-          submitButtonLabel: 'Create & Proceed to Capture',
           onSubmit: _handleCreate,
         ),
       ),

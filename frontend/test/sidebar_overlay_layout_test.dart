@@ -62,7 +62,6 @@ void main() {
     expect(initialSidebarSize.width, equals(Breakpoints.collapsedSidebarWidth));
 
     // 2. Hover over the sidebar rail to expand it
-    final mouseRegionFinder = find.byType(MouseRegion).first;
     final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
     await gesture.addPointer(location: const Offset(30, 200));
     await tester.pump();
@@ -97,6 +96,7 @@ void main() {
     final finalContentOffset = tester.getTopLeft(initialContentFinder);
     final finalContentSize = tester.getSize(initialContentFinder);
     expect(finalContentOffset.dx, equals(initialContentOffset.dx));
+    expect(finalContentSize.width, equals(initialContentSize.width));
     await gesture.removePointer();
     } finally {
       debugDefaultTargetPlatformOverride = null;

@@ -105,10 +105,9 @@ void main() {
       // E-commerce listing controls should appear
       expect(find.text('Marketplace / Platform'), findsOneWidget);
       expect(find.text('Product Listing URL *'), findsOneWidget);
-      expect(find.text('Fetch Listing'), findsOneWidget);
 
       // Try to submit with empty URL
-      final submitButton = find.text('Create & Open E-Commerce Inspection');
+      final submitButton = find.text('Create & Fetch Listing');
       expect(submitButton, findsOneWidget);
       await tester.ensureVisible(submitButton);
       await tester.tap(submitButton);

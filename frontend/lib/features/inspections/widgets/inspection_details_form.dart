@@ -213,6 +213,29 @@ class _InspectionDetailsFormState extends ConsumerState<InspectionDetailsForm> {
     return null;
   }
 
+  void _autoDetectMarketplace(String url) {
+    final lower = url.toLowerCase();
+    String detected = _selectedMarketplace;
+    if (lower.contains('amazon.')) {
+      detected = 'Amazon India';
+    } else if (lower.contains('flipkart.')) {
+      detected = 'Flipkart';
+    } else if (lower.contains('blinkit.')) {
+      detected = 'Blinkit';
+    } else if (lower.contains('zepto')) {
+      detected = 'Zepto';
+    } else if (lower.contains('swiggy')) {
+      detected = 'Swiggy Instamart';
+    } else if (lower.contains('bigbasket')) {
+      detected = 'BigBasket';
+    } else if (lower.contains('jiomart')) {
+      detected = 'JioMart';
+    }
+    if (detected != _selectedMarketplace) {
+      setState(() => _selectedMarketplace = detected);
+    }
+  }
+
   Future<void> _handleFetchListing() async {
     final url = _urlController.text.trim();
     if (url.isEmpty) {
@@ -451,10 +474,12 @@ class _InspectionDetailsFormState extends ConsumerState<InspectionDetailsForm> {
                 Expanded(
                   child: Text(
                     _inspectionType == 'ONLINE_LISTING'
-                        ? 'E-Commerce Listing Mode: Governed by Rule 6(10) of PCR, 2011. Online disclosures are retrieved via safe server-side fetch without physical geometry or PDP scaling.'
+                        ? (isFinalizing
+                            ? 'E-Commerce Listing Mode: Review digital declarations and finalize the audit record.'
+                            : 'E-Commerce Listing Mode: Governed by Rule 6(10). Enter product listing URL to audit digital declarations.')
                         : (isFinalizing
-                            ? 'Complete establishment particulars to finalize and seal this inspection record.'
-                            : 'Inspections are governed by Legal Metrology (Packaged Commodities) Rules, 2011. Sealed with cryptographic audit provenance.'),
+                            ? 'Complete establishment particulars and technical package parameters to finalize and seal this inspection record.'
+                            : 'Create the inspection case and provide the minimum information needed to begin.'),
                     style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
                   ),
                 ),
@@ -520,7 +545,7 @@ class _InspectionDetailsFormState extends ConsumerState<InspectionDetailsForm> {
                   : Text(
                       widget.submitButtonLabel ??
                           (_inspectionType == 'ONLINE_LISTING'
-                              ? (isFinalizing ? 'Confirm & Finalize Inspection' : 'Create & Open E-Commerce Inspection')
+                              ? (isFinalizing ? 'Confirm & Finalize Inspection' : 'Create & Fetch Listing')
                               : (isFinalizing ? 'Confirm & Finalize Inspection' : 'Create & Proceed to Capture')),
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     ),
@@ -535,6 +560,115 @@ class _InspectionDetailsFormState extends ConsumerState<InspectionDetailsForm> {
   // E-COMMERCE LISTING WORKFLOW
   // ---------------------------------------------------------------------------
   Widget _buildEcommerceListingForm() {
+    if (!widget.isFinalizing) {
+      return _buildMinimalEcommerceListingForm();
+    }
+    return _buildDetailedEcommerceListingForm();
+  }
+
+  Widget _buildMinimalEcommerceListingForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Online Listing Information'),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _urlController,
+          onChanged: _autoDetectMarketplace,
+          decoration: InputDecoration(
+            labelText: 'Product Listing URL *',
+            hintText: 'https://www.amazon.in/dp/... or https://www.flipkart.com/...',
+            prefixIcon: const Icon(Icons.link_rounded),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.content_paste_rounded, size: 18),
+              tooltip: 'Paste from Clipboard',
+              onPressed: () async {
+                final data = await Clipboard.getData('text/plain');
+                if (data?.text != null) {
+                  final txt = data!.text!.trim();
+                  _urlController.text = txt;
+                  _autoDetectMarketplace(txt);
+                }
+              },
+            ),
+          ),
+          validator: (val) {
+            if (val == null || val.trim().isEmpty) {
+              return 'Product listing URL is required';
+            }
+            if (!val.startsWith('http://') && !val.startsWith('https://')) {
+              return 'URL must begin with http:// or https://';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(
+              flex: 5,
+              child: DropdownButtonFormField<String>(
+                key: ValueKey('market_$_selectedMarketplace'),
+                initialValue: _selectedMarketplace,
+                decoration: const InputDecoration(
+                  labelText: 'Marketplace / Platform',
+                  prefixIcon: Icon(Icons.store_mall_directory_outlined),
+                  helperText: 'Auto-detected from URL if recognized',
+                ),
+                items: _marketplaces
+                    .map((m) => DropdownMenuItem(value: m, child: Text(m, style: const TextStyle(fontSize: 13))))
+                    .toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedMarketplace = val);
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 5,
+              child: DropdownButtonFormField<String>(
+                key: ValueKey('category_$_category'),
+                initialValue: _category,
+                decoration: const InputDecoration(
+                  labelText: 'Commodity Category (Optional)',
+                  prefixIcon: Icon(Icons.category_outlined),
+                  helperText: 'Statutory classification',
+                ),
+                items: _categories
+                    .map((cat) => DropdownMenuItem(value: cat, child: Text(cat, style: const TextStyle(fontSize: 13))))
+                    .toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _category = val);
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        TextFormField(
+          controller: _businessController,
+          decoration: const InputDecoration(
+            labelText: 'Establishment / Seller Name (Optional)',
+            hintText: 'Leave empty to auto-derive from marketplace',
+            prefixIcon: Icon(Icons.storefront_outlined),
+          ),
+        ),
+        const SizedBox(height: 22),
+        _buildSectionTitle('Optional Field Notes'),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _notesController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            labelText: 'Inspection Field Notes (Optional)',
+            hintText: 'Add relevant observations, compliance notes, or case reference...',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailedEcommerceListingForm() {
     final status = _fetchResult?['fetch_status']?.toString();
     final isRetrieved = status == 'RETRIEVED' || status == 'PARTIAL';
     final isError = status == 'FAILED' || status == 'BLOCKED' || status == 'LOGIN_REQUIRED' || status == 'TIMEOUT';
@@ -1029,9 +1163,87 @@ class _InspectionDetailsFormState extends ConsumerState<InspectionDetailsForm> {
   }
 
   // ---------------------------------------------------------------------------
-  // PHYSICAL COMMODITY WORKFLOW (PRESERVED)
+  // PHYSICAL COMMODITY WORKFLOW
   // ---------------------------------------------------------------------------
   Widget _buildPhysicalCommodityForm() {
+    if (!widget.isFinalizing) {
+      return _buildMinimalPhysicalCommodityForm();
+    }
+    return _buildDetailedPhysicalCommodityForm();
+  }
+
+  Widget _buildMinimalPhysicalCommodityForm() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Basic Inspection Information'),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _businessController,
+          decoration: const InputDecoration(
+            labelText: 'Establishment / Trader Name *',
+            hintText: 'e.g. M/s Greenfield Retail Hub',
+            prefixIcon: Icon(Icons.storefront_outlined),
+          ),
+          validator: (val) => (val == null || val.trim().isEmpty) ? 'Establishment name is required' : null,
+        ),
+        const SizedBox(height: 14),
+        TextFormField(
+          controller: _locationController,
+          decoration: const InputDecoration(
+            labelText: 'Inspection Location / Address *',
+            hintText: 'Shop No., Market, District, State',
+            prefixIcon: Icon(Icons.location_on_outlined),
+          ),
+          validator: (val) {
+            if (val == null || val.trim().isEmpty) {
+              return 'Inspection location address is required';
+            }
+            if (val.trim() == 'Field Scan (Pending Finalisation)') {
+              return 'Please provide the physical inspection address';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 14),
+        DropdownButtonFormField<String>(
+          initialValue: _category,
+          decoration: const InputDecoration(
+            labelText: 'Commodity Category *',
+            prefixIcon: Icon(Icons.category_outlined),
+          ),
+          items: _categories
+              .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+              .toList(),
+          onChanged: (val) {
+            if (val != null) setState(() => _category = val);
+          },
+        ),
+        const SizedBox(height: 14),
+        TextFormField(
+          controller: _sellerController,
+          decoration: const InputDecoration(
+            labelText: 'Dealer / Seller Licensee (Optional)',
+            hintText: 'e.g. Registered Distributor or Packer license',
+            prefixIcon: Icon(Icons.badge_outlined),
+          ),
+        ),
+        const SizedBox(height: 22),
+        _buildSectionTitle('Optional Field Notes'),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _notesController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            labelText: 'Inspection Field Notes (Optional)',
+            hintText: 'Add relevant observations, batch information, or sample tags...',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailedPhysicalCommodityForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

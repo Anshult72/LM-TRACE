@@ -4,91 +4,179 @@ import 'package:maanak_app/features/inspections/widgets/inspection_details_form.
 import 'package:maanak_app/features/inspections/inspections_controller.dart';
 
 void main() {
-  testWidgets('InspectionDetailsForm requires establishment name and valid location', (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1200, 1600);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  group('InspectionDetailsForm — Progressive Disclosure & Simplification', () {
+    testWidgets('New Inspection displays only minimal baseline fields (no upfront questionnaires)', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    bool submitted = false;
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: InspectionDetailsForm(
-              initialInspection: InspectionModel(
-                id: 'ins-test-01',
-                inspectionCode: 'INS-2026-TEST',
-                inspectionDate: '2026-09-13T00:00:00Z',
-                location: 'Field Scan (Pending Finalisation)',
-                status: 'DRAFT',
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: InspectionDetailsForm(
+                initialInspection: null,
+                isFinalizing: false,
+                onSubmit: (data) async {},
               ),
-              isFinalizing: true,
-              onSubmit: (data) async {
-                submitted = true;
-              },
             ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    // Verify submit button is present
-    final submitFinder = find.text('Confirm & Finalize Inspection');
-    expect(submitFinder, findsOneWidget);
+      // Baseline case creation fields MUST be present
+      expect(find.text('Inspection Channel'), findsOneWidget);
+      expect(find.text('Physical Commodity'), findsOneWidget);
+      expect(find.text('E-Commerce Listing'), findsOneWidget);
+      expect(find.text('Basic Inspection Information'), findsOneWidget);
+      expect(find.text('Establishment / Trader Name *'), findsOneWidget);
+      expect(find.text('Inspection Location / Address *'), findsOneWidget);
+      expect(find.text('Commodity Category *'), findsOneWidget);
+      expect(find.text('Dealer / Seller Licensee (Optional)'), findsOneWidget);
+      expect(find.text('Optional Field Notes'), findsOneWidget);
+      expect(find.text('Inspection Field Notes (Optional)'), findsOneWidget);
 
-    await tester.ensureVisible(submitFinder);
-    await tester.tap(submitFinder);
-    await tester.pumpAndSettle();
+      // Primary action button reflects physical next step
+      expect(find.text('Create & Proceed to Capture'), findsOneWidget);
 
+      // Technical & legal questionnaire fields MUST NOT be shown upfront
+      expect(find.text('Package Construction'), findsNothing);
+      expect(find.text('Package Geometry / Shape'), findsNothing);
+      expect(find.text('Declaration Applicability (Rule 6)'), findsNothing);
+      expect(find.text('Intended Consumer / Market Scope'), findsNothing);
+      expect(find.text('Commodity Origin'), findsNothing);
+      expect(find.text('Separate packer declaration'), findsNothing);
+      expect(find.text('Best Before / Use By declaration'), findsNothing);
+      expect(find.text('Commodity dimensions declaration'), findsNothing);
+      expect(find.text('Unit sale price declaration'), findsNothing);
+      expect(find.text('Multi-piece / group / gift package'), findsNothing);
+      expect(find.text('Declarations provided through QR / electronic link'), findsNothing);
+      expect(find.text('Package has an outside container / wrapper'), findsNothing);
+    });
 
-    // Validation errors must be shown and form not submitted
-    expect(find.text('Establishment name is required'), findsOneWidget);
-    expect(submitted, isFalse);
-  });
+    testWidgets('New Inspection submits with only minimal mandatory fields (optional notes left empty)', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-  testWidgets('InspectionDetailsForm submits valid data correctly', (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1200, 1600);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+      InspectionFormData? capturedData;
 
-    InspectionFormData? capturedData;
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: InspectionDetailsForm(
-              initialInspection: null,
-              isFinalizing: false,
-              onSubmit: (data) async {
-                capturedData = data;
-              },
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: InspectionDetailsForm(
+                initialInspection: null,
+                isFinalizing: false,
+                onSubmit: (data) async {
+                  capturedData = data;
+                },
+              ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    final submitFinder = find.text('Create & Proceed to Capture');
-    expect(submitFinder, findsOneWidget);
+      final submitFinder = find.text('Create & Proceed to Capture');
+      expect(submitFinder, findsOneWidget);
 
-    final bizField = find.byType(TextFormField).first;
-    await tester.enterText(bizField, 'Heritage Fresh Supermarket');
+      // Enter only mandatory establishment and location
+      final bizField = find.widgetWithText(TextFormField, 'Establishment / Trader Name *');
+      await tester.enterText(bizField, 'Heritage Fresh Supermarket');
 
-    final locField = find.byType(TextFormField).at(1);
-    await tester.enterText(locField, 'Khan Market, Shop 14, New Delhi');
+      final locField = find.widgetWithText(TextFormField, 'Inspection Location / Address *');
+      await tester.enterText(locField, 'Khan Market, Shop 14, New Delhi');
 
-    await tester.ensureVisible(submitFinder);
-    await tester.tap(submitFinder);
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(submitFinder);
+      await tester.tap(submitFinder);
+      await tester.pumpAndSettle();
 
-    expect(capturedData, isNotNull);
-    expect(capturedData!.businessName, 'Heritage Fresh Supermarket');
-    expect(capturedData!.location, 'Khan Market, Shop 14, New Delhi');
+      expect(capturedData, isNotNull);
+      expect(capturedData!.businessName, 'Heritage Fresh Supermarket');
+      expect(capturedData!.location, 'Khan Market, Shop 14, New Delhi');
+      expect(capturedData!.inspectionType, 'PHYSICAL');
+      expect(capturedData!.notes, isNull);
+      // Backend defaults safely preserved
+      expect(capturedData!.packageType, 'RECTANGULAR');
+      expect(capturedData!.packageConstructionType, 'NORMAL');
+    });
+
+    testWidgets('New Inspection rejects submission when mandatory fields are missing', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      bool submitted = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: InspectionDetailsForm(
+                initialInspection: null,
+                isFinalizing: false,
+                onSubmit: (data) async {
+                  submitted = true;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final submitFinder = find.text('Create & Proceed to Capture');
+      await tester.ensureVisible(submitFinder);
+      await tester.tap(submitFinder);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Establishment name is required'), findsOneWidget);
+      expect(find.text('Inspection location address is required'), findsOneWidget);
+      expect(submitted, isFalse);
+    });
+
+    testWidgets('Finalize Inspection screen preserves comprehensive technical and declaration controls', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: InspectionDetailsForm(
+                initialInspection: InspectionModel(
+                  id: 'ins-test-01',
+                  inspectionCode: 'INS-2026-TEST',
+                  inspectionDate: '2026-09-13T00:00:00Z',
+                  location: 'Connaught Place, New Delhi',
+                  businessName: 'Metro Hypermarket',
+                  status: 'DRAFT',
+                ),
+                isFinalizing: true,
+                onSubmit: (data) async {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Finalization button
+      expect(find.text('Confirm & Finalize Inspection'), findsOneWidget);
+
+      // Detailed technical analysis sections MUST be preserved for final review
+      expect(find.text('Package Construction'), findsOneWidget);
+      expect(find.text('Package Geometry / Shape'), findsOneWidget);
+      expect(find.text('Declaration Applicability (Rule 6)'), findsOneWidget);
+      expect(find.text('Intended Consumer / Market Scope'), findsOneWidget);
+      expect(find.text('Commodity Origin'), findsOneWidget);
+    });
   });
 }
