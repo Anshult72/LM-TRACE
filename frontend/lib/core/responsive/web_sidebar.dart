@@ -113,9 +113,19 @@ class _WebSidebarState extends ConsumerState<WebSidebar> {
           curve: Curves.easeInOutCubic,
           width: currentWidth,
           height: double.infinity,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.primaryNavy,
-            border: Border(right: BorderSide(color: Color(0xFF1E3A5F), width: 1)),
+            border: const Border(right: BorderSide(color: Color(0xFF1E3A5F), width: 1)),
+            boxShadow: isExpanded
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      blurRadius: 18,
+                      spreadRadius: 2,
+                      offset: const Offset(4, 0),
+                    ),
+                  ]
+                : null,
           ),
           child: ClipRect(
             child: OverflowBox(
@@ -123,7 +133,7 @@ class _WebSidebarState extends ConsumerState<WebSidebar> {
               maxWidth: Breakpoints.sidebarWidth,
               alignment: Alignment.topLeft,
               child: SizedBox(
-                width: currentWidth,
+                width: isExpanded ? Breakpoints.sidebarWidth : Breakpoints.collapsedSidebarWidth,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

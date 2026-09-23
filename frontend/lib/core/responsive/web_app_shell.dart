@@ -36,14 +36,16 @@ class WebAppShell extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.surfaceIvory,
-      body: Row(
+      body: Stack(
         children: [
-          // Left persistent collapsible sidebar (starts collapsed by default)
-          const WebSidebar(),
-
-          // Right main area
-          Expanded(
+          // 1. Permanent Main Content Area
+          // Anchored strictly at left: Breakpoints.collapsedSidebarWidth (72px).
+          // Its position, width, padding, margins, and layout NEVER change or reflow
+          // when the sidebar expands or collapses.
+          Positioned.fill(
+            left: Breakpoints.collapsedSidebarWidth,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Compact topbar with live location tracking
                 WebTopBar(location: location),
@@ -54,6 +56,18 @@ class WebAppShell extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+
+          // 2. Left Navigation Sidebar (Floating Overlay)
+          // Anchored to left: 0, top: 0, bottom: 0.
+          // Collapsed: Occupies 72px rail width.
+          // Expanded: Smoothly opens as a floating overlay above page content with drop shadow,
+          // without pushing or shifting any page elements.
+          const Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: WebSidebar(),
           ),
         ],
       ),
