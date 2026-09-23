@@ -234,8 +234,8 @@ class WebSidebar extends ConsumerWidget {
       return Container(
         height: Breakpoints.topBarHeight,
         alignment: Alignment.center,
-        child: const AppLogo.compact(
-          size: 42,
+        child: const AppLogo.sidebar(
+          collapsed: true,
           tooltip: '${AppBrand.name} — ${AppBrand.subtitle}',
         ),
       );
@@ -243,34 +243,42 @@ class WebSidebar extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      alignment: Alignment.centerLeft,
+      alignment: Alignment.center,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
           Center(
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 195, maxHeight: 110),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.35),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: const AppLogo(
-                fit: BoxFit.contain,
-                borderRadius: BorderRadius.all(Radius.circular(12)),
+              child: const AppLogo.sidebar(
+                collapsed: false,
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
+          const Text(
+            AppBrand.name,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 4),
           Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
               decoration: BoxDecoration(
                 color: const Color(0xFF163E50).withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(4),
@@ -280,7 +288,7 @@ class WebSidebar extends ConsumerWidget {
                 'Legal Metrology • Govt. of India',
                 style: TextStyle(
                   color: AppColors.skyGrey,
-                  fontSize: 10,
+                  fontSize: 9.5,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,
                 ),

@@ -150,18 +150,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         // Official LM-TRACE Brand Logo
                         Center(
                           child: Container(
-                            padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: AppShadows.glow(AppColors.primaryNavy, opacity: 0.15),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: AppShadows.glow(AppColors.primaryNavy, opacity: 0.12),
                             ),
-                            child: const AppLogo(
-                              size: 82,
-                              borderRadius: BorderRadius.all(Radius.circular(18)),
-                            ),
+                            child: const AppLogo.login(size: 68),
                           ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 14),
                         const Center(
                           child: Text(
                             AppBrand.name,

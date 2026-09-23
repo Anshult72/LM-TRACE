@@ -1276,9 +1276,8 @@ class _StatutoryReferenceScreenState extends ConsumerState<StatutoryReferenceScr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const AppLogo(
-                size: 80,
-                borderRadius: BorderRadius.all(Radius.circular(14)),
+              const AppLogo.document(
+                size: 60,
               ),
               const SizedBox(height: 12),
               const Text(

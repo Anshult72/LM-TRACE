@@ -5,10 +5,9 @@ import '../constants/app_brand.dart';
 ///
 /// Features:
 /// - Preserves strict 1:1 aspect ratio without stretching, squashing, distortion or blur.
-/// - Supports compact mode (e.g. for collapsed sidebar, topbar, or mobile appbar).
-/// - Supports full mode (for expanded sidebar, login screen, and about dialogs).
+/// - Context-aware sizing: sidebar, header, login, mobile, hero, and document presets.
 /// - Configurable dimensions, rounded corners, tooltips, and accessibility semantics.
-/// - Handles loading gracefully with no duplicate asset path strings across screens.
+/// - Single master brand asset as visual source of truth (`assets/images/logo/lm_trace_logo.png`).
 class AppLogo extends StatelessWidget {
   /// Custom width constraint.
   final double? width;
@@ -28,7 +27,7 @@ class AppLogo extends StatelessWidget {
   /// How the image should be inscribed into the box (defaults to BoxFit.contain).
   final BoxFit fit;
 
-  /// Corner radius for the logo boundary (defaults to 10.0 for natural badge look).
+  /// Corner radius for the logo boundary.
   final BorderRadius? borderRadius;
 
   /// Optional hero tag for smooth transitions (e.g. between splash/login and dashboard).
@@ -46,7 +45,7 @@ class AppLogo extends StatelessWidget {
     this.heroTag,
   });
 
-  /// Factory for a compact 36px-44px icon brand mark.
+  /// Factory for a compact 32px-40px icon brand mark.
   const AppLogo.compact({
     super.key,
     double? size,
@@ -55,7 +54,80 @@ class AppLogo extends StatelessWidget {
     this.borderRadius,
     this.heroTag,
   })  : compact = true,
-        size = size ?? 40.0,
+        size = size ?? 34.0,
+        width = null,
+        height = null;
+
+  /// Factory for desktop sidebar (compact: 34px when collapsed, 48px when expanded).
+  const AppLogo.sidebar({
+    super.key,
+    bool collapsed = false,
+    this.tooltip,
+    this.fit = BoxFit.contain,
+    this.heroTag,
+  })  : compact = collapsed,
+        size = collapsed ? 34.0 : 48.0,
+        borderRadius = const BorderRadius.all(Radius.circular(10)),
+        width = null,
+        height = null;
+
+  /// Factory for application top header bar (very compact 28px).
+  const AppLogo.header({
+    super.key,
+    this.size = 28.0,
+    this.tooltip,
+    this.fit = BoxFit.contain,
+    this.heroTag,
+  })  : compact = true,
+        borderRadius = const BorderRadius.all(Radius.circular(6)),
+        width = null,
+        height = null;
+
+  /// Factory for mobile app bars and mobile navigation drawer (32px).
+  const AppLogo.mobile({
+    super.key,
+    this.size = 32.0,
+    this.tooltip,
+    this.fit = BoxFit.contain,
+    this.heroTag,
+  })  : compact = true,
+        borderRadius = const BorderRadius.all(Radius.circular(6)),
+        width = null,
+        height = null;
+
+  /// Factory for authentication / login screen card (balanced 68px).
+  const AppLogo.login({
+    super.key,
+    this.size = 68.0,
+    this.tooltip,
+    this.fit = BoxFit.contain,
+    this.heroTag,
+  })  : compact = false,
+        borderRadius = const BorderRadius.all(Radius.circular(16)),
+        width = null,
+        height = null;
+
+  /// Factory for landing page hero or prominent about cards (72px).
+  const AppLogo.hero({
+    super.key,
+    this.size = 72.0,
+    this.tooltip,
+    this.fit = BoxFit.contain,
+    this.heroTag,
+  })  : compact = false,
+        borderRadius = const BorderRadius.all(Radius.circular(14)),
+        width = null,
+        height = null;
+
+  /// Factory for formal PDF reports, certificates, and print documents (40px).
+  const AppLogo.document({
+    super.key,
+    this.size = 40.0,
+    this.tooltip,
+    this.fit = BoxFit.contain,
+    this.heroTag,
+  })  : compact = true,
+        borderRadius = const BorderRadius.all(Radius.circular(8)),
         width = null,
         height = null;
 
@@ -73,7 +145,7 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveSize = size ?? (compact ? 40.0 : null);
+    final effectiveSize = size ?? (compact ? 34.0 : 48.0);
     final effectiveWidth = width ?? effectiveSize;
     final effectiveHeight = height ?? effectiveSize;
     final effectiveTooltip = tooltip ?? AppBranding.semanticLabel;
@@ -92,8 +164,8 @@ class AppLogo extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) {
           // Graceful fallback if asset path is momentarily reloading
           return Container(
-            width: effectiveWidth ?? 40,
-            height: effectiveHeight ?? 40,
+            width: effectiveWidth,
+            height: effectiveHeight,
             decoration: BoxDecoration(
               color: const Color(0xFF0F2537),
               borderRadius: effectiveRadius,

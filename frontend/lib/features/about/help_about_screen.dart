@@ -27,9 +27,8 @@ class HelpAboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  const AppLogo(
-                    size: 96,
-                    borderRadius: BorderRadius.all(Radius.circular(16)),
+                  const AppLogo.document(
+                    size: 60,
                   ),
                   const SizedBox(height: 12),
                   const Text(
