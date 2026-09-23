@@ -33,14 +33,13 @@ class WebAppShell extends StatelessWidget {
       return mobileChild;
     }
 
-    final isTablet = ResponsiveLayout.isTablet(context);
 
     return Scaffold(
       backgroundColor: AppColors.surfaceIvory,
       body: Row(
         children: [
-          // Left persistent sidebar
-          WebSidebar(isCollapsed: isTablet),
+          // Left persistent collapsible sidebar (starts collapsed by default)
+          const WebSidebar(),
 
           // Right main area
           Expanded(
