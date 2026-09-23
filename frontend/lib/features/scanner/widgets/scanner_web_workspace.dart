@@ -216,7 +216,7 @@ class ScannerWebWorkspace extends StatelessWidget {
                   elevation: 0,
                 ),
                 icon: const Icon(Icons.add, size: 15, color: Colors.white),
-                label: const Text('+ New Inspection', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                label: const Text('New Inspection', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 onPressed: () => context.push('/new-inspection'),
               ),
             ],

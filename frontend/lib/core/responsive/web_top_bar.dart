@@ -171,7 +171,7 @@ class WebTopBar extends ConsumerWidget {
                 ),
                 icon: const Icon(Icons.add, size: 16, color: Colors.white),
                 label: const Text(
-                  '+ New Inspection',
+                  'New Inspection',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () => context.go('/new-inspection'),
