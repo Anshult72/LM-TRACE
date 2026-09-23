@@ -25,7 +25,7 @@ class AppBrand {
 /// Centralized brand assets and identity configuration for LM-TRACE.
 class AppBranding {
   /// Path to official LM-TRACE high-resolution logo asset.
-  static const String logoAsset = 'assets/images/logo/lm_trace_logo.png';
+  static const String logoAsset = 'assets/images/logo/lm_trace_brand_master.png';
 
   /// Primary application identifier.
   static const String appName = 'LM-TRACE';
