@@ -8,7 +8,9 @@ import 'inspections_controller.dart';
 import 'widgets/inspections_list_web_layout.dart';
 
 class InspectionsListScreen extends ConsumerStatefulWidget {
-  const InspectionsListScreen({super.key});
+  final String? initialStatusFilter;
+
+  const InspectionsListScreen({super.key, this.initialStatusFilter});
 
   @override
   ConsumerState<InspectionsListScreen> createState() => _InspectionsListScreenState();
@@ -22,6 +24,16 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialStatusFilter != null && widget.initialStatusFilter!.isNotEmpty) {
+      final f = widget.initialStatusFilter!.toUpperCase();
+      if (['COMPLIANT', 'COMPLETED', 'FINALIZED'].contains(f)) {
+        _filter = 'COMPLIANT';
+      } else if (['VIOLATION', 'VIOLATIONS', 'POTENTIAL_VIOLATION'].contains(f)) {
+        _filter = 'VIOLATIONS';
+      } else if (['REVIEW', 'NEEDS_REVIEW', 'IN_REVIEW', 'REVIEW_REQUIRED'].contains(f)) {
+        _filter = 'REVIEW';
+      }
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(inspectionsProvider.notifier).fetchInspections();
     });
@@ -36,7 +48,7 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
   @override
   Widget build(BuildContext context) {
     if (ResponsiveLayout.isWebDesktop(context)) {
-      return const InspectionsListWebLayout();
+      return InspectionsListWebLayout(initialStatusFilter: widget.initialStatusFilter);
     }
 
     final state = ref.watch(inspectionsProvider);

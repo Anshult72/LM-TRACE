@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
-import '../../../core/widgets/widgets.dart';
 import '../product_list_screen.dart';
 
 /// Desktop enterprise layout for Product Intelligence & Fingerprint Registry.
@@ -83,55 +82,32 @@ class _ProductListWebLayoutState extends ConsumerState<ProductListWebLayout> {
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Text(
-                        'Product Intelligence & Fingerprint Registry',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
-                      ),
-                      SizedBox(width: 8),
-                      ContextHelpButton(pageId: 'products', size: 16),
-                    ],
+                children: const [
+                  Text(
+                    'Product Intelligence & Fingerprint Registry',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Persistent pre-packaged SKU identities, label version evolution, and statutory compliance history',
+                  SizedBox(height: 4),
+                  Text(
+                    'Persistent product identity, label versions, inspection history, and compliance context.',
                     style: TextStyle(fontSize: 13, color: AppColors.neutral600),
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      side: const BorderSide(color: AppColors.neutral300),
-                    ),
-                    icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('Refresh Registry', style: TextStyle(fontSize: 12)),
-                    onPressed: () => ref.refresh(productsListProvider),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                    ),
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('New Inspection', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
-                    onPressed: () => context.push('/new-inspection'),
-                  ),
-                ],
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  side: const BorderSide(color: AppColors.neutral300),
+                ),
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Refresh Registry', style: TextStyle(fontSize: 12)),
+                onPressed: () => ref.refresh(productsListProvider),
               ),
             ],
           ),
           const SizedBox(height: 18),
 
-          // 2. Informational Banner on Label Evolution & Shrinkflation
+          // 2. Informational Banner: Product Identity vs Inspection Registry + Shrinkflation
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
@@ -145,7 +121,7 @@ class _ProductListWebLayoutState extends ConsumerState<ProductListWebLayout> {
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Deterministic Identity Fingerprint Engine: Hashing pre-packaged specifications across inspection cases detects silent shrinkflation, price increments, and undeclared font alterations over time.',
+                    'Product-Centric Intelligence: Tracks persistent pre-packaged SKU identity, label versions, and shrinkflation detection across multiple audits. For point-in-time enforcement events, see Inspections Registry.',
                     style: TextStyle(fontSize: 12, color: AppColors.neutral800, height: 1.3),
                   ),
                 ),

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
-import '../../../core/widgets/widgets.dart';
 import '../../inspections/inspections_controller.dart';
 import '../models/scanner_surface_state.dart';
 
@@ -106,7 +105,7 @@ class ScannerWebWorkspace extends StatelessWidget {
     bool isFinalized,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -124,14 +123,19 @@ class ScannerWebWorkspace extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.folder_shared_outlined, color: AppColors.secondaryBlue, size: 20),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryNavy.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(Icons.folder_shared_outlined, color: AppColors.primaryNavy, size: 18),
+              ),
+              const SizedBox(width: 10),
               const Text(
                 'Active Inspection Case File:',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primaryNavy),
               ),
-              const SizedBox(width: 6),
-              const ContextHelpButton(pageId: 'scanner', size: 13),
               const SizedBox(width: 14),
               Expanded(
                 child: DropdownButtonHideUnderline(
@@ -140,8 +144,7 @@ class ScannerWebWorkspace extends StatelessWidget {
                     value: state.inspections.any((ins) => ins.id == currentInspectionId)
                         ? currentInspectionId
                         : null,
-                    hint: const Text('Select an inspection case...'),
-
+                    hint: const Text('Select an inspection case to attach packaging evidence...'),
                     items: state.inspections.map((ins) {
                       final itemFinalized = ins.status.toUpperCase() == 'FINALIZED';
                       return DropdownMenuItem<String>(
@@ -180,6 +183,18 @@ class ScannerWebWorkspace extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 14),
+              if (currentInspection != null) ...[
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    side: const BorderSide(color: AppColors.neutral300),
+                  ),
+                  icon: const Icon(Icons.visibility_outlined, size: 15),
+                  label: const Text('View Case', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  onPressed: () => context.push('/inspections/${currentInspection.id}'),
+                ),
+                const SizedBox(width: 8),
+              ],
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -201,11 +216,66 @@ class ScannerWebWorkspace extends StatelessWidget {
                   elevation: 0,
                 ),
                 icon: const Icon(Icons.add, size: 15, color: Colors.white),
-                label: const Text('+ New Case', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                label: const Text('+ New Inspection', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 onPressed: () => context.push('/new-inspection'),
               ),
             ],
           ),
+
+          // Structured Case Details Sub-Panel
+          if (currentInspection != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceIvory,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.skyGrey),
+              ),
+              child: Row(
+                children: [
+                  _buildCaseMetaItem('CASE ID', currentInspection.inspectionCode),
+                  const SizedBox(width: 24),
+                  _buildCaseMetaItem('CHANNEL', currentInspection.inspectionType),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: _buildCaseMetaItem(
+                      'ESTABLISHMENT / SUBJECT',
+                      currentInspection.businessName ?? currentInspection.sellerName ?? currentInspection.location,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text('STATUS', style: TextStyle(fontSize: 10, color: AppColors.steelBlue, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                      const SizedBox(height: 3),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isFinalized ? AppColors.alertRed.withValues(alpha: 0.1) : AppColors.inspectionGreen.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: isFinalized ? AppColors.alertRed.withValues(alpha: 0.4) : AppColors.inspectionGreen.withValues(alpha: 0.4),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          currentInspection.status.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isFinalized ? AppColors.alertRed : AppColors.inspectionGreen,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           if (isFinalized) ...[
             const SizedBox(height: 10),
             Container(
@@ -221,7 +291,7 @@ class ScannerWebWorkspace extends StatelessWidget {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'This case is FINALIZED (sealed legal record). Under statutory audit rules, new images cannot be attached to closed cases. Select an in-progress case or click "+ New Case".',
+                      'This case is FINALIZED (sealed legal record). Under statutory audit rules, new images cannot be attached to closed cases. Select an in-progress case or click "+ New Inspection".',
                       style: TextStyle(fontSize: 11.5, color: AppColors.violationRed, fontWeight: FontWeight.w600),
                     ),
                   ),
@@ -231,6 +301,17 @@ class ScannerWebWorkspace extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildCaseMetaItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.steelBlue, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+        const SizedBox(height: 2),
+        Text(value, style: const TextStyle(fontSize: 13, color: AppColors.primaryNavy, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
+      ],
     );
   }
 

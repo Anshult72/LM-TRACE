@@ -201,6 +201,30 @@ class ReferenceLibraryService:
         """
         repo = get_repository()
         all_products = await repo.list_products()
+        
+        # Dynamic fallback: if no dedicated product entities exist, derive from real inspection records
+        if not all_products:
+            try:
+                all_inspections = await repo.list_all()
+                synth_map = {}
+                for ins in all_inspections:
+                    p_id = ins.get("product_id") or ins.get("id")
+                    if not p_id or p_id in synth_map:
+                        continue
+                    decls = {d.get("field_type"): d.get("extracted_value") for d in (ins.get("declarations") or [])}
+                    synth_map[p_id] = {
+                        "id": p_id,
+                        "name": ins.get("product_name") or decls.get("GENERIC_NAME") or decls.get("COMMODITY_NAME") or "Packaged Commodity",
+                        "brand": ins.get("brand") or decls.get("BRAND_NAME") or "Packaged Commodity",
+                        "category": ins.get("category") or "General Goods",
+                        "barcode": ins.get("barcode") or decls.get("BARCODE") or "",
+                        "net_quantity": decls.get("NET_QUANTITY") or "",
+                        "net_quantity_unit": decls.get("NET_QUANTITY_UNIT") or "",
+                    }
+                all_products = list(synth_map.values())
+            except Exception as e:
+                logger.warning(f"Error deriving reference products from inspections: {e}")
+
         results = []
         all_categories = set()
 
@@ -214,6 +238,11 @@ class ReferenceLibraryService:
                 all_categories.add(cat)
 
             inspections = await repo.get_inspections_for_product(p_id)
+            if not inspections:
+                # Check if this product corresponds directly to an inspection ID
+                direct_ins = await repo.get_by_id(p_id)
+                if direct_ins and ("inspection_code" in direct_ins or "inspector_id" in direct_ins):
+                    inspections = [direct_ins]
             inspections.sort(key=lambda x: x.get("inspection_date") or x.get("created_at") or "", reverse=True)
             label_versions = await repo.get_label_versions(p_id)
 
@@ -360,9 +389,27 @@ class ReferenceLibraryService:
         if not prod:
             prod = await repo.get_by_id(product_id)
         if not prod:
+            # Fallback: check if an inspection exists with this id
+            fallback_ins = await repo.get_by_id(product_id)
+            if fallback_ins and ("inspection_code" in fallback_ins or "inspector_id" in fallback_ins):
+                decls = {d.get("field_type"): d.get("extracted_value") for d in (fallback_ins.get("declarations") or [])}
+                prod = {
+                    "id": product_id,
+                    "name": fallback_ins.get("product_name") or decls.get("GENERIC_NAME") or decls.get("COMMODITY_NAME") or "Packaged Commodity",
+                    "brand": fallback_ins.get("brand") or decls.get("BRAND_NAME") or "Packaged Commodity",
+                    "category": fallback_ins.get("category") or "General Goods",
+                    "barcode": fallback_ins.get("barcode") or decls.get("BARCODE") or "",
+                    "net_quantity": decls.get("NET_QUANTITY") or "",
+                    "net_quantity_unit": decls.get("NET_QUANTITY_UNIT") or "",
+                }
+        if not prod:
             return None
 
         inspections = await repo.get_inspections_for_product(product_id)
+        if not inspections:
+            direct_ins = await repo.get_by_id(product_id)
+            if direct_ins and ("inspection_code" in direct_ins or "inspector_id" in direct_ins):
+                inspections = [direct_ins]
         inspections.sort(key=lambda x: x.get("inspection_date") or x.get("created_at") or "", reverse=True)
         label_versions = await repo.get_label_versions(product_id)
 

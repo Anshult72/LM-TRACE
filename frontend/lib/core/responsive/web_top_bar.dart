@@ -14,7 +14,7 @@ class WebTopBar extends ConsumerWidget {
 
   String _getPageTitle(String loc) {
     if (loc.startsWith('/new-inspection')) return 'New Inspection Case';
-    if (loc.startsWith('/dashboard') || loc == '/') return 'Operational Dashboard';
+    if (loc.startsWith('/dashboard') || loc == '/') return 'Dashboard';
     if (loc.startsWith('/inspections/')) return 'Inspection Case File';
     if (loc.startsWith('/inspections')) return 'Inspections Registry';
     if (loc.startsWith('/scanner')) return 'Package Scanner & OCR Workspace';
@@ -70,6 +70,10 @@ class WebTopBar extends ConsumerWidget {
         effectiveLocation.endsWith('/finalize') ||
         effectiveLocation.startsWith('/scanner') ||
         effectiveLocation.startsWith('/analysis-progress');
+
+    final isInspectionContext = effectiveLocation.startsWith('/dashboard') ||
+        effectiveLocation == '/' ||
+        effectiveLocation == '/inspections';
 
     return Container(
       height: Breakpoints.topBarHeight,
@@ -138,8 +142,8 @@ class WebTopBar extends ConsumerWidget {
 
           const Spacer(),
 
-          // Role-aware Action Button (hidden on focused workflows)
-          if (!isFocusedWorkflow) ...[
+          // Role-aware Action Button (shown only on contextual workflows: Dashboard & Inspections Registry)
+          if (!isFocusedWorkflow && isInspectionContext) ...[
             if (user?.isSupervisor == true)
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
@@ -167,7 +171,7 @@ class WebTopBar extends ConsumerWidget {
                 ),
                 icon: const Icon(Icons.add, size: 16, color: Colors.white),
                 label: const Text(
-                  'New Inspection',
+                  '+ New Inspection',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 onPressed: () => context.go('/new-inspection'),

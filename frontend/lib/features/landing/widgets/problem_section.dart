@@ -101,7 +101,7 @@ class ProblemSection extends StatelessWidget {
                         icon: Icons.visibility_off_outlined,
                         title: 'Omitted & Deceptive Declarations',
                         description:
-                            'Detecting subtle packaging omissions—such as absent Unit Sale Price (USP), hidden consumer care lines, or conflicting dual MRPs—requires rigorous, multi-surface cross-examination.',
+                            'Detecting subtle packaging omissions, such as absent Unit Sale Price (USP), hidden consumer care lines, or conflicting dual MRPs, requires rigorous, multi-surface cross-examination.',
                       ),
                       _buildProblemCard(
                         width: (constraints.maxWidth - (crossAxisCount - 1) * 20) / crossAxisCount,

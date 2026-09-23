@@ -8,7 +8,9 @@ import '../inspections_controller.dart';
 
 /// Desktop enterprise data table layout for Inspections Registry.
 class InspectionsListWebLayout extends ConsumerStatefulWidget {
-  const InspectionsListWebLayout({super.key});
+  final String? initialStatusFilter;
+
+  const InspectionsListWebLayout({super.key, this.initialStatusFilter});
 
   @override
   ConsumerState<InspectionsListWebLayout> createState() => _InspectionsListWebLayoutState();
@@ -19,6 +21,35 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
   String _typeFilter = 'ALL';
   String _searchQuery = '';
   final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _applyInitialFilter(widget.initialStatusFilter);
+  }
+
+  @override
+  void didUpdateWidget(covariant InspectionsListWebLayout oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialStatusFilter != oldWidget.initialStatusFilter) {
+      _applyInitialFilter(widget.initialStatusFilter);
+    }
+  }
+
+  void _applyInitialFilter(String? filter) {
+    if (filter != null && filter.isNotEmpty) {
+      final f = filter.toUpperCase();
+      if (['COMPLIANT', 'COMPLETED', 'FINALIZED'].contains(f)) {
+        _statusFilter = 'COMPLIANT';
+      } else if (['VIOLATION', 'VIOLATIONS', 'POTENTIAL_VIOLATION'].contains(f)) {
+        _statusFilter = 'VIOLATION';
+      } else if (['REVIEW', 'NEEDS_REVIEW', 'IN_REVIEW', 'REVIEW_REQUIRED'].contains(f)) {
+        _statusFilter = 'REVIEW';
+      } else {
+        _statusFilter = 'ALL';
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -418,26 +449,16 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
               flex: 3,
               child: Align(
                 alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.qr_code_scanner, size: 16, color: AppColors.secondaryBlue),
-                      tooltip: 'Open in Scanner',
-                      onPressed: () => context.go('/scanner?inspectionId=${ins.id}'),
-                    ),
-                    const SizedBox(width: 4),
-                    TextButton.icon(
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      icon: const Icon(Icons.arrow_forward, size: 12),
-                      label: const Text('View Case', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      onPressed: () => context.push('/inspections/${ins.id}'),
-                    ),
-                  ],
+                child: TextButton.icon(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    backgroundColor: AppColors.surfaceIvory,
+                  ),
+                  icon: const Icon(Icons.arrow_forward, size: 12),
+                  label: const Text('View Case', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: () => context.push('/inspections/${ins.id}'),
                 ),
               ),
             ),

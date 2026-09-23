@@ -38,6 +38,8 @@ class _LandingPageScreenState extends State<LandingPageScreen> {
   final GlobalKey _architectureKey = GlobalKey();
   final GlobalKey _aboutKey = GlobalKey();
 
+  String _activeSection = '';
+
   @override
   void initState() {
     super.initState();
@@ -56,9 +58,45 @@ class _LandingPageScreenState extends State<LandingPageScreen> {
     if (scrolled != _isScrolled) {
       setState(() => _isScrolled = scrolled);
     }
+    _updateActiveSection();
   }
 
-  void _scrollToKey(GlobalKey key) {
+  void _updateActiveSection() {
+    final sections = [
+      ('about', _aboutKey),
+      ('architecture', _architectureKey),
+      ('evidence', _evidenceKey),
+      ('rules', _ruleEngineKey),
+      ('capabilities', _capabilitiesKey),
+      ('how_it_works', _howItWorksKey),
+    ];
+
+    String detected = '';
+    for (final section in sections) {
+      final id = section.$1;
+      final key = section.$2;
+      final ctx = key.currentContext;
+      if (ctx != null) {
+        final box = ctx.findRenderObject() as RenderBox?;
+        if (box != null && box.hasSize && box.attached) {
+          final pos = box.localToGlobal(Offset.zero);
+          if (pos.dy <= 140) {
+            detected = id;
+            break;
+          }
+        }
+      }
+    }
+
+    if (detected != _activeSection) {
+      setState(() => _activeSection = detected);
+    }
+  }
+
+  void _scrollToKey(GlobalKey key, [String? sectionId]) {
+    if (sectionId != null) {
+      setState(() => _activeSection = sectionId);
+    }
     final context = key.currentContext;
     if (context != null) {
       final disableAnimations = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
@@ -66,7 +104,7 @@ class _LandingPageScreenState extends State<LandingPageScreen> {
         context,
         duration: disableAnimations ? Duration.zero : const Duration(milliseconds: 600),
         curve: Curves.easeInOutCubic,
-        alignment: 0.05,
+        alignment: 0.0,
       );
     }
   }
@@ -87,7 +125,7 @@ class _LandingPageScreenState extends State<LandingPageScreen> {
 
                 // 1. Hero Section
                 HeroSection(
-                  onExploreTap: () => _scrollToKey(_howItWorksKey),
+                  onExploreTap: () => _scrollToKey(_howItWorksKey, 'how_it_works'),
                 ),
 
                 // 2. Regulatory Enforcement Challenges Section
@@ -143,12 +181,12 @@ class _LandingPageScreenState extends State<LandingPageScreen> {
 
                 // 13. Public Regulatory Footer
                 PublicFooter(
-                  onHowItWorksTap: () => _scrollToKey(_howItWorksKey),
-                  onCapabilitiesTap: () => _scrollToKey(_capabilitiesKey),
-                  onRuleEngineTap: () => _scrollToKey(_ruleEngineKey),
-                  onEvidenceTap: () => _scrollToKey(_evidenceKey),
-                  onArchitectureTap: () => _scrollToKey(_architectureKey),
-                  onAboutTap: () => _scrollToKey(_aboutKey),
+                  onHowItWorksTap: () => _scrollToKey(_howItWorksKey, 'how_it_works'),
+                  onCapabilitiesTap: () => _scrollToKey(_capabilitiesKey, 'capabilities'),
+                  onRuleEngineTap: () => _scrollToKey(_ruleEngineKey, 'rules'),
+                  onEvidenceTap: () => _scrollToKey(_evidenceKey, 'evidence'),
+                  onArchitectureTap: () => _scrollToKey(_architectureKey, 'architecture'),
+                  onAboutTap: () => _scrollToKey(_aboutKey, 'about'),
                 ),
               ],
             ),
@@ -161,12 +199,13 @@ class _LandingPageScreenState extends State<LandingPageScreen> {
             right: 0,
             child: PublicNavbar(
               isScrolled: _isScrolled,
-              onHowItWorksTap: () => _scrollToKey(_howItWorksKey),
-              onCapabilitiesTap: () => _scrollToKey(_capabilitiesKey),
-              onRuleEngineTap: () => _scrollToKey(_ruleEngineKey),
-              onEvidenceTap: () => _scrollToKey(_evidenceKey),
-              onArchitectureTap: () => _scrollToKey(_architectureKey),
-              onAboutTap: () => _scrollToKey(_aboutKey),
+              activeSection: _activeSection,
+              onHowItWorksTap: () => _scrollToKey(_howItWorksKey, 'how_it_works'),
+              onCapabilitiesTap: () => _scrollToKey(_capabilitiesKey, 'capabilities'),
+              onRuleEngineTap: () => _scrollToKey(_ruleEngineKey, 'rules'),
+              onEvidenceTap: () => _scrollToKey(_evidenceKey, 'evidence'),
+              onArchitectureTap: () => _scrollToKey(_architectureKey, 'architecture'),
+              onAboutTap: () => _scrollToKey(_aboutKey, 'about'),
             ),
           ),
         ],

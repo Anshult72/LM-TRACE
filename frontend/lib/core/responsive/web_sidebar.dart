@@ -341,26 +341,6 @@ class _WebSidebarState extends ConsumerState<WebSidebar> {
               letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 4),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF163E50).withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: AppColors.inspectionGreen.withValues(alpha: 0.3), width: 0.8),
-              ),
-              child: const Text(
-                'Legal Metrology • Govt. of India',
-                style: TextStyle(
-                  color: AppColors.skyGrey,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -502,7 +482,7 @@ class _WebSidebarState extends ConsumerState<WebSidebar> {
         ),
         child: IconButton(
           icon: const Icon(Icons.logout_rounded, color: Color(0xFFF87171), size: 18),
-          tooltip: 'Sign Out (${user?.fullName ?? "Officer"})',
+          tooltip: 'Logout',
           onPressed: () => _confirmLogout(context, ref, user),
         ),
       );
@@ -554,7 +534,7 @@ class _WebSidebarState extends ConsumerState<WebSidebar> {
                   Icon(Icons.logout_rounded, color: Color(0xFFF87171), size: 14),
                   SizedBox(width: 6),
                   Text(
-                    'Sign Out of LM-TRACE',
+                    'Logout',
                     style: TextStyle(
                       color: Color(0xFFF87171),
                       fontSize: 11.5,

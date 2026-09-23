@@ -297,35 +297,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-
-                        // Official Footer
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: AppColors.successGreen,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 7),
-                            const Flexible(
-                              child: Text(
-                                "Legal Metrology Department • Government of India",
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.steelBlue,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
 
                         // Back to Home action inside card
                         Center(

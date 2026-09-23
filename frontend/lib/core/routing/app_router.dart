@@ -126,7 +126,10 @@ GoRouter createAppRouter(WidgetRef ref, ValueListenable<int> authNotifier) {
           ),
           GoRoute(
             path: '/inspections',
-            builder: (context, state) => const InspectionsListScreen(),
+            builder: (context, state) {
+              final status = state.uri.queryParameters['status'];
+              return InspectionsListScreen(initialStatusFilter: status);
+            },
           ),
           GoRoute(
             path: '/scanner',

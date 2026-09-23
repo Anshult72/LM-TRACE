@@ -171,12 +171,26 @@ class _ReferenceLibraryScreenState extends ConsumerState<ReferenceLibraryScreen>
                   child: Padding(
                     padding: const EdgeInsets.all(32.0),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(Icons.error_outline, size: 48, color: AppColors.violationRed),
                         const SizedBox(height: 12),
-                        Text('Failed to query reference library: $err', style: const TextStyle(color: AppColors.neutral700)),
-                        const SizedBox(height: 12),
-                        OutlinedButton(onPressed: _applySearch, child: const Text('Retry Search')),
+                        const Text(
+                          'Unable to load reference library. Please retry.',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '$err',
+                          style: const TextStyle(fontSize: 12.5, color: AppColors.neutral600),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        AppButton.secondary(
+                          label: 'Retry Search',
+                          icon: Icons.refresh,
+                          onPressed: _applySearch,
+                        ),
                       ],
                     ),
                   ),
@@ -275,35 +289,22 @@ class _ReferenceLibraryScreenState extends ConsumerState<ReferenceLibraryScreen>
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Text(
-                        'Compliance Reference Library',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
-                      ),
-                      SizedBox(width: 8),
-                      ContextHelpButton(pageId: 'reference_library', size: 16),
-                    ],
+                children: const [
+                  Text(
+                    'Compliance Reference Library',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     'Explore previously inspected products, recorded label declarations, and statutory Legal Metrology evaluations as design reference examples.',
                     style: TextStyle(fontSize: 13, color: AppColors.neutral600),
                   ),
                 ],
               ),
             ),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryNavy,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              icon: const Icon(Icons.qr_code_scanner, size: 18),
-              label: const Text('Check My Product', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            AppButton.secondary(
+              label: 'Check My Product',
+              icon: Icons.qr_code_scanner,
               onPressed: () => context.push('/scanner'),
             ),
           ],
@@ -759,10 +760,9 @@ class _ReferenceLibraryScreenState extends ConsumerState<ReferenceLibraryScreen>
                   child: const Text('Clear All Filters'),
                 ),
                 const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryNavy, foregroundColor: Colors.white),
-                  icon: const Icon(Icons.qr_code_scanner, size: 16),
-                  label: const Text('Check My Product'),
+                AppButton.secondary(
+                  label: 'Check My Product',
+                  icon: Icons.qr_code_scanner,
                   onPressed: () => context.push('/scanner'),
                 ),
               ],

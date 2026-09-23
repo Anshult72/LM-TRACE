@@ -23,6 +23,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final user = authState.user;
+    final isSupervisor = user?.isSupervisor ?? false;
     final summaryAsync = ref.watch(dashboardSummaryProvider);
     final inspectionsState = ref.watch(inspectionsProvider);
 
@@ -36,15 +37,15 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
 
           // 2. 4 Stat Cards in a row
           summaryAsync.when(
-            data: (summary) => _buildStatCards(summary),
+            data: (summary) => _buildStatCards(summary, isSupervisor),
             loading: () => _buildStatCardsSkeleton(),
-            error: (err, stack) => _buildStatCardsFallback(inspectionsState.inspections),
+            error: (err, stack) => _buildStatCardsFallback(inspectionsState.inspections, isSupervisor),
           ),
           const SizedBox(height: 20),
 
           // 3. Operational Action Required Strip (Live DB work queue)
           summaryAsync.maybeWhen(
-            data: (summary) => _buildActionRequiredBanner(context, summary),
+            data: (summary) => _buildActionRequiredBanner(context, summary, isSupervisor),
             orElse: () => const SizedBox.shrink(),
           ),
 
@@ -62,7 +63,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               // Right: Compliance Breakdown by Rule Family (~35%)
               Expanded(
                 flex: 35,
-                child: _buildComplianceBreakdownCard(summaryAsync, inspectionsState),
+                child: _buildComplianceBreakdownCard(summaryAsync, inspectionsState, user),
               ),
             ],
           ),
@@ -157,8 +158,6 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    const ContextHelpButton(pageId: 'dashboard', size: 14),
                   ],
                 ),
                 const SizedBox(height: 3),
@@ -170,7 +169,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
             ),
           ),
 
-          // Role-specific action shortcut button
+          // Role-specific action shortcut button (Supervisors and Admins only; standard canonical New Inspection CTA resides in page header)
           if (isSupervisor)
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
@@ -196,26 +195,13 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               icon: const Icon(Icons.settings_outlined, size: 16, color: Colors.white),
               label: const Text('System Settings', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               onPressed: () => context.go('/settings'),
-            )
-          else
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryNavy,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                elevation: 0,
-              ),
-              icon: const Icon(Icons.add, size: 16, color: Colors.white),
-              label: const Text('New Inspection', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              onPressed: () => context.go('/new-inspection'),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildStatCards(Map<String, dynamic> summary) {
+  Widget _buildStatCards(Map<String, dynamic> summary, bool isSupervisor) {
     final audited = (summary['total_audited'] ?? summary['total_inspections'] ?? 0) as int;
     final compRate = (summary['compliance_rate'] as num?)?.toDouble();
     final violations = (summary['violations_flagged'] ?? summary['potential_violations'] ?? 0) as int;
@@ -230,7 +216,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
             subtitle: audited == 0 ? 'No finalized audits yet' : 'Statutory Audits Finalized',
             icon: Icons.assignment_turned_in_outlined,
             accentColor: AppColors.inspectionGreen,
-            onTap: () => context.go('/inspections'),
+            onTap: () => context.go('/inspections?status=COMPLETED'),
           ),
         ),
         const SizedBox(width: 14),
@@ -255,7 +241,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
             accentColor: AppColors.alertRed,
             trendText: violations > 0 ? '$violations Alerts' : '0 Alerts',
             isPositiveTrend: violations == 0,
-            onTap: () => context.go('/inspections'),
+            onTap: () => context.go('/inspections?status=VIOLATION'),
           ),
         ),
         const SizedBox(width: 14),
@@ -268,7 +254,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
             accentColor: AppColors.warningAmber,
             trendText: pending > 0 ? '$pending pending' : 'All clear',
             isPositiveTrend: pending == 0,
-            onTap: () => context.go('/inspections'),
+            onTap: () => isSupervisor ? context.go('/supervisor') : context.go('/inspections?status=REVIEW'),
           ),
         ),
       ],
@@ -295,7 +281,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
     );
   }
 
-  Widget _buildStatCardsFallback(List<InspectionModel> list) {
+  Widget _buildStatCardsFallback(List<InspectionModel> list, bool isSupervisor) {
     final audited = list.where((i) => ['COMPLETED', 'COMPLIANT', 'FINALIZED', 'ARCHIVED'].contains(i.status.toUpperCase())).length;
     final violations = list.where((i) => ['VIOLATION', 'POTENTIAL_VIOLATION'].contains(i.status.toUpperCase())).length;
     final compliant = list.where((i) => ['COMPLIANT', 'FINALIZED'].contains(i.status.toUpperCase())).length;
@@ -307,10 +293,10 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
       'compliance_rate': rate,
       'violations_flagged': violations,
       'pending_review': pending,
-    });
+    }, isSupervisor);
   }
 
-  Widget _buildActionRequiredBanner(BuildContext context, Map<String, dynamic> summary) {
+  Widget _buildActionRequiredBanner(BuildContext context, Map<String, dynamic> summary, bool isSupervisor) {
     final actionData = summary['action_required'] as Map<String, dynamic>?;
     if (actionData == null) return const SizedBox.shrink();
 
@@ -366,18 +352,34 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               runSpacing: 6,
               children: [
                 if (pending > 0)
-                  _buildActionPill('$pending Pending Reviews', AppColors.warningAmber, () => context.go('/inspections')),
+                  _buildActionPill(
+                    '$pending Pending Reviews',
+                    AppColors.warningAmber,
+                    () => isSupervisor ? context.go('/supervisor') : context.go('/inspections?status=REVIEW'),
+                  ),
                 if (violations > 0)
-                  _buildActionPill('$violations Violations Flagged', AppColors.alertRed, () => context.go('/inspections')),
+                  _buildActionPill(
+                    '$violations Violations Flagged',
+                    AppColors.alertRed,
+                    () => context.go('/inspections?status=VIOLATION'),
+                  ),
                 if (labelChanges > 0)
-                  _buildActionPill('$labelChanges Packaging Changes', AppColors.inspectionGreen, () => context.go('/products')),
+                  _buildActionPill(
+                    '$labelChanges Packaging Changes',
+                    AppColors.inspectionGreen,
+                    () => context.go('/products'),
+                  ),
                 if (lowConfidence > 0)
-                  _buildActionPill('$lowConfidence Low Confidence', AppColors.accentGold, () => context.go('/inspections')),
+                  _buildActionPill(
+                    '$lowConfidence Low Confidence',
+                    AppColors.accentGold,
+                    () => context.go('/inspections?status=REVIEW'),
+                  ),
               ],
             ),
           ),
           TextButton(
-            onPressed: () => context.go('/inspections'),
+            onPressed: () => isSupervisor ? context.go('/supervisor') : context.go('/inspections?status=REVIEW'),
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               minimumSize: Size.zero,
@@ -579,6 +581,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
   Widget _buildComplianceBreakdownCard(
     AsyncValue<Map<String, dynamic>> summaryAsync, [
     InspectionState? inspectionsState,
+    UserModel? user,
   ]) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -657,19 +660,20 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               );
             },
           ),
-          const SizedBox(height: 16),
-
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                side: const BorderSide(color: AppColors.skyGrey),
+          if (user?.canAccessRoute('/rules') ?? false) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  side: const BorderSide(color: AppColors.skyGrey),
+                ),
+                onPressed: () => context.go('/rules'),
+                child: const Text('View Rule Engine Registry →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)),
               ),
-              onPressed: () => context.go('/rules'),
-              child: const Text('View Rule Engine Registry →', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)),
             ),
-          ),
+          ],
         ],
       ),
     );

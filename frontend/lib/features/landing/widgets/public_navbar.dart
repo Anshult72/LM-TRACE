@@ -19,6 +19,7 @@ class PublicNavbar extends StatefulWidget {
   final VoidCallback? onEvidenceTap;
   final VoidCallback? onArchitectureTap;
   final VoidCallback? onAboutTap;
+  final String activeSection;
   final bool isScrolled;
 
   const PublicNavbar({
@@ -29,6 +30,7 @@ class PublicNavbar extends StatefulWidget {
     this.onEvidenceTap,
     this.onArchitectureTap,
     this.onAboutTap,
+    this.activeSection = '',
     this.isScrolled = false,
   });
 
@@ -147,12 +149,36 @@ class _PublicNavbarState extends State<PublicNavbar> {
 
                     // Desktop Navigation Links
                     if (!isMobile) ...[
-                      _NavLink(label: 'How It Works', onTap: widget.onHowItWorksTap),
-                      _NavLink(label: 'Capabilities', onTap: widget.onCapabilitiesTap),
-                      _NavLink(label: 'Rule Engine', onTap: widget.onRuleEngineTap),
-                      _NavLink(label: 'Evidence', onTap: widget.onEvidenceTap),
-                      _NavLink(label: 'Architecture', onTap: widget.onArchitectureTap),
-                      _NavLink(label: 'About', onTap: widget.onAboutTap),
+                      _NavLink(
+                        label: 'How It Works',
+                        isActive: widget.activeSection == 'how_it_works',
+                        onTap: widget.onHowItWorksTap,
+                      ),
+                      _NavLink(
+                        label: 'Capabilities',
+                        isActive: widget.activeSection == 'capabilities',
+                        onTap: widget.onCapabilitiesTap,
+                      ),
+                      _NavLink(
+                        label: 'Rule Engine',
+                        isActive: widget.activeSection == 'rules',
+                        onTap: widget.onRuleEngineTap,
+                      ),
+                      _NavLink(
+                        label: 'Evidence',
+                        isActive: widget.activeSection == 'evidence',
+                        onTap: widget.onEvidenceTap,
+                      ),
+                      _NavLink(
+                        label: 'Architecture',
+                        isActive: widget.activeSection == 'architecture',
+                        onTap: widget.onArchitectureTap,
+                      ),
+                      _NavLink(
+                        label: 'About',
+                        isActive: widget.activeSection == 'about',
+                        onTap: widget.onAboutTap,
+                      ),
                       const SizedBox(width: 16),
                       // Prominent Login Button
                       _LoginButton(),
@@ -189,6 +215,7 @@ class _PublicNavbarState extends State<PublicNavbar> {
                 _MobileNavLink(
                   label: 'How It Works',
                   icon: Icons.alt_route_rounded,
+                  isActive: widget.activeSection == 'how_it_works',
                   onTap: () {
                     _closeMenu();
                     widget.onHowItWorksTap?.call();
@@ -197,6 +224,7 @@ class _PublicNavbarState extends State<PublicNavbar> {
                 _MobileNavLink(
                   label: 'Capabilities',
                   icon: Icons.grid_view_rounded,
+                  isActive: widget.activeSection == 'capabilities',
                   onTap: () {
                     _closeMenu();
                     widget.onCapabilitiesTap?.call();
@@ -205,6 +233,7 @@ class _PublicNavbarState extends State<PublicNavbar> {
                 _MobileNavLink(
                   label: 'Statutory Rule Engine',
                   icon: Icons.gavel_rounded,
+                  isActive: widget.activeSection == 'rules',
                   onTap: () {
                     _closeMenu();
                     widget.onRuleEngineTap?.call();
@@ -213,6 +242,7 @@ class _PublicNavbarState extends State<PublicNavbar> {
                 _MobileNavLink(
                   label: 'Evidence Traceability',
                   icon: Icons.verified_user_outlined,
+                  isActive: widget.activeSection == 'evidence',
                   onTap: () {
                     _closeMenu();
                     widget.onEvidenceTap?.call();
@@ -221,6 +251,7 @@ class _PublicNavbarState extends State<PublicNavbar> {
                 _MobileNavLink(
                   label: 'Architecture',
                   icon: Icons.hub_outlined,
+                  isActive: widget.activeSection == 'architecture',
                   onTap: () {
                     _closeMenu();
                     widget.onArchitectureTap?.call();
@@ -229,6 +260,7 @@ class _PublicNavbarState extends State<PublicNavbar> {
                 _MobileNavLink(
                   label: 'About & Mandate',
                   icon: Icons.info_outline_rounded,
+                  isActive: widget.activeSection == 'about',
                   onTap: () {
                     _closeMenu();
                     widget.onAboutTap?.call();
@@ -262,8 +294,13 @@ class _PublicNavbarState extends State<PublicNavbar> {
 class _NavLink extends StatefulWidget {
   final String label;
   final VoidCallback? onTap;
+  final bool isActive;
 
-  const _NavLink({required this.label, this.onTap});
+  const _NavLink({
+    required this.label,
+    this.onTap,
+    this.isActive = false,
+  });
 
   @override
   State<_NavLink> createState() => _NavLinkState();
@@ -274,6 +311,7 @@ class _NavLinkState extends State<_NavLink> {
 
   @override
   Widget build(BuildContext context) {
+    final active = widget.isActive;
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -281,15 +319,40 @@ class _NavLinkState extends State<_NavLink> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 150),
-            style: TextStyle(
-              color: _isHovered ? AppColors.mintMist : const Color(0xFFD9E2EA),
-              fontSize: 13.5,
-              fontWeight: _isHovered ? FontWeight.w600 : FontWeight.w500,
-            ),
-            child: Text(widget.label),
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 150),
+                style: TextStyle(
+                  color: (active || _isHovered) ? AppColors.mintMist : const Color(0xFFD9E2EA),
+                  fontSize: 13.5,
+                  fontWeight: active ? FontWeight.w700 : (_isHovered ? FontWeight.w600 : FontWeight.w500),
+                ),
+                child: Text(widget.label),
+              ),
+              const SizedBox(height: 4),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: 2.5,
+                width: active ? 24 : 0,
+                decoration: BoxDecoration(
+                  color: AppColors.inspectionGreen,
+                  borderRadius: BorderRadius.circular(2),
+                  boxShadow: active
+                      ? [
+                          BoxShadow(
+                            color: AppColors.inspectionGreen.withValues(alpha: 0.6),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ]
+                      : null,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -360,11 +423,13 @@ class _LoginButtonState extends State<_LoginButton> {
 class _MobileNavLink extends StatelessWidget {
   final String label;
   final IconData icon;
+  final bool isActive;
   final VoidCallback onTap;
 
   const _MobileNavLink({
     required this.label,
     required this.icon,
+    this.isActive = false,
     required this.onTap,
   });
 
@@ -373,22 +438,30 @@ class _MobileNavLink extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.inspectionGreen.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.sage, size: 18),
+            Icon(icon, color: isActive ? AppColors.mintMist : AppColors.sage, size: 18),
             const SizedBox(width: 14),
             Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFFF1F5F9),
+              style: TextStyle(
+                color: isActive ? AppColors.mintMist : const Color(0xFFF1F5F9),
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
             const Spacer(),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.steelBlue, size: 18),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: isActive ? AppColors.mintMist : AppColors.steelBlue,
+              size: 18,
+            ),
           ],
         ),
       ),

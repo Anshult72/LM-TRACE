@@ -371,7 +371,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     if (selectedInspection != null && selectedInspection.status.toUpperCase() == 'FINALIZED') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Selected case is FINALIZED. Please select an active inspection or tap + New Case to run a compliance audit.'),
+          content: Text('Selected case is FINALIZED. Please select an active inspection or tap + New Inspection to run a compliance audit.'),
           backgroundColor: AppColors.violation,
           duration: Duration(seconds: 4),
         ),
@@ -765,12 +765,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               TextButton(
                 onPressed: () => context.push('/new-inspection'),
                 style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(50, 24)),
-                child: const Text('+ New Case', style: TextStyle(fontSize: 12)),
+                child: const Text('+ New Inspection', style: TextStyle(fontSize: 12)),
               ),
             ],
           ),
           if (state.inspections.isEmpty)
-            const Text('No inspections created. Tap + New Case.', style: TextStyle(color: AppColors.warning))
+            const Text('No inspections created. Tap + New Inspection.', style: TextStyle(color: AppColors.warning))
           else ...[
             DropdownButton<String>(
               isExpanded: true,
@@ -845,7 +845,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
-                          'Selected case is FINALIZED (read-only). To scan package images, please select an in-progress case or tap + New Case.',
+                          'Selected case is FINALIZED (read-only). To scan package images, please select an in-progress case or tap + New Inspection.',
                           style: TextStyle(fontSize: 11, color: AppColors.violation, fontWeight: FontWeight.w600),
                         ),
                       ),

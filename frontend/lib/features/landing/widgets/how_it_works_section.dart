@@ -144,7 +144,7 @@ class HowItWorksSection extends StatelessWidget {
         role: 'INTELLIGENT NORMALIZATION',
         roleColor: AppColors.steelBlue,
         description:
-            'AI semantic models categorize raw OCR blocks into statutory declaration entities (Net Qty, MRP, Unit Sale Price, Packer Details, Month/Year, Consumer Care). AI structures—it does NOT decide the law.',
+            'AI semantic models categorize raw OCR blocks into statutory declaration entities (Net Qty, MRP, Unit Sale Price, Packer Details, Month/Year, Consumer Care). AI structures the data; it does NOT decide the law.',
         icon: Icons.psychology_outlined,
       ),
       _StepData(
