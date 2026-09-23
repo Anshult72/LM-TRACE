@@ -4,7 +4,7 @@
 backend/
 storage/
 tools/
-*.png
+/*.png
 
 # Native platform directories
 frontend/android/
