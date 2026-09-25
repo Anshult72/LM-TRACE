@@ -28,6 +28,8 @@ from app.core.logging import logger
 from app.services.inspection.surface_validator import validate_inspection_surfaces, REQUIRED_SURFACE_CODES, ALLOWED_SURFACE_CODES
 from app.services.product.product_intelligence_service import product_intelligence_service
 from app.services.audit.audit_service import audit_service
+import shutil
+from app.services.storage.cloudinary_service import cloudinary_storage_service
 
 router = APIRouter(prefix="/api/inspections", tags=["Inspections"])
 
@@ -326,6 +328,98 @@ async def delete_image(
             raise HTTPException(status_code=400, detail="Cannot delete images from a finalized inspection")
     deleted = await repo.delete_image(inspection_id, image_id)
     return {"success": deleted}
+
+@router.delete("/{inspection_id}")
+async def delete_inspection(
+    inspection_id: str,
+    user_payload: dict = Depends(get_current_user_payload)
+):
+    """
+    Strict Admin-Only Deletion of an Inspection case.
+    Rejects any non-ADMIN role with 403 Forbidden before initiating deletion.
+    Cascades safely through dependent tables and cleans associated Cloudinary evidence.
+    """
+    user_role = (user_payload.get("role") or "").upper()
+    if user_role != "ADMIN":
+        logger.warning(
+            "Unauthorized deletion attempt on inspection %s by user %s with role %s",
+            inspection_id, user_payload.get("sub"), user_role
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "FORBIDDEN",
+                "message": f"Access denied: Only administrators can delete inspections. Role '{user_role}' is not authorized.",
+                "details": None
+            }
+        )
+
+    repo = get_repository()
+
+    # Verify existence
+    existing = await repo.get_by_id(inspection_id)
+    if not existing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "INSPECTION_NOT_FOUND",
+                "message": f"Inspection '{inspection_id}' not found.",
+                "details": None
+            }
+        )
+
+    del_result = await repo.delete_inspection(inspection_id)
+    if not del_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "INSPECTION_NOT_FOUND",
+                "message": f"Inspection '{inspection_id}' not found.",
+                "details": None
+            }
+        )
+
+    actual_id = del_result.get("inspection_id", inspection_id)
+    code = del_result.get("inspection_code", inspection_id)
+    cloudinary_pids = del_result.get("cloudinary_public_ids", [])
+
+    # Clean Cloudinary evidence assets belonging specifically to this inspection
+    if cloudinary_pids:
+        for c_pid in cloudinary_pids:
+            try:
+                await cloudinary_storage_service.delete_evidence_image(c_pid)
+                logger.info("Cleaned Cloudinary evidence asset: %s", c_pid)
+            except Exception as c_err:
+                logger.warning("Could not delete Cloudinary asset %s: %s", c_pid, c_err)
+
+    # Clean local storage folder if it exists
+    try:
+        local_folder = os.path.join(storage_manager.inspections_dir, actual_id)
+        if os.path.exists(local_folder):
+            shutil.rmtree(local_folder, ignore_errors=True)
+            logger.info("Cleaned local inspection directory: %s", local_folder)
+    except Exception as fs_err:
+        logger.warning("Could not clean local storage folder: %s", fs_err)
+
+    # Record audit trail event
+    await audit_service.record_event(
+        action="INSPECTION_DELETED",
+        actor_id=user_payload["sub"],
+        actor_name=user_payload.get("full_name") or user_payload.get("sub"),
+        role=user_role,
+        resource_type="INSPECTION",
+        resource_id=actual_id,
+        inspection_id=actual_id,
+        result="SUCCESS",
+        description=f"Inspection case {code} was permanently deleted by administrator {user_payload.get('full_name') or user_payload.get('sub')}.",
+        old_value={"code": code, "status": del_result.get("status")}
+    )
+
+    return {
+        "success": True,
+        "message": f"Inspection {code} successfully deleted.",
+        "deleted_id": actual_id
+    }
 
 @router.get("/{inspection_id}/required-surfaces", response_model=Dict[str, Any])
 async def get_required_surfaces(

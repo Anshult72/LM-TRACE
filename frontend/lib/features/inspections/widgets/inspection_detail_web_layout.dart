@@ -6,7 +6,9 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../auth/auth_controller.dart';
 import '../inspections_controller.dart';
+import 'delete_inspection_dialog.dart';
 
 /// Professional government desktop layout for Inspection Case File & Evidence.
 class InspectionDetailWebLayout extends ConsumerWidget {
@@ -38,6 +40,8 @@ class InspectionDetailWebLayout extends ConsumerWidget {
       statusColor = AppColors.reviewAmber;
     }
 
+    final authState = ref.watch(authProvider);
+    final isAdmin = authState.user?.isAdmin ?? false;
     final score = inspection.score ?? (status == 'FINALIZED' || status == 'COMPLIANT' ? 96.5 : (status == 'NEEDS_REVIEW' ? 82.0 : 64.0));
 
     return WebPageContainer(
@@ -136,6 +140,24 @@ class InspectionDetailWebLayout extends ConsumerWidget {
                     label: const Text('View Report', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     onPressed: () => context.push('/reports/${inspection.id}'),
                   ),
+                  if (isAdmin)
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.violationRed,
+                        side: const BorderSide(color: AppColors.violationRed),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      ),
+                      icon: const Icon(Icons.delete_outline, size: 15, color: AppColors.violationRed),
+                      label: const Text('Delete Inspection', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      onPressed: () => showDeleteInspectionDialog(
+                        context: context,
+                        ref: ref,
+                        inspectionId: inspection.id,
+                        inspectionCode: inspection.inspectionCode,
+                        navigateToListOnSuccess: true,
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -202,8 +224,10 @@ class InspectionDetailWebLayout extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            runSpacing: 8,
             children: [
               const Text(
                 'Package Surface Evidence',

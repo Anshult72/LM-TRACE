@@ -1237,6 +1237,56 @@ class DemoInMemoryRepository(
         ins["images"] = [img for img in ins["images"] if img["id"] != image_id]
         return len(ins["images"]) < orig_len
 
+    async def delete_inspection(self, inspection_id: str) -> Optional[Dict[str, Any]]:
+        ins = self.inspections.get(inspection_id)
+        if not ins:
+            ins = next((i for i in self.inspections.values() if i.get("inspection_code") == inspection_id), None)
+            if not ins:
+                return None
+
+        actual_id = ins["id"]
+        code = ins.get("inspection_code", inspection_id)
+        status_val = ins.get("status", "DRAFT")
+
+        cloudinary_public_ids = [
+            ev.get("cloudinary_public_id")
+            for ev in ins.get("evidence_items", [])
+            if ev.get("cloudinary_public_id")
+        ]
+        image_paths = [
+            img.get("original_path")
+            for img in ins.get("images", [])
+            if img.get("original_path")
+        ]
+
+        # Delete dependent calibrations
+        calib_keys = [k for k, v in self.calibrations.items() if v.get("inspection_id") == actual_id]
+        for k in calib_keys:
+            del self.calibrations[k]
+
+        # Delete dependent reports
+        rep_keys = [k for k, v in self.reports.items() if v.get("inspection_id") == actual_id]
+        for k in rep_keys:
+            del self.reports[k]
+
+        # Delete dependent label versions
+        self.label_versions = [lv for lv in self.label_versions if lv.get("inspection_id") != actual_id]
+
+        # Delete inspection
+        if actual_id in self.inspections:
+            del self.inspections[actual_id]
+        if code in self.inspections:
+            del self.inspections[code]
+
+        return {
+            "deleted": True,
+            "inspection_id": actual_id,
+            "inspection_code": code,
+            "status": status_val,
+            "cloudinary_public_ids": cloudinary_public_ids,
+            "image_paths": image_paths,
+        }
+
     async def save_declarations(self, inspection_id: str, declarations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         ins = self.inspections.get(inspection_id)
         if not ins:

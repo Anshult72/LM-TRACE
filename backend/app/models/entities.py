@@ -99,6 +99,7 @@ class Inspection(Base):
     violations = relationship("Violation", back_populates="inspection", cascade="all, delete-orphan")
     evidence_items = relationship("Evidence", back_populates="inspection", cascade="all, delete-orphan")
     calibrations = relationship("ImageCalibration", back_populates="inspection", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="inspection", cascade="all, delete-orphan")
 
 class InspectionImage(Base):
     __tablename__ = "inspection_images"
@@ -344,6 +345,8 @@ class Report(Base):
     archival_status = Column(String(50), nullable=False, default="NOT_GENERATED")
     generated_by = Column(String(36), nullable=True)
     created_at = Column(DateTime(timezone=True), default=get_utc_now)
+
+    inspection = relationship("Inspection", back_populates="reports")
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

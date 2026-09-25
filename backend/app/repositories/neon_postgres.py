@@ -416,6 +416,61 @@ class NeonPostgresRepository(
             await session.commit()
             return res.rowcount > 0
 
+    async def delete_inspection(self, inspection_id: str) -> Optional[Dict[str, Any]]:
+        async with await self._get_session() as session:
+            stmt = select(Inspection).where(
+                or_(Inspection.id == inspection_id, Inspection.inspection_code == inspection_id)
+            )
+            res = await session.execute(stmt)
+            ins = res.scalar_one_or_none()
+            if not ins:
+                return None
+
+            actual_id = ins.id
+            code = ins.inspection_code
+            status_val = ins.status
+
+            # Collect Cloudinary public IDs and local image paths for post-commit cleanup
+            ev_stmt = select(Evidence).where(Evidence.inspection_id == actual_id)
+            ev_records = (await session.execute(ev_stmt)).scalars().all()
+            cloudinary_public_ids = [
+                ev.cloudinary_public_id for ev in ev_records if ev.cloudinary_public_id
+            ]
+
+            img_stmt = select(InspectionImage).where(InspectionImage.inspection_id == actual_id)
+            img_records = (await session.execute(img_stmt)).scalars().all()
+            image_paths = [
+                img.original_path for img in img_records if img.original_path
+            ]
+
+            try:
+                # Explicit child-record deletion in dependency order
+                await session.execute(delete(Violation).where(Violation.inspection_id == actual_id))
+                await session.execute(delete(ComplianceCheck).where(ComplianceCheck.inspection_id == actual_id))
+                await session.execute(delete(ImageCalibration).where(ImageCalibration.inspection_id == actual_id))
+                await session.execute(delete(Evidence).where(Evidence.inspection_id == actual_id))
+                await session.execute(delete(InspectionImage).where(InspectionImage.inspection_id == actual_id))
+                await session.execute(delete(Declaration).where(Declaration.inspection_id == actual_id))
+                await session.execute(delete(Report).where(Report.inspection_id == actual_id))
+                await session.execute(delete(LabelVersion).where(LabelVersion.inspection_id == actual_id))
+                del_res = await session.execute(delete(Inspection).where(Inspection.id == actual_id))
+                if del_res.rowcount == 0:
+                    await session.rollback()
+                    return None
+
+                await session.commit()
+                return {
+                    "deleted": True,
+                    "inspection_id": actual_id,
+                    "inspection_code": code,
+                    "status": status_val,
+                    "cloudinary_public_ids": cloudinary_public_ids,
+                    "image_paths": image_paths,
+                }
+            except Exception:
+                await session.rollback()
+                raise
+
     async def save_declarations(self, inspection_id: str, declarations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         async with await self._get_session() as session:
             await session.execute(delete(Declaration).where(Declaration.inspection_id == inspection_id))

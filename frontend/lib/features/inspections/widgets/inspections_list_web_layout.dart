@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/web_page_container.dart';
 import '../../../core/widgets/widgets.dart';
+import '../../auth/auth_controller.dart';
 import '../inspections_controller.dart';
+import 'delete_inspection_dialog.dart';
 
 /// Desktop enterprise data table layout for Inspections Registry.
 class InspectionsListWebLayout extends ConsumerStatefulWidget {
@@ -59,6 +61,8 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final isAdmin = authState.user?.isAdmin ?? false;
     final state = ref.watch(inspectionsProvider);
     final allInspections = state.inspections;
 
@@ -239,13 +243,13 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
                               child: Row(
                                 children: const [
                                   Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('CASE ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
-                                  Expanded(flex: 4, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('ESTABLISHMENT / TRADER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
+                                  Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('ESTABLISHMENT / TRADER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
                                   Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('LOCATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
                                   Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('INSPECTION TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
                                   Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('PACKAGE TYPE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
                                   Expanded(flex: 3, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
                                   Expanded(flex: 2, child: Padding(padding: EdgeInsets.only(right: 8), child: Text('AUDIT DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
-                                  Expanded(flex: 3, child: Align(alignment: Alignment.centerRight, child: Text('ACTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
+                                  Expanded(flex: 4, child: Align(alignment: Alignment.centerRight, child: Text('ACTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primaryNavy)))),
                                 ],
                               ),
                             ),
@@ -292,7 +296,7 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
                                 separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.skyGrey),
                                 itemBuilder: (context, index) {
                                   final ins = filtered[index];
-                                  return _buildTableRow(context, ins);
+                                  return _buildTableRow(context, ins, isAdmin);
                                 },
                               ),
                           ],
@@ -356,7 +360,7 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
     );
   }
 
-  Widget _buildTableRow(BuildContext context, InspectionModel ins) {
+  Widget _buildTableRow(BuildContext context, InspectionModel ins, bool isAdmin) {
     final dateStr = ins.inspectionDate.length >= 10 ? ins.inspectionDate.substring(0, 10) : ins.inspectionDate;
 
     return InkWell(
@@ -379,7 +383,7 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
               ),
             ),
             Expanded(
-              flex: 4,
+              flex: 3,
               child: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Text(
@@ -446,19 +450,40 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
               ),
             ),
             Expanded(
-              flex: 3,
+              flex: 4,
               child: Align(
                 alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    backgroundColor: AppColors.surfaceIvory,
-                  ),
-                  icon: const Icon(Icons.arrow_forward, size: 12),
-                  label: const Text('View Case', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  onPressed: () => context.push('/inspections/${ins.id}'),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        backgroundColor: AppColors.surfaceIvory,
+                      ),
+                      icon: const Icon(Icons.arrow_forward, size: 12),
+                      label: const Text('View Case', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      onPressed: () => context.push('/inspections/${ins.id}'),
+                    ),
+                    if (isAdmin) ...[
+                      const SizedBox(width: 6),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.violationRed),
+                        tooltip: 'Delete Inspection (Admin Only)',
+                        padding: const EdgeInsets.all(4),
+                        constraints: const BoxConstraints(),
+                        onPressed: () => showDeleteInspectionDialog(
+                          context: context,
+                          ref: ref,
+                          inspectionId: ins.id,
+                          inspectionCode: ins.inspectionCode,
+                          navigateToListOnSuccess: false,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),

@@ -780,6 +780,48 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
       return false;
     }
   }
+
+  Future<bool> deleteInspection(String inspectionId) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final response = await _apiClient.delete("${ApiConstants.inspections}/$inspectionId");
+      if (response.statusCode == 200) {
+        if (_activeDraftId == inspectionId) {
+          _activeDraftId = null;
+        }
+        final updatedList = state.inspections
+            .where((i) => i.id != inspectionId && i.inspectionCode != inspectionId)
+            .toList();
+        state = state.copyWith(
+          isLoading: false,
+          inspections: updatedList,
+          selectedInspection: state.selectedInspection?.id == inspectionId ? null : state.selectedInspection,
+          errorMessage: null,
+        );
+        return true;
+      }
+    } catch (e) {
+      String msg = 'Inspection deletion failed: $e';
+      if (e is DioException) {
+        if (e.response?.statusCode == 403) {
+          msg = 'Access denied: Only administrators can delete inspections.';
+        } else if (e.response?.statusCode == 404) {
+          msg = 'Inspection not found or already deleted.';
+        } else if (e.response?.data is Map) {
+          final d = e.response!.data as Map;
+          if (d['detail'] is Map) {
+            msg = (d['detail']['message'] as String?) ?? msg;
+          } else if (d['detail'] is String) {
+            msg = d['detail'] as String;
+          } else if (d['message'] is String) {
+            msg = d['message'] as String;
+          }
+        }
+      }
+      state = state.copyWith(isLoading: false, errorMessage: msg);
+    }
+    return false;
+  }
 }
 
 final inspectionsProvider = StateNotifierProvider<InspectionsNotifier, InspectionState>((ref) {

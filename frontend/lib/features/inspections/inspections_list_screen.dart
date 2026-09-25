@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/widgets/widgets.dart';
+import '../auth/auth_controller.dart';
 import 'inspections_controller.dart';
 import 'widgets/inspections_list_web_layout.dart';
+import 'widgets/delete_inspection_dialog.dart';
 
 class InspectionsListScreen extends ConsumerStatefulWidget {
   final String? initialStatusFilter;
@@ -51,6 +53,8 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
       return InspectionsListWebLayout(initialStatusFilter: widget.initialStatusFilter);
     }
 
+    final authState = ref.watch(authProvider);
+    final isAdmin = authState.user?.isAdmin ?? false;
     final state = ref.watch(inspectionsProvider);
 
     List<InspectionModel> filtered = state.inspections.where((ins) {
@@ -165,7 +169,7 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final ins = filtered[index];
-                          return _buildInspectionTile(context, ins);
+                          return _buildInspectionTile(context, ins, isAdmin);
                         },
                       ),
           ),
@@ -220,7 +224,7 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
     );
   }
 
-  Widget _buildInspectionTile(BuildContext context, InspectionModel ins) {
+  Widget _buildInspectionTile(BuildContext context, InspectionModel ins, bool isAdmin) {
     return AppCard(
       onTap: () => context.push('/inspections/${ins.id}'),
       padding: const EdgeInsets.all(14),
@@ -249,9 +253,30 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
                   ),
                 ],
               ),
-              Text(
-                ins.inspectionDate.split('T').first,
-                style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    ins.inspectionDate.split('T').first,
+                    style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+                  ),
+                  if (isAdmin) ...[
+                    const SizedBox(width: 6),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.violationRed),
+                      tooltip: 'Delete Inspection (Admin Only)',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: () => showDeleteInspectionDialog(
+                        context: context,
+                        ref: ref,
+                        inspectionId: ins.id,
+                        inspectionCode: ins.inspectionCode,
+                        navigateToListOnSuccess: false,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ],
           ),

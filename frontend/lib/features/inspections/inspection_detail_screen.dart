@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/widgets/widgets.dart';
+import '../auth/auth_controller.dart';
 import 'inspections_controller.dart';
 import 'widgets/inspection_detail_web_layout.dart';
+import 'widgets/delete_inspection_dialog.dart';
 
 class InspectionDetailScreen extends ConsumerStatefulWidget {
   final String inspectionId;
@@ -134,6 +136,8 @@ class _InspectionDetailScreenState extends ConsumerState<InspectionDetailScreen>
       );
     }
 
+    final authState = ref.watch(authProvider);
+    final isAdmin = authState.user?.isAdmin ?? false;
     final isFinalized = ins?.status == "FINALIZED";
     final declarations = ins?.declarations ?? [];
     final checks = ins?.checks ?? [];
@@ -147,6 +151,18 @@ class _InspectionDetailScreenState extends ConsumerState<InspectionDetailScreen>
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.read(inspectionsProvider.notifier).fetchInspectionDetail(widget.inspectionId),
           ),
+          if (isAdmin && ins != null)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: AppColors.violationRed),
+              tooltip: 'Delete Inspection',
+              onPressed: () => showDeleteInspectionDialog(
+                context: context,
+                ref: ref,
+                inspectionId: ins.id,
+                inspectionCode: ins.inspectionCode,
+                navigateToListOnSuccess: true,
+              ),
+            ),
         ],
       ),
       body: Column(
@@ -195,15 +211,17 @@ class _InspectionDetailScreenState extends ConsumerState<InspectionDetailScreen>
                           children: [
                             const Icon(Icons.analytics_outlined, size: 20, color: AppColors.secondaryBlue),
                             const SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text("Compliance Score", style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
-                                Text(
-                                  "${(ins?.score ?? 90).toStringAsFixed(1)} / 100",
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
-                                ),
-                              ],
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text("Compliance Score", style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                                  Text(
+                                    "${(ins?.score ?? 90).toStringAsFixed(1)} / 100",
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primaryNavy),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -277,7 +295,25 @@ class _InspectionDetailScreenState extends ConsumerState<InspectionDetailScreen>
                           icon: const Icon(Icons.lock_outline, size: 16),
                           label: const Text("Finalise Inspection", style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
-
+                      if (isAdmin && ins != null) ...[
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.violationRed,
+                            side: const BorderSide(color: AppColors.violationRed),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          ),
+                          onPressed: () => showDeleteInspectionDialog(
+                            context: context,
+                            ref: ref,
+                            inspectionId: ins.id,
+                            inspectionCode: ins.inspectionCode,
+                            navigateToListOnSuccess: true,
+                          ),
+                          icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.violationRed),
+                          label: const Text("Delete Inspection", style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ],
                     ],
                   ),
                 ),
