@@ -109,7 +109,7 @@ Future<bool> showDeleteInspectionDialog({
             ),
             actions: [
               OutlinedButton(
-                onPressed: isDeleting ? null : () => Navigator.of(dialogContext).pop(false),
+                onPressed: isDeleting ? null : () => Navigator.of(dialogContext).pop(null),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: AppColors.borderLight),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -172,8 +172,8 @@ Future<bool> showDeleteInspectionDialog({
       context.go('/inspections');
     }
     return true;
-  } else if (confirmed == false && ref.read(inspectionsProvider).errorMessage != null && context.mounted) {
-    final err = ref.read(inspectionsProvider).errorMessage!;
+  } else if (confirmed == false && context.mounted) {
+    final err = ref.read(inspectionsProvider).errorMessage ?? 'Inspection deletion failed. Please try again.';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(err),

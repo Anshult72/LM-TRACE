@@ -782,7 +782,7 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
   }
 
   Future<bool> deleteInspection(String inspectionId) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(errorMessage: null);
     try {
       final response = await _apiClient.delete("${ApiConstants.inspections}/$inspectionId");
       if (response.statusCode == 200) {
@@ -793,7 +793,6 @@ class InspectionsNotifier extends StateNotifier<InspectionState> {
             .where((i) => i.id != inspectionId && i.inspectionCode != inspectionId)
             .toList();
         state = state.copyWith(
-          isLoading: false,
           inspections: updatedList,
           selectedInspection: state.selectedInspection?.id == inspectionId ? null : state.selectedInspection,
           errorMessage: null,

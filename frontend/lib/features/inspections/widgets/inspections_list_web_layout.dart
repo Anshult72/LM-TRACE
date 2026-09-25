@@ -453,37 +453,41 @@ class _InspectionsListWebLayoutState extends ConsumerState<InspectionsListWebLay
               flex: 4,
               child: Align(
                 alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextButton.icon(
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        backgroundColor: AppColors.surfaceIvory,
-                      ),
-                      icon: const Icon(Icons.arrow_forward, size: 12),
-                      label: const Text('View Case', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      onPressed: () => context.push('/inspections/${ins.id}'),
-                    ),
-                    if (isAdmin) ...[
-                      const SizedBox(width: 6),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.violationRed),
-                        tooltip: 'Delete Inspection (Admin Only)',
-                        padding: const EdgeInsets.all(4),
-                        constraints: const BoxConstraints(),
-                        onPressed: () => showDeleteInspectionDialog(
-                          context: context,
-                          ref: ref,
-                          inspectionId: ins.id,
-                          inspectionCode: ins.inspectionCode,
-                          navigateToListOnSuccess: false,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {}, // Stop event propagation to row InkWell
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          backgroundColor: AppColors.surfaceIvory,
                         ),
+                        icon: const Icon(Icons.arrow_forward, size: 12),
+                        label: const Text('View Case', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                        onPressed: () => context.push('/inspections/${ins.id}'),
                       ),
+                      if (isAdmin) ...[
+                        const SizedBox(width: 6),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.violationRed),
+                          tooltip: 'Delete Inspection (Admin Only)',
+                          padding: const EdgeInsets.all(6),
+                          constraints: const BoxConstraints(),
+                          onPressed: () => showDeleteInspectionDialog(
+                            context: context,
+                            ref: ref,
+                            inspectionId: ins.id,
+                            inspectionCode: ins.inspectionCode,
+                            navigateToListOnSuccess: false,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),

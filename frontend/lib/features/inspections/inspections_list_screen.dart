@@ -261,18 +261,22 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
                     style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted),
                   ),
                   if (isAdmin) ...[
-                    const SizedBox(width: 6),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.violationRed),
-                      tooltip: 'Delete Inspection (Admin Only)',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => showDeleteInspectionDialog(
-                        context: context,
-                        ref: ref,
-                        inspectionId: ins.id,
-                        inspectionCode: ins.inspectionCode,
-                        navigateToListOnSuccess: false,
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {}, // Prevent parent card tap
+                      child: IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.violationRed),
+                        tooltip: 'Delete Inspection (Admin Only)',
+                        padding: const EdgeInsets.all(4),
+                        constraints: const BoxConstraints(),
+                        onPressed: () => showDeleteInspectionDialog(
+                          context: context,
+                          ref: ref,
+                          inspectionId: ins.id,
+                          inspectionCode: ins.inspectionCode,
+                          navigateToListOnSuccess: false,
+                        ),
                       ),
                     ),
                   ],
