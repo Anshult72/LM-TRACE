@@ -204,6 +204,8 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
   Widget _buildStatCards(Map<String, dynamic> summary, bool isSupervisor) {
     final audited = (summary['total_audited'] ?? summary['total_inspections'] ?? 0) as int;
     final compRate = (summary['compliance_rate'] as num?)?.toDouble();
+    final compSubtitle = summary['compliance_rate_subtitle'] as String? ??
+        (compRate != null ? 'Rule 6 & 7 Compliant' : 'No audits completed');
     final violations = (summary['violations_flagged'] ?? summary['potential_violations'] ?? 0) as int;
     final pending = (summary['pending_review'] ?? summary['pending_reviews'] ?? 0) as int;
 
@@ -224,11 +226,11 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           child: StatMetricCard(
             title: 'Compliance Rate',
             value: compRate != null ? '${compRate.toStringAsFixed(1)}%' : '—',
-            subtitle: compRate != null ? 'Rule 6 & 7 Compliant' : 'No audits completed',
+            subtitle: compSubtitle,
             icon: Icons.verified_outlined,
             accentColor: AppColors.successGreen,
-            trendText: compRate != null ? (compRate >= 70 ? 'Optimal' : 'Needs Review') : null,
-            isPositiveTrend: compRate != null ? compRate >= 70 : true,
+            trendText: compRate != null ? (compRate >= 65 ? 'Statutory Pass' : 'Needs Review') : null,
+            isPositiveTrend: compRate != null ? compRate >= 65 : true,
           ),
         ),
         const SizedBox(width: 14),
@@ -236,7 +238,7 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
           child: StatMetricCard(
             title: 'Violations Flagged',
             value: '$violations',
-            subtitle: violations == 0 ? 'Zero active violations' : 'Non-compliant Goods',
+            subtitle: violations == 0 ? 'Zero active violations' : '$violations Active Violations',
             icon: Icons.gavel_outlined,
             accentColor: AppColors.alertRed,
             trendText: violations > 0 ? '$violations Alerts' : '0 Alerts',
@@ -283,15 +285,17 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
 
   Widget _buildStatCardsFallback(List<InspectionModel> list, bool isSupervisor) {
     final audited = list.where((i) => ['COMPLETED', 'COMPLIANT', 'FINALIZED', 'ARCHIVED'].contains(i.status.toUpperCase())).length;
-    final violations = list.where((i) => ['VIOLATION', 'POTENTIAL_VIOLATION'].contains(i.status.toUpperCase())).length;
-    final compliant = list.where((i) => ['COMPLIANT', 'FINALIZED'].contains(i.status.toUpperCase())).length;
+    final violationCases = list.where((i) => i.violations.isNotEmpty || (i.score != null && i.score! < 80) || ['VIOLATION', 'POTENTIAL_VIOLATION'].contains(i.status.toUpperCase())).length;
+    final totalViolations = list.fold<int>(0, (sum, i) => sum + (i.violations.isNotEmpty ? i.violations.length : (i.score != null && i.score! < 80 ? 1 : 0)));
+    final compliant = list.where((i) => i.violations.isEmpty && (i.score == null || i.score! >= 80) && ['COMPLIANT', 'FINALIZED'].contains(i.status.toUpperCase())).length;
     final rate = audited > 0 ? (compliant / audited) * 100 : null;
-    final pending = list.where((i) => ['NEEDS_REVIEW', 'REVIEW_REQUIRED', 'IN_REVIEW'].contains(i.status.toUpperCase())).length;
+    final pending = list.where((i) => ['NEEDS_REVIEW', 'REVIEW_REQUIRED', 'IN_REVIEW', 'DRAFT'].contains(i.status.toUpperCase())).length;
 
     return _buildStatCards({
       'total_audited': audited,
       'compliance_rate': rate,
-      'violations_flagged': violations,
+      'violations_flagged': totalViolations > 0 ? totalViolations : violationCases,
+      'potential_violations': violationCases,
       'pending_review': pending,
     }, isSupervisor);
   }
@@ -713,10 +717,17 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
     final inspections = state.inspections;
 
     final filtered = inspections.where((ins) {
-      if (_tableFilter == 'COMPLIANT' && !['COMPLETED', 'COMPLIANT', 'FINALIZED'].contains(ins.status.toUpperCase())) {
+      final hasViolations = ins.violations.isNotEmpty ||
+          (ins.score != null && ins.score! < 80) ||
+          ['POTENTIAL_VIOLATION', 'VIOLATION'].contains(ins.status.toUpperCase());
+      final isCompliant = ins.violations.isEmpty &&
+          (ins.score == null || ins.score! >= 80) &&
+          ['COMPLETED', 'COMPLIANT', 'FINALIZED'].contains(ins.status.toUpperCase());
+
+      if (_tableFilter == 'COMPLIANT' && !isCompliant) {
         return false;
       }
-      if (_tableFilter == 'VIOLATIONS' && !['POTENTIAL_VIOLATION', 'VIOLATION'].contains(ins.status.toUpperCase())) {
+      if (_tableFilter == 'VIOLATIONS' && !hasViolations) {
         return false;
       }
       if (_tableFilter == 'REVIEW' && !['REVIEW_REQUIRED', 'IN_REVIEW', 'NEEDS_REVIEW', 'DRAFT'].contains(ins.status.toUpperCase())) {
@@ -937,9 +948,57 @@ class _DashboardWebLayoutState extends ConsumerState<DashboardWebLayout> {
               flex: 3,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: AppStatusBadge(
-                  status: ins.status,
-                  size: BadgeSize.sm,
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 3,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    AppStatusBadge(
+                      status: ins.status,
+                      size: BadgeSize.sm,
+                    ),
+                    if (ins.violations.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.alertRed.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppColors.alertRed.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.gavel, size: 10, color: AppColors.alertRed),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${ins.violations.length} ${ins.violations.length == 1 ? "Violation" : "Violations"}',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.alertRed,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (ins.score != null && ins.score! < 80)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.warningAmber.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: AppColors.warningAmber.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(
+                          'Score ${ins.score!.round()}%',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.warningAmber,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),

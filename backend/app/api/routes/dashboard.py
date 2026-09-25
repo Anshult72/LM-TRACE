@@ -18,15 +18,15 @@ def _filter_cases(inspections: List[Dict[str, Any]], date_from: Optional[str], d
     filtered = []
     for item in inspections:
         date = _date_value(item)[:10]
-        if date_from and date and date < date_from:
+        if isinstance(date_from, str) and date and date < date_from:
             continue
-        if date_to and date and date > date_to:
+        if isinstance(date_to, str) and date and date > date_to:
             continue
         item_category = str(item.get("product_category") or item.get("category") or "Uncategorised")
-        if category and category.lower() not in item_category.lower():
+        if isinstance(category, str) and category.lower() not in item_category.lower():
             continue
         assessment = classify_inspection(item)
-        if outcome and assessment["outcome"] != outcome.upper():
+        if isinstance(outcome, str) and assessment["outcome"] != outcome.upper():
             continue
         enriched = dict(item)
         enriched.update({
@@ -78,8 +78,32 @@ async def get_dashboard_summary(
     inspections = _filter_cases(all_cases, date_from, date_to, category, outcome)
     metrics = summarize_inspections(inspections)
     outcomes = metrics["outcomes"]
-    evaluated = outcomes.get("COMPLIANT", 0) + outcomes.get("POTENTIAL_VIOLATION", 0)
-    compliance_rate = round(outcomes.get("COMPLIANT", 0) / evaluated * 100, 1) if evaluated else None
+    finalized = sum(1 for item in inspections if str(item.get("status") or "").upper() in {"FINALIZED", "ARCHIVED"})
+
+    # Statutory evaluations across checked parameters
+    assessments = [classify_inspection(item) for item in inspections]
+    total_passed_checks = sum(a["passed_check_count"] for a in assessments)
+    total_failed_checks = sum(a["failed_check_count"] for a in assessments)
+    total_active_violations = sum(a["active_violation_count"] for a in assessments)
+    scores = [float(item["score"]) for item in inspections if item.get("score") is not None]
+
+    total_decided_checks = total_passed_checks + total_failed_checks
+    if total_decided_checks > 0:
+        compliance_rate = round((total_passed_checks / total_decided_checks) * 100, 1)
+        compliance_subtitle = f"{total_passed_checks} of {total_decided_checks} Statutory Checks Passed"
+    elif scores:
+        compliance_rate = round(sum(scores) / len(scores), 1)
+        compliance_subtitle = f"Mean statutory score across {len(scores)} audits"
+    elif finalized > 0:
+        evaluated = outcomes.get("COMPLIANT", 0) + outcomes.get("POTENTIAL_VIOLATION", 0)
+        compliance_rate = round(outcomes.get("COMPLIANT", 0) / evaluated * 100, 1) if evaluated else 0.0
+        compliance_subtitle = "Based on conclusive case outcomes"
+    else:
+        compliance_rate = None
+        compliance_subtitle = "No finalized inspections yet"
+
+    violations_flagged = total_active_violations if total_active_violations > 0 else outcomes.get("POTENTIAL_VIOLATION", 0)
+    potential_violations = outcomes.get("POTENTIAL_VIOLATION", 0)
     action_queue = [item for item in inspections if item["compliance_outcome"] in {"POTENTIAL_VIOLATION", "NEEDS_REVIEW", "UNVERIFIED"}]
 
     commodity_spread = []
@@ -87,11 +111,29 @@ async def get_dashboard_summary(
         decided = stats["compliant"] + stats["potential_violations"]
         commodity_spread.append({"name": name, "category": name, **stats, "compliance_rate": round(stats["compliant"] / decided, 3) if decided else None})
 
+    RULE_TITLES = {
+        "RULE-006": "Rule 6: Mandatory Declarations",
+        "RULE-007": "Rule 7: Numeral & Letter Height",
+        "RULE-008": "Rule 8: Principal Display Panel",
+        "RULE-009": "Rule 9: Contrast & Readability",
+        "RULE-049": "Rule 49: E-Commerce Disclosures",
+    }
+
     rule_health = []
     for code, stats in sorted(metrics["rule_stats"].items()):
         decided = stats["pass"] + stats["failed"]
         rate = round(stats["pass"] / decided, 3) if decided else None
-        rule_health.append({"rule": code, "code": code, "total_checked": stats["total"], **stats, "rate": rate, "progress": rate, "pass_rate": f"{round(rate * 100)}%" if rate is not None else None})
+        title = RULE_TITLES.get(code, code)
+        rule_health.append({
+            "rule": title,
+            "code": code,
+            "title": title,
+            "total_checked": stats["total"],
+            **stats,
+            "rate": rate,
+            "progress": rate,
+            "pass_rate": f"{round(rate * 100)}%" if rate is not None else None,
+        })
 
     trend_map: Dict[str, Dict[str, int]] = {}
     for item in inspections:
@@ -104,17 +146,16 @@ async def get_dashboard_summary(
     rules = await repo.list_rules()
     latest_rule = rules[0] if rules else None
     change_alert = await _product_change_alert(repo)
-    finalized = sum(1 for item in inspections if str(item.get("status") or "").upper() in {"FINALIZED", "ARCHIVED"})
     return {
         "total_audited": finalized, "total_inspections": len(inspections), "raw_total_cases": len(all_cases),
         "compliance_rate": compliance_rate,
-        "compliance_rate_subtitle": "Based only on cases with a conclusive check outcome" if evaluated else "No conclusively evaluated inspections",
-        "violations_flagged": outcomes.get("POTENTIAL_VIOLATION", 0), "potential_violations": outcomes.get("POTENTIAL_VIOLATION", 0),
+        "compliance_rate_subtitle": compliance_subtitle,
+        "violations_flagged": violations_flagged, "potential_violations": potential_violations,
         "pending_review": outcomes.get("NEEDS_REVIEW", 0) + outcomes.get("UNVERIFIED", 0), "pending_reviews": outcomes.get("NEEDS_REVIEW", 0) + outcomes.get("UNVERIFIED", 0),
         "unverified_cases": outcomes.get("UNVERIFIED", 0), "drafts_pending": outcomes.get("IN_PROGRESS", 0),
         "active_rules_count": len(rules), "recent_changes_detected": 1 if change_alert else 0,
         "recent_inspections": inspections[:8], "enforcement_queue": action_queue[:25],
-        "action_required": {"pending_reviews": outcomes.get("NEEDS_REVIEW", 0) + outcomes.get("UNVERIFIED", 0), "compliance_violations": outcomes.get("POTENTIAL_VIOLATION", 0), "drafts_pending_finalisation": outcomes.get("IN_PROGRESS", 0), "unverified_cases": outcomes.get("UNVERIFIED", 0), "label_changes_to_review": 1 if change_alert else 0},
+        "action_required": {"pending_reviews": outcomes.get("NEEDS_REVIEW", 0) + outcomes.get("UNVERIFIED", 0), "compliance_violations": potential_violations, "drafts_pending_finalisation": outcomes.get("IN_PROGRESS", 0), "unverified_cases": outcomes.get("UNVERIFIED", 0), "label_changes_to_review": 1 if change_alert else 0},
         "violation_summary": {"by_type": metrics["violation_types"], "by_severity": metrics["severity_counts"]},
         "product_change_alert": change_alert,
         "latest_rule_update": ({"code": latest_rule.get("code"), "title": latest_rule.get("title"), "category": latest_rule.get("category"), "effective_date": latest_rule.get("effective_from"), "version": latest_rule.get("version")} if latest_rule else None),

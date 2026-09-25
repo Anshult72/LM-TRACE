@@ -1,6 +1,7 @@
 from typing import Optional, List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, or_
+from sqlalchemy.orm import selectinload
 from app.repositories.interfaces import (
     IUserRepository, IProductRepository, IInspectionRepository,
     IRuleRepository, IReportRepository, IAuditLogRepository
@@ -371,7 +372,11 @@ class NeonPostgresRepository(
 
     async def list_inspections(self, inspector_id: Optional[str] = None, status: Optional[str] = None, query: Optional[str] = None) -> List[Dict[str, Any]]:
         async with await self._get_session() as session:
-            stmt = select(Inspection)
+            stmt = select(Inspection).options(
+                selectinload(Inspection.checks),
+                selectinload(Inspection.violations),
+                selectinload(Inspection.product),
+            )
             if inspector_id:
                 stmt = stmt.where(or_(Inspection.inspector_id == inspector_id, Inspection.inspector_id.is_(None)))
             if status:
@@ -392,13 +397,52 @@ class NeonPostgresRepository(
             inspections = res.scalars().all()
             return [
                 {
-                    "id": ins.id, "inspection_code": ins.inspection_code, "status": ins.status,
-                    "inspector_id": ins.inspector_id, "product_id": ins.product_id,
-                    "inspection_type": ins.inspection_type, "location": ins.location,
-                    "seller_name": ins.seller_name, "business_name": ins.business_name,
+                    "id": ins.id,
+                    "inspection_code": ins.inspection_code,
+                    "status": ins.status,
+                    "inspector_id": ins.inspector_id,
+                    "product_id": ins.product_id,
+                    "product_category": (
+                        (ins.product.category if ins.product and ins.product.category else None) or
+                        ((ins.rule_snapshot or {}).get("product_category") if isinstance(ins.rule_snapshot, dict) else None) or
+                        "General Pre-packaged Good"
+                    ),
+                    "package_type": ins.package_type or "RECTANGULAR",
+                    "package_construction_type": ins.package_construction_type,
+                    "inspection_type": ins.inspection_type,
+                    "location": ins.location,
+                    "seller_name": ins.seller_name,
+                    "business_name": ins.business_name,
                     "score": ins.score,
+                    "rule_snapshot": ins.rule_snapshot,
+                    "notes": ins.notes,
+                    "listing_url": getattr(ins, "listing_url", None),
+                    "canonical_url": getattr(ins, "canonical_url", None),
+                    "marketplace": getattr(ins, "marketplace", None),
                     "inspection_date": ins.inspection_date.isoformat() if ins.inspection_date else None,
                     "created_at": ins.created_at.isoformat() if ins.created_at else None,
+                    "checks": [{
+                        "id": check.id,
+                        "inspection_id": check.inspection_id,
+                        "check_type": check.check_type,
+                        "field_name": check.field_name,
+                        "input_value": check.input_value,
+                        "expected_condition": check.expected_condition,
+                        "result": check.result,
+                        "confidence": check.confidence,
+                        "explanation": check.explanation,
+                    } for check in (ins.checks or [])],
+                    "violations": [{
+                        "id": violation.id,
+                        "inspection_id": violation.inspection_id,
+                        "type": violation.type,
+                        "severity": violation.severity,
+                        "confidence": violation.confidence,
+                        "status": violation.status,
+                        "provenance": violation.provenance,
+                        "ai_explanation": violation.ai_explanation,
+                        "inspector_comment": violation.inspector_comment,
+                    } for violation in (ins.violations or [])],
                 } for ins in inspections
             ]
 

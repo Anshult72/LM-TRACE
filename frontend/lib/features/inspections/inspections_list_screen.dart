@@ -58,13 +58,21 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
     final state = ref.watch(inspectionsProvider);
 
     List<InspectionModel> filtered = state.inspections.where((ins) {
-      if (_filter == 'COMPLIANT' && !['COMPLETED', 'COMPLIANT'].contains(ins.status.toUpperCase())) {
+      final s = ins.status.toUpperCase();
+      final hasViolations = ins.violations.isNotEmpty ||
+          (ins.score != null && ins.score! < 80) ||
+          ['VIOLATION', 'POTENTIAL_VIOLATION'].contains(s);
+      final isCompliant = ins.violations.isEmpty &&
+          (ins.score == null || ins.score! >= 80) &&
+          ['COMPLIANT', 'COMPLETED', 'FINALIZED'].contains(s);
+
+      if (_filter == 'COMPLIANT' && !isCompliant) {
         return false;
       }
-      if (_filter == 'VIOLATIONS' && !['POTENTIAL_VIOLATION', 'VIOLATION'].contains(ins.status.toUpperCase())) {
+      if (_filter == 'VIOLATIONS' && !hasViolations) {
         return false;
       }
-      if (_filter == 'REVIEW' && !['REVIEW_REQUIRED', 'IN_REVIEW', 'DRAFT'].contains(ins.status.toUpperCase())) {
+      if (_filter == 'REVIEW' && !['REVIEW_REQUIRED', 'IN_REVIEW', 'NEEDS_REVIEW', 'DRAFT'].contains(s)) {
         return false;
       }
       if (_searchQuery.isNotEmpty) {
@@ -251,6 +259,32 @@ class _InspectionsListScreenState extends ConsumerState<InspectionsListScreen> {
                     status: ins.status,
                     size: BadgeSize.sm,
                   ),
+                  if (ins.violations.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.alertRed.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: AppColors.alertRed.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.gavel, size: 10, color: AppColors.alertRed),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${ins.violations.length} Violations',
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.alertRed,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
               Row(

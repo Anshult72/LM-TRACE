@@ -46,6 +46,22 @@ def classify_inspection(inspection: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+RULE_CODE_MAP = {
+    "MANDATORY_DECLARATION": "RULE-006",
+    "DECLARATION_CORRECTNESS": "RULE-006",
+    "DECLARATION_COMPLETENESS": "RULE-006",
+    "PRICE_INCLUSIVE": "RULE-006",
+    "UNIT_SALE_PRICE": "RULE-006",
+    "CROSS_FIELD_CONSISTENCY": "RULE-006",
+    "OPTIONAL_DECLARATION": "RULE-006",
+    "CHARACTER_HEIGHT": "RULE-007",
+    "CHARACTER_PROPORTION": "RULE-007",
+    "PLACEMENT": "RULE-008",
+    "READABILITY": "RULE-009",
+    "ECOMMERCE_DIGITAL_PDP": "RULE-049",
+}
+
+
 def summarize_inspections(inspections: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
     records = list(inspections)
     outcomes = Counter()
@@ -58,7 +74,12 @@ def summarize_inspections(inspections: Iterable[Dict[str, Any]]) -> Dict[str, An
         assessment = classify_inspection(item)
         outcome = assessment["outcome"]
         outcomes[outcome] += 1
-        category = str(item.get("product_category") or item.get("category") or "Uncategorised")
+        category = str(
+            item.get("product_category") or
+            item.get("category") or
+            ((item.get("rule_snapshot") or {}).get("product_category") if isinstance(item.get("rule_snapshot"), dict) else None) or
+            "General Pre-packaged Good"
+        )
         category_stats[category]["total"] += 1
         category_key = {
             "COMPLIANT": "compliant", "NEEDS_REVIEW": "needs_review",
@@ -74,7 +95,8 @@ def summarize_inspections(inspections: Iterable[Dict[str, Any]]) -> Dict[str, An
             severity_counts[str(finding.get("severity") or "UNSPECIFIED")] += 1
 
         for check in _dicts(item.get("checks")):
-            code = str(check.get("rule_code") or "UNMAPPED_RULE")
+            check_type = str(check.get("check_type") or "").upper()
+            code = str(check.get("rule_code") or RULE_CODE_MAP.get(check_type) or ("RULE-006" if check_type else "UNMAPPED_RULE"))
             result = str(check.get("result") or "UNVERIFIED").upper()
             rule_stats[code]["total"] += 1
             if result == "PASS":
