@@ -140,7 +140,7 @@ void main() {
       expect(submitted, isFalse);
     });
 
-    testWidgets('Finalize Inspection screen preserves comprehensive technical and declaration controls', (WidgetTester tester) async {
+    testWidgets('Finalize Inspection screen displays streamlined baseline fields matching new inspection', (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1200, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -171,12 +171,26 @@ void main() {
       // Finalization button
       expect(find.text('Confirm & Finalize Inspection'), findsOneWidget);
 
-      // Detailed technical analysis sections MUST be preserved for final review
-      expect(find.text('Package Construction'), findsOneWidget);
-      expect(find.text('Package Geometry / Shape'), findsOneWidget);
-      expect(find.text('Declaration Applicability (Rule 6)'), findsOneWidget);
-      expect(find.text('Intended Consumer / Market Scope'), findsOneWidget);
-      expect(find.text('Commodity Origin'), findsOneWidget);
+      // Baseline fields MUST be present and prefilled
+      expect(find.text('Basic Inspection Information'), findsOneWidget);
+      expect(find.text('Establishment / Trader Name *'), findsOneWidget);
+      expect(find.text('Inspection Location / Address *'), findsOneWidget);
+      expect(find.text('Commodity Category *'), findsOneWidget);
+      expect(find.text('Dealer / Seller Licensee (Optional)'), findsOneWidget);
+      expect(find.text('Optional Field Notes'), findsOneWidget);
+      expect(find.text('Metro Hypermarket'), findsOneWidget);
+      expect(find.text('Connaught Place, New Delhi'), findsOneWidget);
+
+      // Technical & legal questionnaire fields MUST NOT be shown
+      expect(find.text('Package Construction'), findsNothing);
+      expect(find.text('Package Geometry / Shape'), findsNothing);
+      expect(find.text('Declaration Applicability (Rule 6)'), findsNothing);
+      expect(find.text('Intended Consumer / Market Scope'), findsNothing);
+      expect(find.text('Commodity Origin'), findsNothing);
+      expect(find.text('Separate packer declaration'), findsNothing);
+      expect(find.text('Best Before / Use By declaration'), findsNothing);
+      expect(find.text('Multi-piece / group / gift package'), findsNothing);
+      expect(find.text('Package has an outside container / wrapper'), findsNothing);
     });
   });
 }
